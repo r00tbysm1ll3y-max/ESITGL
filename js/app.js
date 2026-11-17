@@ -3247,7 +3247,7 @@ function renderAdminAthletes() {
             : ``;
 
         const regNo = getAthleteRegNo(a);
-        const domisili = [a.kecamatan ? `Kec. ${a.kecamatan}` : '', a.institution].filter(Boolean).join(' Â· ');
+        const domisili = [a.kecamatan ? `Kec. ${a.kecamatan}` : '', a.institution].filter(Boolean).join(' • ');
 
         return `
             <tr class="border-b border-[#E2E8F0] hover:bg-slate-50/60 transition">

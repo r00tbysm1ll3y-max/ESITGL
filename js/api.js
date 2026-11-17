@@ -1,5 +1,5 @@
 /**
- * API SERVICE LAYER Ã¢â‚¬â€ Vercel Blob Store (Primary)
+ * API SERVICE LAYER - Vercel Blob Store (Primary)
  *
  * Semua data utama (athletes, events, news, registrations) disimpan di Vercel Blob
  * via endpoint server-side /api/store.
@@ -120,7 +120,7 @@ const Mapper = {
 const Api = {
 
     // ================================================================
-    //  HELPER INTERNAL â€” Panggil /api/store (Vercel Blob via server)
+    //  HELPER INTERNAL - Panggil /api/store (Vercel Blob via server)
     // ================================================================
 
     async _storeGet(collection) {
@@ -177,7 +177,7 @@ const Api = {
         const blobData = await this._storeGet('athletes');
         if (blobData && blobData.length > 0) return blobData;
 
-        // Blob kosong/belum di-seed â€” cek data lama di localStorage (migrasi otomatis)
+        // Blob kosong/belum di-seed - cek data lama di localStorage (migrasi otomatis)
         const legacyKeys = [
             CONFIG.STORAGE_KEYS.ATHLETES,  // 'esi_trenggalek_athletes_v2'
             'esi_trenggalek_athletes_v1'
@@ -518,7 +518,7 @@ const Api = {
                     if (Array.isArray(legacy) && legacy.length > 0) {
                         matched = findMatch(legacy);
                         if (matched) {
-                            // Data lama ditemukan â€” push ke Blob di background agar sinkron
+                            // Data lama ditemukan - push ke Blob di background agar sinkron
                             this.getAthletes().then(() => {}).catch(() => {});
                             break;
                         }
