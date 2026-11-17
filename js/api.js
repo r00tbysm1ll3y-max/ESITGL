@@ -284,6 +284,44 @@ const Api = {
         return true;
     },
 
+    // ==================== STORAGE & MEDIA MANAGEMENT ====================
+    /**
+     * Hapus gambar dari Supabase Storage jika merupakan URL file cloud storage Supabase
+     * Aman dipanggil untuk base64 / data:image / blob: / assets/ lokal (tidak akan error)
+     */
+    async deleteStorageImage(imageUrl) {
+        if (!imageUrl || typeof imageUrl !== 'string') return false;
+
+        // Skip jika base64 inline, blob URL, atau aset lokal portal
+        if (imageUrl.startsWith('data:') || imageUrl.startsWith('blob:') || imageUrl.startsWith('assets/') || imageUrl.startsWith('./') || imageUrl.startsWith('/')) {
+            return true;
+        }
+
+        if (!supabaseClient || !supabaseClient.storage) {
+            return false;
+        }
+
+        try {
+            // Contoh URL Supabase: https://xxxx.supabase.co/storage/v1/object/public/<bucket>/<path>
+            const urlObj = new URL(imageUrl);
+            const pathParts = urlObj.pathname.split('/');
+            const publicIdx = pathParts.indexOf('public');
+            if (publicIdx !== -1 && pathParts.length > publicIdx + 2) {
+                const bucket = pathParts[publicIdx + 1];
+                const filePath = decodeURIComponent(pathParts.slice(publicIdx + 2).join('/'));
+                const { error } = await supabaseClient.storage.from(bucket).remove([filePath]);
+                if (error) {
+                    console.warn(`Supabase Storage remove error (${bucket}/${filePath}):`, error);
+                    return false;
+                }
+                return true;
+            }
+        } catch (err) {
+            console.warn('Gagal menghapus gambar dari cloud storage:', err);
+        }
+        return false;
+    },
+
     // ==================== 2. EVENT ====================
     async getEvents() {
         if (supabaseClient) {
@@ -303,21 +341,31 @@ const Api = {
     },
 
     getLocalEvents() {
+        const deletedEventIdsKey = 'esi_deleted_event_ids';
+        let deletedEventIds = [];
+        try {
+            deletedEventIds = JSON.parse(localStorage.getItem(deletedEventIdsKey) || '[]').map(String);
+        } catch (e) {
+            deletedEventIds = [];
+        }
+
         const saved = localStorage.getItem(CONFIG.STORAGE_KEYS.EVENTS);
         if (!saved) {
-            localStorage.setItem(CONFIG.STORAGE_KEYS.EVENTS, JSON.stringify(INITIAL_EVENTS));
-            return [...INITIAL_EVENTS];
+            const initialFiltered = INITIAL_EVENTS.filter(e => !deletedEventIds.includes(String(e.id)));
+            localStorage.setItem(CONFIG.STORAGE_KEYS.EVENTS, JSON.stringify(initialFiltered));
+            return [...initialFiltered];
         }
         try {
             let parsed = JSON.parse(saved);
             const hasLegacyMultiDiv = Array.isArray(parsed) && parsed.some(e => e.division === 'Multi-Divisi' || e.title === 'Piala Pelajar Esports Season 2 Tahun 2026');
             if (!Array.isArray(parsed) || parsed.length === 0 || hasLegacyMultiDiv) {
-                localStorage.setItem(CONFIG.STORAGE_KEYS.EVENTS, JSON.stringify(INITIAL_EVENTS));
-                return [...INITIAL_EVENTS];
+                const initialFiltered = INITIAL_EVENTS.filter(e => !deletedEventIds.includes(String(e.id)));
+                localStorage.setItem(CONFIG.STORAGE_KEYS.EVENTS, JSON.stringify(initialFiltered));
+                return [...initialFiltered];
             }
-            return parsed;
+            return parsed.filter(e => !deletedEventIds.includes(String(e.id)));
         } catch {
-            return [...INITIAL_EVENTS];
+            return INITIAL_EVENTS.filter(e => !deletedEventIds.includes(String(e.id)));
         }
     },
 
@@ -370,6 +418,20 @@ const Api = {
     },
 
     async deleteEvent(id) {
+        const idStr = String(id);
+
+        // 1. Dapatkan data event sebelum dihapus untuk menghapus file gambar poster dari storage
+        let targetEvent = null;
+        try {
+            const currentEvents = await this.getEvents();
+            targetEvent = currentEvents.find(e => String(e.id) === idStr);
+        } catch (_) {}
+
+        if (targetEvent && targetEvent.imageUrl) {
+            await this.deleteStorageImage(targetEvent.imageUrl);
+        }
+
+        // 2. Hapus dari Supabase DB
         if (supabaseClient) {
             try {
                 const { error } = await supabaseClient
@@ -382,9 +444,36 @@ const Api = {
             }
         }
 
+        // 3. Catat ID event yang dihapus agar tidak di-seed ulang
+        const deletedEventIdsKey = 'esi_deleted_event_ids';
+        let deletedEventIds = [];
+        try {
+            deletedEventIds = JSON.parse(localStorage.getItem(deletedEventIdsKey) || '[]').map(String);
+        } catch (e) {
+            deletedEventIds = [];
+        }
+        if (!deletedEventIds.includes(idStr)) {
+            deletedEventIds.push(idStr);
+            localStorage.setItem(deletedEventIdsKey, JSON.stringify(deletedEventIds));
+        }
+
+        // 4. Hapus dari localStorage (membebaskan storage memori gambar secara bersih)
         let local = this.getLocalEvents();
-        local = local.filter(e => e.id != id);
+        local = local.filter(e => String(e.id) !== idStr);
         localStorage.setItem(CONFIG.STORAGE_KEYS.EVENTS, JSON.stringify(local));
+
+        // 5. Bersihkan data pendaftaran turnamen terkait dari storage
+        try {
+            const regKey = CONFIG.STORAGE_KEYS.TOURNAMENT_REGISTRATIONS || 'esi_trenggalek_trn_regs_v2';
+            const savedRegs = JSON.parse(localStorage.getItem(regKey) || '[]');
+            if (Array.isArray(savedRegs)) {
+                const filteredRegs = savedRegs.filter(r => String(r.tournamentId) !== idStr);
+                localStorage.setItem(regKey, JSON.stringify(filteredRegs));
+            }
+        } catch (err) {
+            console.warn('Notice saat membersihkan pendaftaran turnamen terkait:', err);
+        }
+
         return true;
     },
 
@@ -556,6 +645,32 @@ const Api = {
     },
 
         async deleteNews(id) {
+        const idStr = String(id);
+
+        // 1. Dapatkan data artikel sebelum dihapus untuk mendeteksi file gambar sampul & gambar di teks
+        let targetNews = null;
+        try {
+            const currentList = await this.getNews();
+            targetNews = currentList.find(n => String(n.id) === idStr);
+        } catch (_) {}
+
+        if (targetNews) {
+            // Hapus foto sampul dari storage
+            if (targetNews.imageUrl) {
+                await this.deleteStorageImage(targetNews.imageUrl);
+            }
+            // Hapus foto-foto inline di dalam konten dari storage jika ada
+            if (targetNews.content) {
+                const imgRegex = /(?:!\[.*?\]\((https?:\/\/[^\s\)]+)\)|<img[^>]+src=["'](https?:\/\/[^"']+)["'])/g;
+                let match;
+                while ((match = imgRegex.exec(targetNews.content)) !== null) {
+                    const url = match[1] || match[2];
+                    if (url) await this.deleteStorageImage(url);
+                }
+            }
+        }
+
+        // 2. Hapus dari Supabase DB
         if (supabaseClient) {
             try {
                 const { error } = await supabaseClient
@@ -568,7 +683,7 @@ const Api = {
             }
         }
 
-        // Catat ID berita yang dihapus agar tidak pernah di-seed ulang
+        // 3. Catat ID berita yang dihapus agar tidak pernah di-seed ulang
         const deletedIdsKey = 'esi_deleted_news_ids';
         let deletedIds = [];
         try {
@@ -576,13 +691,12 @@ const Api = {
         } catch (e) {
             deletedIds = [];
         }
-        const idStr = String(id);
         if (!deletedIds.includes(idStr)) {
             deletedIds.push(idStr);
             localStorage.setItem(deletedIdsKey, JSON.stringify(deletedIds));
         }
 
-        // Hapus dari data tersimpan di localStorage
+        // 4. Hapus dari data tersimpan di localStorage (membebaskan memori storage gambar secara bersih)
         let saved = [];
         try {
             saved = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.NEWS) || '[]');

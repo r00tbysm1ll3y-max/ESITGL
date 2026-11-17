@@ -3921,11 +3921,15 @@ async function changeEventStatus(id, newStatus) {
 }
 
 async function deleteEvent(id) {
-    if (confirm('Hapus jadwal event ini?')) {
+    const ev = events.find(e => e.id == id);
+    const evTitle = ev ? ` "${ev.title}"` : '';
+    if (confirm(`Apakah Anda yakin ingin menghapus turnamen${evTitle}? Poster dan seluruh file gambar terkait akan dihapus bersih dari storage.`)) {
         await Api.deleteEvent(id);
         events = await Api.getEvents();
         renderAdminEvents();
-        showToast('Event Dihapus', 'Jadwal event telah dihapus.');
+        if (typeof renderEventsView === 'function') renderEventsView();
+        if (typeof renderHomeView === 'function') renderHomeView();
+        showToast('Turnamen & Poster Dihapus', 'Jadwal turnamen dan file gambar terkait telah dihapus bersih dari storage.');
     }
 }
 
@@ -4337,6 +4341,10 @@ async function handleAdminAddNews(e) {
     if (editId) {
         // Mode Update Artikel Lama
         const existing = news.find(n => n.id == editId);
+        // Bersihkan gambar lama dari storage jika foto sampul diganti
+        if (existing && existing.imageUrl && existing.imageUrl !== finalImageUrl) {
+            await Api.deleteStorageImage(existing.imageUrl);
+        }
         articlePayload.date = existing ? existing.date : today;
         await Api.updateNews(editId, articlePayload);
         showToast('Artikel Diperbarui', 'Perubahan berita berhasil disimpan dan diperbarui.');
@@ -4398,13 +4406,15 @@ function renderAdminNews() {
 }
 
 async function deleteNews(id) {
-    if (confirm('Apakah Anda yakin ingin menghapus artikel berita ini?')) {
+    const art = news.find(n => n.id == id);
+    const artTitle = art ? ` "${art.title}"` : '';
+    if (confirm(`Apakah Anda yakin ingin menghapus artikel berita${artTitle}? Foto sampul dan file gambar terkait akan dihapus bersih dari storage.`)) {
         await Api.deleteNews(id);
         news = await Api.getNews();
         renderAdminNews();
         if (typeof renderNewsView === 'function') renderNewsView();
         if (typeof renderHomeView === 'function') renderHomeView();
-        showToast('Berita Dihapus', 'Artikel berita telah berhasil dihapus.');
+        showToast('Berita & Gambar Dihapus', 'Artikel berita dan seluruh file gambar terkait telah dihapus bersih dari storage.');
     }
 }
 
