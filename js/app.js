@@ -2208,8 +2208,7 @@ function scrollToComments() {
     }
 }
 
-function renderArticleComments(articleId) {
-    const comments = getArticleComments(articleId);
+function renderCommentsHtml(articleId, comments) {
     const totalCount = countTotalComments(comments);
 
     // Update Badges
@@ -2421,7 +2420,22 @@ function renderArticleComments(articleId) {
     }).join('');
 }
 
-function handlePostComment(e) {
+function renderArticleComments(articleId) {
+    // 1. Tampilkan komentar dari cache lokal segera (instant UI)
+    const cached = getArticleComments(articleId);
+    renderCommentsHtml(articleId, cached);
+
+    // 2. Ambil update komentar real-time dari Cloud (Vercel Blob / Supabase)
+    if (typeof Api !== 'undefined' && typeof Api.getArticleComments === 'function') {
+        Api.getArticleComments(articleId).then(freshComments => {
+            if (freshComments && activeArticleId == articleId) {
+                renderCommentsHtml(articleId, freshComments);
+            }
+        }).catch(() => {});
+    }
+}
+
+async function handlePostComment(e) {
     e.preventDefault();
     const articleId = activeArticleId;
     if (!articleId) return;
@@ -2429,6 +2443,13 @@ function handlePostComment(e) {
     const textarea = document.getElementById('commentTextInput');
     const content = (textarea ? textarea.value : '').trim();
     if (!content) return;
+
+    const submitBtn = e.target ? e.target.querySelector('button[type="submit"]') : null;
+    const oldBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Mengirim...';
+    }
 
     let author = 'Pengunjung ESI';
     let isAdmin = false;
@@ -2463,16 +2484,32 @@ function handlePostComment(e) {
         replies: []
     };
 
-    const comments = getArticleComments(articleId);
-    comments.unshift(newComment);
-    saveArticleComments(articleId, comments);
+    try {
+        let updatedComments = null;
+        if (typeof Api !== 'undefined' && typeof Api.postArticleComment === 'function') {
+            updatedComments = await Api.postArticleComment(articleId, newComment);
+        } else {
+            const comments = getArticleComments(articleId);
+            comments.unshift(newComment);
+            saveArticleComments(articleId, comments);
+            updatedComments = comments;
+        }
 
-    if (textarea) textarea.value = '';
-    const authorInput = document.getElementById('commentAuthorInput');
-    if (authorInput) authorInput.value = '';
+        if (textarea) textarea.value = '';
+        const authorInput = document.getElementById('commentAuthorInput');
+        if (authorInput) authorInput.value = '';
 
-    renderArticleComments(articleId);
-    showToast('Komentar Terkirim! 🎉', 'Terima kasih telah berpartisipasi dalam diskusi artikel ini.');
+        renderCommentsHtml(articleId, updatedComments);
+        showToast('Komentar Terkirim! 🎉', 'Komentar Anda berhasil dipublikasikan dan dapat dilihat oleh pengunjung lain.');
+    } catch (err) {
+        console.error('Submit comment error:', err);
+        showToast('Gagal Mengirim', 'Terjadi kesalahan saat mengirim komentar.');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = oldBtnHtml;
+        }
+    }
 }
 
 function toggleReplyBox(commentId) {
@@ -2489,7 +2526,7 @@ function toggleReplyBox(commentId) {
     }
 }
 
-function handlePostReply(e, commentId) {
+async function handlePostReply(e, commentId) {
     e.preventDefault();
     const articleId = activeArticleId;
     if (!articleId) return;
@@ -2497,6 +2534,13 @@ function handlePostReply(e, commentId) {
     const textarea = document.getElementById(`replyText-${commentId}`);
     const content = (textarea ? textarea.value : '').trim();
     if (!content) return;
+
+    const submitBtn = e.target ? e.target.querySelector('button[type="submit"]') : null;
+    const oldBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>';
+    }
 
     let author = 'Pengunjung ESI';
     let isAdmin = false;
@@ -2530,19 +2574,36 @@ function handlePostReply(e, commentId) {
         content
     };
 
-    const comments = getArticleComments(articleId);
-    const target = comments.find(c => c.id === commentId);
-    if (target) {
-        if (!Array.isArray(target.replies)) target.replies = [];
-        target.replies.push(newReply);
-        saveArticleComments(articleId, comments);
-        renderArticleComments(articleId);
-        showToast('Balasan Terkirim! 💬', `Balasan Anda untuk @${target.author} berhasil ditambahkan.`);
+    try {
+        let updatedComments = null;
+        if (typeof Api !== 'undefined' && typeof Api.postArticleReply === 'function') {
+            updatedComments = await Api.postArticleReply(articleId, commentId, newReply);
+        } else {
+            const comments = getArticleComments(articleId);
+            const target = comments.find(c => c.id === commentId);
+            if (target) {
+                if (!Array.isArray(target.replies)) target.replies = [];
+                target.replies.push(newReply);
+                saveArticleComments(articleId, comments);
+                updatedComments = comments;
+            }
+        }
+
+        renderCommentsHtml(articleId, updatedComments);
+        showToast('Balasan Terkirim! 💬', 'Balasan Anda berhasil dipublikasikan.');
+    } catch (err) {
+        console.error('Submit reply error:', err);
+        showToast('Gagal Membalas', 'Terjadi kesalahan saat mengirim balasan.');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = oldBtnHtml;
+        }
     }
 }
 
 // -------------------- 3. HAPUS KOMENTAR & BALASAN (KHUSUS ADMIN) --------------------
-function deleteArticleComment(commentId) {
+async function deleteArticleComment(commentId) {
     if (!isAdminLoggedIn) {
         showToast('Akses Ditolak', 'Hanya administrator yang dapat menghapus komentar.');
         return;
@@ -2553,14 +2614,20 @@ function deleteArticleComment(commentId) {
     const articleId = activeArticleId;
     if (!articleId) return;
 
-    let comments = getArticleComments(articleId);
-    comments = comments.filter(c => c.id !== commentId);
-    saveArticleComments(articleId, comments);
-    renderArticleComments(articleId);
+    let updated = null;
+    if (typeof Api !== 'undefined' && typeof Api.deleteArticleComment === 'function') {
+        updated = await Api.deleteArticleComment(articleId, commentId);
+    } else {
+        let comments = getArticleComments(articleId);
+        comments = comments.filter(c => c.id !== commentId);
+        saveArticleComments(articleId, comments);
+        updated = comments;
+    }
+    renderCommentsHtml(articleId, updated);
     showToast('Komentar Dihapus 🗑️', 'Komentar berhasil dihapus oleh admin.');
 }
 
-function deleteArticleReply(commentId, replyId) {
+async function deleteArticleReply(commentId, replyId) {
     if (!isAdminLoggedIn) {
         showToast('Akses Ditolak', 'Hanya administrator yang dapat menghapus balasan.');
         return;
@@ -2571,14 +2638,20 @@ function deleteArticleReply(commentId, replyId) {
     const articleId = activeArticleId;
     if (!articleId) return;
 
-    const comments = getArticleComments(articleId);
-    const target = comments.find(c => c.id === commentId);
-    if (target && Array.isArray(target.replies)) {
-        target.replies = target.replies.filter(r => r.id !== replyId);
-        saveArticleComments(articleId, comments);
-        renderArticleComments(articleId);
-        showToast('Balasan Dihapus 🗑️', 'Balasan komentar berhasil dihapus oleh admin.');
+    let updated = null;
+    if (typeof Api !== 'undefined' && typeof Api.deleteArticleComment === 'function') {
+        updated = await Api.deleteArticleComment(articleId, replyId);
+    } else {
+        const comments = getArticleComments(articleId);
+        const target = comments.find(c => c.id === commentId);
+        if (target && Array.isArray(target.replies)) {
+            target.replies = target.replies.filter(r => r.id !== replyId);
+            saveArticleComments(articleId, comments);
+            updated = comments;
+        }
     }
+    renderCommentsHtml(articleId, updated);
+    showToast('Balasan Dihapus 🗑️', 'Balasan komentar berhasil dihapus oleh admin.');
 }
 
 // Tetap dukung openNewsModal dengan mengarahkannya ke openNewsArticle

@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const blobHandler = require('./api/blob');
+const commentsHandler = require('./api/comments');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = __dirname;
@@ -30,6 +31,18 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/blob') {
         try {
             await blobHandler(req, res);
+            return;
+        } catch (err) {
+            res.statusCode = 500;
+            res.end(`Internal Server Error: ${err.message}`);
+            return;
+        }
+    }
+
+    // 1b. API Route: /api/comments
+    if (pathname === '/api/comments') {
+        try {
+            await commentsHandler(req, res);
             return;
         } catch (err) {
             res.statusCode = 500;

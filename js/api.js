@@ -1269,6 +1269,132 @@ const Api = {
         return true;
     },
 
+    // ==================== 6b. DISKUSI & KOMENTAR BERITA ====================
+    /**
+     * Ambil daftar komentar artikel secara real-time dari cloud (Vercel / Supabase)
+     * Sinkron otomatis antar semua user / perangkat
+     */
+    async getArticleComments(articleId) {
+        const cacheKey = `esi_comments_v3_${articleId}`;
+        try {
+            const res = await fetch(`/api/comments?articleId=${articleId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    try { localStorage.setItem(cacheKey, JSON.stringify(data)); } catch (_) {}
+                    return data;
+                }
+            }
+        } catch (err) {
+            // Offline fallback
+        }
+        // Fallback ke localStorage atau INITIAL_ARTICLE_COMMENTS
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            try { return JSON.parse(cached); } catch (_) {}
+        }
+        if (typeof INITIAL_ARTICLE_COMMENTS !== 'undefined' && INITIAL_ARTICLE_COMMENTS[articleId]) {
+            return JSON.parse(JSON.stringify(INITIAL_ARTICLE_COMMENTS[articleId]));
+        }
+        return [];
+    },
+
+    /**
+     * Kirim komentar baru ke cloud sehingga langsung terlihat oleh user lain
+     */
+    async postArticleComment(articleId, comment) {
+        const cacheKey = `esi_comments_v3_${articleId}`;
+        try {
+            const res = await fetch('/api/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ articleId, comment })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && Array.isArray(data.comments)) {
+                    try { localStorage.setItem(cacheKey, JSON.stringify(data.comments)); } catch (_) {}
+                    return data.comments;
+                }
+            }
+        } catch (err) {
+            console.warn('Post comment cloud error, saving to local cache:', err);
+        }
+
+        // Fallback local
+        const cached = await this.getArticleComments(articleId);
+        cached.unshift(comment);
+        try { localStorage.setItem(cacheKey, JSON.stringify(cached)); } catch (_) {}
+        return cached;
+    },
+
+    /**
+     * Kirim balasan komentar (reply) ke cloud
+     */
+    async postArticleReply(articleId, commentId, reply) {
+        const cacheKey = `esi_comments_v3_${articleId}`;
+        try {
+            const res = await fetch('/api/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ articleId, replyToCommentId: commentId, comment: reply })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && Array.isArray(data.comments)) {
+                    try { localStorage.setItem(cacheKey, JSON.stringify(data.comments)); } catch (_) {}
+                    return data.comments;
+                }
+            }
+        } catch (err) {
+            console.warn('Post reply cloud error:', err);
+        }
+
+        // Fallback local
+        const cached = await this.getArticleComments(articleId);
+        const target = cached.find(c => c.id === commentId);
+        if (target) {
+            if (!Array.isArray(target.replies)) target.replies = [];
+            target.replies.push(reply);
+            try { localStorage.setItem(cacheKey, JSON.stringify(cached)); } catch (_) {}
+        }
+        return cached;
+    },
+
+    /**
+     * Hapus komentar (Admin) dari cloud
+     */
+    async deleteArticleComment(articleId, commentId) {
+        const cacheKey = `esi_comments_v3_${articleId}`;
+        try {
+            const res = await fetch('/api/comments', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ articleId, commentId })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && Array.isArray(data.comments)) {
+                    try { localStorage.setItem(cacheKey, JSON.stringify(data.comments)); } catch (_) {}
+                    return data.comments;
+                }
+            }
+        } catch (err) {
+            console.warn('Delete comment cloud error:', err);
+        }
+
+        // Fallback local
+        let cached = await this.getArticleComments(articleId);
+        cached = cached.filter(c => c.id !== commentId);
+        cached.forEach(c => {
+            if (Array.isArray(c.replies)) c.replies = c.replies.filter(r => r.id !== commentId);
+        });
+        try { localStorage.setItem(cacheKey, JSON.stringify(cached)); } catch (_) {}
+        return cached;
+    },
+
     // ==================== 7. RESET DATA ====================
     async resetToSeedData() {
         localStorage.removeItem('esi_deleted_athlete_ids');
