@@ -4222,7 +4222,7 @@ function renderAdminNews() {
     const sortedNews = [...news].sort((a, b) => getNewsTimestamp(b) - getNewsTimestamp(a));
     list.innerHTML = sortedNews.map(n => {
         const thumb = n.imageUrl
-            ? `<img src="${n.imageUrl}" alt="${n.title}" class="w-14 h-12 object-cover rounded-lg shrink-0 border border-slate-200">`
+            ? `<img src="${n.imageUrl}" alt="${n.title}" onerror="this.onerror=null;this.src='assets/images/logo-esi.png'" class="w-14 h-12 object-cover rounded-lg shrink-0 border border-slate-200">`
             : `<div class="w-14 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0"><i class="fa-solid fa-image text-xs"></i></div>`;
 
         return `

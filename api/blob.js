@@ -1,16 +1,37 @@
 /**
- * Serverless Function: Proxy & Serve Vercel Private Blob
+ * Serverless & Local Handler: Proxy & Serve Vercel Private Blob
  * Mengizinkan gambar dari private blob store ditampilkan di tag <img> publik dengan aman dan cepat (cached).
  */
 module.exports = async (req, res) => {
+    // Helper status & send untuk kompatibilitas Node HTTP murni dan Vercel Functions
+    if (!res.status) {
+        res.status = function(code) {
+            this.statusCode = code;
+            return this;
+        };
+    }
+    if (!res.send) {
+        res.send = function(data) {
+            this.end(data);
+        };
+    }
+
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        return res.status(200).send('');
     }
 
-    const { url } = req.query || {};
+    // Ambil param url baik dari req.query (Vercel) maupun query string URL (Node native)
+    let url = req.query ? req.query.url : null;
+    if (!url && req.url) {
+        try {
+            const parsed = new URL(req.url, 'http://localhost:3000');
+            url = parsed.searchParams.get('url');
+        } catch (_) {}
+    }
+
     if (!url) {
         return res.status(400).send('Parameter url diperlukan');
     }
