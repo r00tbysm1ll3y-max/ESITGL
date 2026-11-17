@@ -568,6 +568,25 @@ const Api = {
     //  6. REGISTRASI TURNAMEN
     // ================================================================
 
+    getLocalTournamentRegistrations(eventId = null) {
+        try {
+            const cached = localStorage.getItem('esi_blob_cache_registrations');
+            let list = null;
+            if (cached) {
+                try { list = JSON.parse(cached); } catch (_) {}
+            }
+            if (!Array.isArray(list)) {
+                list = typeof INITIAL_TOURNAMENT_REGISTRATIONS !== 'undefined' ? [...INITIAL_TOURNAMENT_REGISTRATIONS] : [];
+            }
+            if (eventId) {
+                return list.filter(r => String(r.tournamentId) === String(eventId));
+            }
+            return list;
+        } catch (_) {
+            return [];
+        }
+    },
+
     async getTournamentRegistrations(eventId = null) {
         let regs = await this._storeGet('registrations');
         if (!regs) regs = typeof INITIAL_TOURNAMENT_REGISTRATIONS !== 'undefined' ? [...INITIAL_TOURNAMENT_REGISTRATIONS] : [];
@@ -578,16 +597,31 @@ const Api = {
     async createTournamentRegistration(regData) {
         const newReg = { id: Date.now(), ...regData };
         const result = await this._storePost('create', 'registrations', newReg);
+        try {
+            const list = this.getLocalTournamentRegistrations();
+            list.push(result.item || newReg);
+            localStorage.setItem('esi_blob_cache_registrations', JSON.stringify(list));
+        } catch (_) {}
         return result.item;
     },
 
     async updateTournamentRegistrationStatus(id, newStatus) {
         await this._storePost('update', 'registrations', { id, data: { status: newStatus } });
+        try {
+            const list = this.getLocalTournamentRegistrations();
+            const item = list.find(r => String(r.id) === String(id));
+            if (item) item.status = newStatus;
+            localStorage.setItem('esi_blob_cache_registrations', JSON.stringify(list));
+        } catch (_) {}
         return true;
     },
 
     async deleteTournamentRegistration(id) {
         await this._storePost('delete', 'registrations', { id });
+        try {
+            const list = this.getLocalTournamentRegistrations().filter(r => String(r.id) !== String(id));
+            localStorage.setItem('esi_blob_cache_registrations', JSON.stringify(list));
+        } catch (_) {}
         return true;
     },
 

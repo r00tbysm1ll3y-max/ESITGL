@@ -47,7 +47,8 @@ function buildHash(view, id) {
 function getInitialView() {
     const { view, id } = parseHash(window.location.hash);
     if (view === 'berita' && id) { return { view: 'baca-berita', id }; }
-    if (view === 'event' && id)  { return { view: 'event', id }; }
+    if (view === 'event' && id)  { return { view: 'event-detail', id }; }
+    if (view === 'event-detail') { return { view: 'event-detail', id: id || activeEventId }; }
     if (view === 'daftar-event') {
         if (id) activeRegisterEventId = id;
         return { view: 'daftar-event', id: activeRegisterEventId };
@@ -93,6 +94,9 @@ async function initApp() {
     if (startRoute.view === 'baca-berita' && startRoute.id) {
         activeArticleId = startRoute.id;
     }
+    if (startRoute.view === 'event-detail' && startRoute.id) {
+        activeEventId = startRoute.id;
+    }
     navigateTo(startRoute.view, false);
 
     // Listener tombol Back/Forward browser — mendukung deep-link
@@ -108,8 +112,8 @@ async function initApp() {
             openEventDetail(id, false);
             return;
         }
-        if (view === 'event-detail' && id) {
-            openEventDetail(id, false);
+        if (view === 'event-detail') {
+            openEventDetail(id || activeEventId, false);
             return;
         }
         if (view === 'daftar-event') {
@@ -126,11 +130,15 @@ async function initApp() {
 
 async function refreshAllData() {
     try {
-        [athletes, events, news] = await Promise.all([
+        const [a, e, n] = await Promise.all([
             Api.getAthletes(),
             Api.getEvents(),
-            Api.getNews()
+            Api.getNews(),
+            Api.getTournamentRegistrations().catch(() => [])
         ]);
+        athletes = a || [];
+        events = e || [];
+        news = n || [];
     } catch (err) {
         console.error('Error saat refresh data:', err);
     }
@@ -200,7 +208,10 @@ function navigateTo(viewName, updateHash = true) {
     document.querySelectorAll('.nav-link').forEach(btn => {
         const isHidden = btn.dataset.nav === 'daftar' && Boolean(loggedMember);
         const hideClass = isHidden ? ' hidden' : '';
-        const isNavActive = (btn.dataset.nav === viewName) || (viewName === 'baca-berita' && btn.dataset.nav === 'berita');
+        const isNavActive = (btn.dataset.nav === viewName) ||
+                            (viewName === 'baca-berita' && btn.dataset.nav === 'berita') ||
+                            (viewName === 'event-detail' && btn.dataset.nav === 'event') ||
+                            (viewName === 'daftar-event' && btn.dataset.nav === 'event');
         if (isNavActive) {
             btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-bold bg-[#DC2626] text-white transition${hideClass}`;
         } else {
@@ -210,7 +221,10 @@ function navigateTo(viewName, updateHash = true) {
 
     // Update Mobile Bottom Nav Active State
     document.querySelectorAll('.bnav-btn').forEach(btn => {
-        const isBNavActive = (btn.dataset.bnav === viewName) || (viewName === 'baca-berita' && btn.dataset.bnav === 'berita');
+        const isBNavActive = (btn.dataset.bnav === viewName) ||
+                             (viewName === 'baca-berita' && btn.dataset.bnav === 'berita') ||
+                             (viewName === 'event-detail' && btn.dataset.bnav === 'event') ||
+                             (viewName === 'daftar-event' && btn.dataset.bnav === 'event');
         if (isBNavActive) {
             btn.className = "bnav-btn flex flex-col items-center justify-center gap-1 text-[#DC2626] font-bold";
         } else {
@@ -222,6 +236,8 @@ function navigateTo(viewName, updateHash = true) {
     if (viewName === 'beranda') renderHomeView();
     if (viewName === 'cek-data') renderPublicAthletes();
     if (viewName === 'event') renderEventsView();
+    if (viewName === 'event-detail') renderEventDetailPage(activeEventId);
+    if (viewName === 'daftar-event') renderEventRegistrationPage(activeRegisterEventId);
     if (viewName === 'klasemen') renderKlasemenView();
     if (viewName === 'berita') renderNewsView();
     if (viewName === 'baca-berita') renderArticleDetailPage(activeArticleId);
@@ -1351,12 +1367,12 @@ function renderEventsView() {
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">${ev.description}</p>
                 </div>
                 <div class="flex flex-col gap-2 mt-auto">
-                    <button onclick="openEventDetail(${ev.id})"
+                    <button onclick="openEventDetail('${ev.id}')"
                         class="w-full py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider bg-[#0F172A] hover:bg-slate-700 text-white transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Lihat Detail & Bagikan
                     </button>
                     ${ev.status !== 'Selesai'
-                        ? `<button onclick="openEventRegistration(${ev.id})" class="w-full py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center justify-center gap-2"><i class="fa-solid fa-users text-xs"></i> Daftar Tim</button>`
+                        ? `<button onclick="openEventRegistration('${ev.id}')" class="w-full py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center justify-center gap-2"><i class="fa-solid fa-users text-xs"></i> Daftar Tim</button>`
                         : `<button disabled class="w-full py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider bg-slate-100 text-slate-400 cursor-not-allowed">Event Telah Selesai</button>`
                     }
                 </div>
@@ -2715,20 +2731,14 @@ function copyEventUrl() {
     }
 }
 
-function openEventDetail(id, updateHash = true) {
-    const ev = events.find(e => e.id == id);
-    if (!ev) return;
+function renderEventDetailPage(id) {
+    if (!id && events.length > 0) id = events[0].id;
+    const ev = events.find(e => String(e.id) === String(id));
+    if (!ev) return null;
     activeEventId = id;
 
-    if (updateHash) {
-        window.location.hash = `event/${id}`;
-    }
-
-    // Navigasi ke view dedicated detail event
-    navigateTo('event-detail', false);
-
     // Fallback data
-    const prizePool = ev.prizePool || 'Piala Bergilir & E-Sertifikat Resmi';
+    const prizePool = ev.prizePool || ev.prize || 'Piala Bergilir & E-Sertifikat Resmi';
     const fee = ev.fee || 'Gratis / Free Entry';
     const slots = ev.slots ? parseInt(ev.slots, 10) : 32;
     const format = ev.format || 'Knockout / Best of 3 (BO3)';
@@ -2745,7 +2755,9 @@ function openEventDetail(id, updateHash = true) {
     const shareUrl = `${window.location.origin}${window.location.pathname}#event/${ev.id}`;
 
     // Data Pendaftar Real-time
-    const regs = Api.getLocalTournamentRegistrations(ev.id);
+    const regs = (typeof Api !== 'undefined' && typeof Api.getLocalTournamentRegistrations === 'function')
+        ? Api.getLocalTournamentRegistrations(ev.id)
+        : [];
     const registeredCount = regs ? regs.length : 0;
     const remainingSlots = Math.max(0, slots - registeredCount);
     const isOpen = ev.status === 'Upcoming' || ev.status === 'Ongoing';
@@ -2813,7 +2825,7 @@ function openEventDetail(id, updateHash = true) {
             </div>
         </div>`;
 
-    // 8 Spesifikasi Grid (Desain Clean & Seragam, Bebas Efek Pelangi)
+    // 8 Spesifikasi Grid
     const specItems = [
         { icon: 'fa-calendar-days', label: 'Tanggal Pelaksanaan', value: ev.date || '-' },
         { icon: 'fa-location-dot', label: 'Lokasi / Venue', value: ev.location || '-' },
@@ -2838,7 +2850,7 @@ function openEventDetail(id, updateHash = true) {
     `).join('');
 
     const bodyEl = document.getElementById('eventDetailPageBody');
-    if (!bodyEl) return;
+    if (!bodyEl) return ev;
 
     bodyEl.innerHTML = `
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -2853,7 +2865,7 @@ function openEventDetail(id, updateHash = true) {
                 <!-- Tombol Aksi Registrasi -->
                 <div class="space-y-2.5">
                     ${isOpen ? `
-                    <button onclick="navigateTo('daftar-event'); activeRegisterEventId = ${ev.id}; renderEventRegistrationPage(${ev.id});"
+                    <button onclick="openEventRegistration('${ev.id}')"
                         class="w-full py-4 px-6 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-red-600/30 hover:shadow-red-600/40 transition flex items-center justify-center gap-2.5 active:scale-[0.99]">
                         <i class="fa-solid fa-clipboard-list text-lg"></i>
                         <span>DAFTAR SEKARANG</span>
@@ -2986,7 +2998,7 @@ function openEventDetail(id, updateHash = true) {
                         <h4 class="text-lg font-black text-white">Segera Daftarkan Tim Anda</h4>
                         <p class="text-xs text-slate-400 mt-0.5">Slot terbatas. Amankan posisi skuad Anda di turnamen resmi ini.</p>
                     </div>
-                    <button onclick="navigateTo('daftar-event'); activeRegisterEventId = ${ev.id}; renderEventRegistrationPage(${ev.id});"
+                    <button onclick="openEventRegistration('${ev.id}')"
                         class="px-6 py-3 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md transition shrink-0 active:scale-95">
                         <i class="fa-solid fa-clipboard-list"></i>
                         <span>Daftar Tim Sekarang</span>
@@ -2997,6 +3009,56 @@ function openEventDetail(id, updateHash = true) {
             </div>
         </div>
     `;
+
+    return ev;
+}
+
+function openEventDetail(id, updateHash = true) {
+    if (!id && events.length > 0) id = events[0].id;
+
+    if (!events || events.length === 0) {
+        Api.getEvents().then(list => {
+            events = list || [];
+            openEventDetail(id, updateHash);
+        });
+        return;
+    }
+
+    const ev = renderEventDetailPage(id);
+    if (!ev) return;
+
+    if (updateHash) {
+        window.location.hash = `event/${id}`;
+    }
+
+    // Navigasi ke view dedicated detail event
+    activeView = 'event-detail';
+    sessionStorage.setItem('esi_active_view', 'event-detail');
+    document.querySelectorAll('.spa-view').forEach(el => el.classList.add('hidden'));
+    const target = document.getElementById('view-event-detail');
+    if (target) target.classList.remove('hidden');
+
+    // Update Desktop Nav Active State
+    document.querySelectorAll('.nav-link').forEach(btn => {
+        const isHidden = btn.dataset.nav === 'daftar' && Boolean(loggedMember);
+        const hideClass = isHidden ? ' hidden' : '';
+        const isNavActive = btn.dataset.nav === 'event';
+        if (isNavActive) {
+            btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-bold bg-[#DC2626] text-white transition${hideClass}`;
+        } else {
+            btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-[#1E293B] transition${hideClass}`;
+        }
+    });
+
+    // Update Mobile Bottom Nav
+    document.querySelectorAll('.bnav-btn').forEach(btn => {
+        const isBNavActive = btn.dataset.bnav === 'event';
+        if (isBNavActive) {
+            btn.className = "bnav-btn flex flex-col items-center justify-center gap-1 text-[#DC2626] font-bold";
+        } else {
+            btn.className = "bnav-btn flex flex-col items-center justify-center gap-1 text-slate-500 font-semibold";
+        }
+    });
 
     // Scroll mulus ke paling atas halaman
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -6374,7 +6436,7 @@ function handleTournamentGameBranchChange(newGame) {
 function openEventRegistration(eventId) {
     if (!eventId && events.length > 0) eventId = events[0].id;
     activeRegisterEventId = eventId;
-    closeEventDetail();
+    activeEventId = null;
     window.location.hash = `daftar-event/${eventId}`;
     navigateTo('daftar-event', false);
     renderEventRegistrationPage(eventId);
