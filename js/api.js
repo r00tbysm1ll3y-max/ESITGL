@@ -1,5 +1,5 @@
 ﻿/**
- * API SERVICE LAYER â€” Vercel Blob Store (Primary)
+ * API SERVICE LAYER Ã¢â‚¬â€ Vercel Blob Store (Primary)
  *
  * Semua data utama (athletes, events, news, registrations) disimpan di Vercel Blob
  * via endpoint server-side /api/store.
@@ -112,7 +112,7 @@ const Mapper = {
 const Api = {
 
     // ================================================================
-    //  HELPER INTERNAL — Panggil /api/store (Vercel Blob via server)
+    //  HELPER INTERNAL â€” Panggil /api/store (Vercel Blob via server)
     // ================================================================
 
     async _storeGet(collection) {
@@ -122,17 +122,23 @@ const Api = {
             });
             if (res.ok) {
                 const data = await res.json();
-                if (Array.isArray(data)) {
+                if (Array.isArray(data) && data.length > 0) {
                     // simpan ke localStorage sebagai cache offline
                     try { localStorage.setItem(`esi_blob_cache_${collection}`, JSON.stringify(data)); } catch (_) {}
                     return data;
                 }
+                // Blob mengembalikan [] (kosong/belum di-seed) â†’ kembalikan null
+                // agar caller bisa fallback ke cache / seed data
+                return null;
             }
         } catch (_) {}
         // offline fallback dari cache
         try {
             const cached = localStorage.getItem(`esi_blob_cache_${collection}`);
-            if (cached) return JSON.parse(cached);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
         } catch (_) {}
         return null;
     },
@@ -160,9 +166,27 @@ const Api = {
     // ================================================================
 
     async getAthletes() {
-        const data = await this._storeGet('athletes');
-        if (data) return data;
-        // ultimate fallback ke seed data
+        const blobData = await this._storeGet('athletes');
+        if (blobData && blobData.length > 0) return blobData;
+
+        // Blob kosong/belum di-seed â€” cek data lama di localStorage (migrasi otomatis)
+        const legacyKeys = [
+            CONFIG.STORAGE_KEYS.ATHLETES,  // 'esi_trenggalek_athletes_v2'
+            'esi_trenggalek_athletes_v1'
+        ];
+        for (const key of legacyKeys) {
+            try {
+                const legacy = JSON.parse(localStorage.getItem(key) || 'null');
+                if (Array.isArray(legacy) && legacy.length > 0) {
+                    // Auto-migrate: seed data lama ke Blob di background
+                    console.log(`[Api] Auto-migrating ${legacy.length} athletes from localStorage to Blob...`);
+                    this._storePost('reset', 'athletes', { data: legacy }).catch(() => {});
+                    return legacy;
+                }
+            } catch (_) {}
+        }
+
+        // Ultimate fallback ke seed data awal
         return typeof INITIAL_ATHLETES !== 'undefined' ? [...INITIAL_ATHLETES] : [];
     },
 
@@ -434,26 +458,57 @@ const Api = {
             return { success: false, message: 'Username / No. WA dan Password wajib diisi.' };
         }
 
-        // Ambil dari Blob (sumber kebenaran)
+        // Ambil dari Blob (sumber kebenaran), dengan fallback otomatis ke localStorage
         let allAthletes = await this.getAthletes();
 
-        const matched = allAthletes.find(a => {
-            const u = (a.username || '').toLowerCase();
-            const e = (a.email || '').toLowerCase();
+        // Fungsi pencarian fleksibel
+        const findMatch = (list) => list.find(a => {
+            if (!a) return false;
+            const u = (a.username || '').trim().toLowerCase();
+            const e = (a.email || '').trim().toLowerCase();
             const w = (a.whatsapp || '').replace(/\D/g, '');
             const inputDigits = idClean.replace(/\D/g, '');
-            const matchId = (u && u === idClean) ||
-                            (e && e === idClean) ||
-                            (inputDigits.length >= 8 && w && w.includes(inputDigits));
-            const matchPass = (a.password_hash === pwdClean || a.password === pwdClean);
+
+            const matchId =
+                (u && u === idClean) ||
+                (e && e === idClean) ||
+                (inputDigits.length >= 8 && w && w.endsWith(inputDigits.slice(-9)));
+
+            // Cek semua field password yang mungkin digunakan
+            const storedPwd  = (a.password_hash || a.password || '').trim();
+            const matchPass  = storedPwd.length > 0 && storedPwd === pwdClean;
+
             return matchId && matchPass;
         });
+
+        let matched = findMatch(allAthletes);
+
+        // Jika tidak ketemu di Blob, coba langsung dari localStorage lama (bridge)
+        if (!matched) {
+            const legacyKeys = [CONFIG.STORAGE_KEYS.ATHLETES, 'esi_trenggalek_athletes_v1'];
+            for (const key of legacyKeys) {
+                try {
+                    const legacy = JSON.parse(localStorage.getItem(key) || 'null');
+                    if (Array.isArray(legacy) && legacy.length > 0) {
+                        matched = findMatch(legacy);
+                        if (matched) {
+                            // Data lama ditemukan â€” push ke Blob di background agar sinkron
+                            this.getAthletes().then(() => {}).catch(() => {});
+                            break;
+                        }
+                    }
+                } catch (_) {}
+            }
+        }
 
         if (matched) {
             localStorage.setItem(CONFIG.STORAGE_KEYS.MEMBER_SESSION, JSON.stringify(matched));
             return { success: true, member: matched };
         }
-        return { success: false, message: 'Username/No. WhatsApp atau kata sandi tidak cocok.' };
+        return {
+            success: false,
+            message: 'Username/No. WhatsApp atau kata sandi tidak cocok. Pastikan akun sudah terdaftar dan terverifikasi.'
+        };
     },
 
     logoutMember() {
