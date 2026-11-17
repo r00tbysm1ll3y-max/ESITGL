@@ -2316,7 +2316,7 @@ function renderCommentsHtml(articleId, comments) {
         // Render Replies
         const repliesHtml = (c.replies && c.replies.length > 0)
             ? `
-                <div class="mt-3.5 pt-3 border-t border-slate-100 space-y-2.5 pl-0 sm:pl-[52px]">
+                <div class="mt-3.5 pt-3 border-t border-slate-100 space-y-2.5">
                     ${c.replies.map(r => {
                         const rInitial = (r.author || 'U').charAt(0).toUpperCase();
                         const rBadge = r.isAdmin
@@ -2337,20 +2337,21 @@ function renderCommentsHtml(articleId, comments) {
                                             ${rBadge}
                                         </div>
                                         <span class="text-[10px] text-slate-400 mt-0.5 block">${escapeHtml(r.date)}</span>
+
+                                        <div class="mt-1.5 text-xs text-slate-700 leading-relaxed whitespace-pre-line break-words">
+                                            ${escapeHtml(r.content)}
+                                        </div>
+                                        ${isAdminLoggedIn ? `
+                                            <div class="mt-2 pt-1.5 border-t border-slate-200/60 flex justify-end">
+                                                <button type="button" onclick="deleteArticleReply('${c.id}', '${r.id}')" title="Hapus Balasan (Admin)"
+                                                    class="inline-flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition">
+                                                    <i class="fa-regular fa-trash-can text-[10px]"></i>
+                                                    <span>Hapus Balasan</span>
+                                                </button>
+                                            </div>
+                                        ` : ''}
                                     </div>
                                 </div>
-                                <div class="mt-2 text-xs text-slate-700 leading-relaxed whitespace-pre-line break-words pl-0 sm:pl-9">
-                                    ${escapeHtml(r.content)}
-                                </div>
-                                ${isAdminLoggedIn ? `
-                                    <div class="mt-2 pt-2 border-t border-slate-200/60 flex justify-end pl-0 sm:pl-9">
-                                        <button type="button" onclick="deleteArticleReply('${c.id}', '${r.id}')" title="Hapus Balasan (Admin)"
-                                            class="inline-flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition">
-                                            <i class="fa-regular fa-trash-can text-[10px]"></i>
-                                            <span>Hapus Balasan</span>
-                                        </button>
-                                    </div>
-                                ` : ''}
                             </div>
                         `;
                     }).join('')}
@@ -2360,7 +2361,7 @@ function renderCommentsHtml(articleId, comments) {
 
         // Form Balasan (Inline Reply Box)
         const replyBoxHtml = `
-            <div id="replyBox-${c.id}" class="hidden mt-3 pt-3 border-t border-slate-100 bg-red-50/40 p-3.5 sm:p-4 rounded-xl border border-red-200/80 sm:ml-[52px]">
+            <div id="replyBox-${c.id}" class="hidden mt-3 pt-3 border-t border-slate-100 bg-red-50/40 p-3.5 sm:p-4 rounded-xl border border-red-200/80">
                 <div class="flex items-center justify-between mb-2.5">
                     <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5 truncate">
                         <i class="fa-solid fa-reply text-xs text-[#DC2626]"></i>
@@ -2398,51 +2399,53 @@ function renderCommentsHtml(articleId, comments) {
 
         return `
             <div class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition">
-                <!-- Header Komentar: Avatar, Nama, Badge, Tanggal -->
                 <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 rounded-full ${c.isAdmin ? 'bg-gradient-to-tr from-[#DC2626] to-red-500' : 'bg-gradient-to-tr from-[#0F172A] to-slate-700'} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ring-2 ring-white">
+                    <!-- Avatar Pinned Top-Left -->
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full ${c.isAdmin ? 'bg-gradient-to-tr from-[#DC2626] to-red-500' : 'bg-gradient-to-tr from-[#0F172A] to-slate-700'} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ring-2 ring-white">
                         ${c.isAdmin ? '<i class="fa-solid fa-shield-halved text-xs"></i>' : initial}
                     </div>
+
+                    <!-- Right Column: Flow Rapi & Sejajar di Semua Device -->
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <span class="font-extrabold text-xs sm:text-sm text-[#0F172A] leading-tight break-words">${escapeHtml(c.author)}</span>
                             ${roleBadgeHtml}
                         </div>
-                        <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
+                        <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
                             <i class="fa-regular fa-clock text-[10px]"></i>
                             <span>${escapeHtml(c.date)}</span>
                         </div>
+
+                        <!-- Isi Komentar -->
+                        <div class="mt-2.5 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words">
+                            ${escapeHtml(c.content)}
+                        </div>
+
+                        <!-- Footer Action Bar: Balas & Hapus -->
+                        <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                            <button type="button" onclick="toggleReplyBox('${c.id}')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-[#DC2626] hover:bg-red-50/80 active:bg-red-100 transition">
+                                <i class="fa-solid fa-reply text-[11px] text-[#DC2626]"></i>
+                                <span>Balas</span>
+                                ${(c.replies && c.replies.length > 0) ? `<span class="ml-1 px-1.5 py-0.2 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">${c.replies.length}</span>` : ''}
+                            </button>
+
+                            ${isAdminLoggedIn ? `
+                                <button type="button" onclick="deleteArticleComment('${c.id}')" title="Hapus Komentar (Admin)"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition">
+                                    <i class="fa-regular fa-trash-can text-xs"></i>
+                                    <span>Hapus</span>
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        <!-- Box Balasan (Form) -->
+                        ${replyBoxHtml}
+
+                        <!-- Thread Balasan -->
+                        ${repliesHtml}
                     </div>
                 </div>
-
-                <!-- Isi Komentar -->
-                <div class="mt-3 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words pl-0 sm:pl-[52px]">
-                    ${escapeHtml(c.content)}
-                </div>
-
-                <!-- Footer Action Bar: Balas & Hapus -->
-                <div class="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between pl-0 sm:pl-[52px]">
-                    <button type="button" onclick="toggleReplyBox('${c.id}')"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-[#DC2626] hover:bg-red-50/80 active:bg-red-100 transition">
-                        <i class="fa-solid fa-reply text-[11px] text-[#DC2626]"></i>
-                        <span>Balas</span>
-                        ${(c.replies && c.replies.length > 0) ? `<span class="ml-1 px-1.5 py-0.2 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">${c.replies.length}</span>` : ''}
-                    </button>
-
-                    ${isAdminLoggedIn ? `
-                        <button type="button" onclick="deleteArticleComment('${c.id}')" title="Hapus Komentar (Admin)"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition">
-                            <i class="fa-regular fa-trash-can text-xs"></i>
-                            <span>Hapus</span>
-                        </button>
-                    ` : ''}
-                </div>
-
-                <!-- Box Balasan (Form) -->
-                ${replyBoxHtml}
-
-                <!-- Thread Balasan -->
-                ${repliesHtml}
             </div>
         `;
     }).join('');
