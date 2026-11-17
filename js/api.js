@@ -341,7 +341,7 @@ const Api = {
                         while (n--) {
                             u8arr[n] = bstr.charCodeAt(n);
                         }
-                        body = u8arr;
+                        body = (typeof Blob !== 'undefined') ? new Blob([u8arr], { type: mimeType }) : u8arr;
                     }
                 } else if (fileOrDataUrl instanceof Blob || (typeof File !== 'undefined' && fileOrDataUrl instanceof File)) {
                     body = fileOrDataUrl;
