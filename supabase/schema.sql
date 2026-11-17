@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS public.athletes (
     team_name TEXT DEFAULT 'Individu / Non-Tim',
     points INTEGER DEFAULT 0,
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'verified', 'rejected')),
+    avatar_url TEXT,
     
     persetujuan BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())

@@ -4620,6 +4620,9 @@ function renderMemberView() {
     if (elName) elName.textContent = loggedMember.fullName || 'Atlet ESI Trenggalek';
     if (elSub) elSub.innerHTML = `Divisi: <strong class="text-white">${loggedMember.division}</strong> • Nickname: <strong class="text-red-400">${loggedMember.nickname}</strong> • Tim: <strong class="text-white">${loggedMember.teamName || 'Individu'}</strong>`;
 
+    // 1b. Render Avatar di banner & edit tab
+    updateAllAvatarUI(loggedMember.avatarUrl || '');
+
     // 2. Render Kartu Tanda Anggota (KTA) Digital
     renderMemberKtaCard();
 
@@ -4724,9 +4727,12 @@ function renderMemberKtaCard() {
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
                     <!-- Left Photo / Avatar & QR Simulation -->
                     <div class="md:col-span-4 flex flex-col items-center justify-center text-center p-3.5 sm:p-4 bg-slate-900/60 rounded-xl border border-slate-700/60">
-                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-500 p-1 mb-2.5 sm:mb-3 shadow-inner">
-                            <div class="w-full h-full rounded-xl bg-[#0F172A] flex items-center justify-center text-2xl sm:text-3xl text-white">
-                                <i class="fa-solid fa-gamepad"></i>
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-500 p-1 mb-2.5 sm:mb-3 shadow-inner cursor-pointer" onclick="openMemberAvatarLightbox()">
+                            <div class="w-full h-full rounded-xl bg-[#0F172A] flex items-center justify-center text-2xl sm:text-3xl text-white overflow-hidden">
+                                ${m.avatarUrl
+                                    ? `<img src="${m.avatarUrl}" alt="Foto Profil" class="w-full h-full object-cover rounded-xl">`
+                                    : `<i class="fa-solid fa-gamepad"></i>`
+                                }
                             </div>
                         </div>
                         <span class="px-3 py-1 rounded-md text-[10px] sm:text-[11px] font-black uppercase tracking-wider bg-[#DC2626] text-white mb-1.5">
@@ -4954,6 +4960,7 @@ async function handleUpdateMemberProfile(e) {
             athletes = await Api.getAthletes();
             updateHeaderMemberBadge();
             renderMemberKtaCard();
+            updateAllAvatarUI(loggedMember.avatarUrl || '');
             showToast('Profil Diperbarui', 'Data profil akun Anda berhasil disimpan.');
         } else {
             showToast('Gagal Memperbarui', res.message || 'Terjadi kesalahan.');
@@ -4968,6 +4975,159 @@ async function handleUpdateMemberProfile(e) {
         }
     }
 }
+
+// ==================== FITUR AVATAR PROFIL (MLBB ZOOM STYLE) ====================
+
+let _avatarZoomScale = 1.0;
+
+function triggerAvatarUpload() {
+    const inp = document.getElementById('athleteAvatarFileInput');
+    if (inp) inp.click();
+}
+
+async function handleAvatarFileSelected(event) {
+    const file = event.target.files[0];
+    if (!file || !loggedMember) return;
+
+    showToast('Mengupload...', 'Foto profil sedang diunggah ke cloud.');
+
+    try {
+        const cloudUrl = await Api.uploadStorageImage(file, 'avatars');
+        if (!cloudUrl) throw new Error('Upload gagal');
+
+        await Api.updateMemberProfile(loggedMember.id, { avatarUrl: cloudUrl });
+
+        // Update local state
+        loggedMember.avatarUrl = cloudUrl;
+        const inAthletes = athletes.find(a => a.id == loggedMember.id);
+        if (inAthletes) inAthletes.avatarUrl = cloudUrl;
+
+        // Update semua elemen UI avatar
+        updateAllAvatarUI(cloudUrl);
+
+        // Update lightbox jika terbuka
+        const zoomImg = document.getElementById('avatarZoomImg');
+        if (zoomImg) { zoomImg.src = cloudUrl; zoomImg.classList.remove('hidden'); }
+        const placeholder = document.getElementById('avatarZoomPlaceholder');
+        if (placeholder) placeholder.classList.add('hidden');
+
+        showToast('Foto Diperbarui ✅', 'Foto profil berhasil disimpan dan sinkron ke cloud.');
+    } catch (err) {
+        console.error('Avatar upload error:', err);
+        showToast('Gagal Upload', 'Terjadi kesalahan saat mengunggah foto profil.');
+    }
+    // Reset input agar bisa pilih file yang sama lagi
+    event.target.value = '';
+}
+
+function updateAllAvatarUI(avatarUrl) {
+    const initial = (loggedMember ? (loggedMember.nickname || loggedMember.fullName || 'A') : 'A').charAt(0).toUpperCase();
+
+    // Banner avatar
+    const bannerImg = document.getElementById('memberBannerAvatarImg');
+    const bannerInit = document.getElementById('memberBannerAvatarInitial');
+    if (avatarUrl && bannerImg) {
+        bannerImg.src = avatarUrl;
+        bannerImg.classList.remove('hidden');
+        if (bannerInit) bannerInit.classList.add('hidden');
+    } else {
+        if (bannerImg) bannerImg.classList.add('hidden');
+        if (bannerInit) { bannerInit.textContent = initial; bannerInit.classList.remove('hidden'); }
+    }
+
+    // Edit tab avatar
+    const editImg = document.getElementById('memberEditAvatarImg');
+    const editInit = document.getElementById('memberEditAvatarInitial');
+    if (avatarUrl && editImg) {
+        editImg.src = avatarUrl;
+        editImg.classList.remove('hidden');
+        if (editInit) editInit.classList.add('hidden');
+    } else {
+        if (editImg) editImg.classList.add('hidden');
+        if (editInit) { editInit.textContent = initial; editInit.classList.remove('hidden'); }
+    }
+}
+
+function openMemberAvatarLightbox(athleteId) {
+    const m = athleteId ? athletes.find(a => a.id == athleteId) : loggedMember;
+    if (!m) return;
+
+    const modal = document.getElementById('modalAvatarZoom');
+    if (!modal) return;
+
+    const zoomImg = document.getElementById('avatarZoomImg');
+    const placeholder = document.getElementById('avatarZoomPlaceholder');
+    const avatarUrl = m.avatarUrl || '';
+
+    if (avatarUrl && zoomImg) {
+        zoomImg.src = avatarUrl;
+        zoomImg.classList.remove('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
+        const dlBtn = document.getElementById('avatarZoomDownloadBtn');
+        if (dlBtn) dlBtn.href = avatarUrl;
+    } else {
+        if (zoomImg) zoomImg.classList.add('hidden');
+        if (placeholder) placeholder.classList.remove('hidden');
+    }
+
+    // Player Info
+    const regNo = typeof getAthleteRegNo === 'function' ? getAthleteRegNo(m) : (m.regNo || '-');
+    const nickEl = document.getElementById('avatarZoomNickname');
+    const divEl = document.getElementById('avatarZoomDivision');
+    const subEl = document.getElementById('avatarZoomSub');
+    if (nickEl) nickEl.textContent = m.nickname || m.fullName || '-';
+    if (divEl) divEl.textContent = m.division || '-';
+    if (subEl) subEl.textContent = `No. Reg: ${regNo}`;
+
+    // Show "Ganti Foto" button hanya jika ini milik loggedMember
+    const uploadBtn = document.getElementById('avatarZoomUploadBtn');
+    if (uploadBtn) {
+        if (loggedMember && m.id == loggedMember.id) {
+            uploadBtn.classList.remove('hidden');
+        } else {
+            uploadBtn.classList.add('hidden');
+        }
+    }
+
+    // Reset zoom
+    resetAvatarZoom();
+
+    // Show modal
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAvatarLightbox() {
+    const modal = document.getElementById('modalAvatarZoom');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    document.body.style.overflow = '';
+    resetAvatarZoom();
+}
+
+function zoomAvatar(delta) {
+    _avatarZoomScale = Math.min(4.0, Math.max(0.5, _avatarZoomScale + delta));
+    _applyAvatarZoom();
+}
+
+function resetAvatarZoom() {
+    _avatarZoomScale = 1.0;
+    _applyAvatarZoom();
+}
+
+function toggleAvatarZoomLevel() {
+    _avatarZoomScale = _avatarZoomScale >= 2.0 ? 1.0 : 2.0;
+    _applyAvatarZoom();
+}
+
+function _applyAvatarZoom() {
+    const img = document.getElementById('avatarZoomImg');
+    if (img) img.style.transform = `scale(${_avatarZoomScale})`;
+    const pct = document.getElementById('avatarZoomPercentage');
+    if (pct) pct.textContent = `${Math.round(_avatarZoomScale * 100)}%`;
+}
+
+// ==================== END FITUR AVATAR ====================
 
 async function handleMemberPasswordChange(e) {
     e.preventDefault();
@@ -5984,6 +6144,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ktaShareModal) {
         ktaShareModal.addEventListener('click', function(e) {
             if (e.target === this) closeKtaShareModal();
+        });
+    }
+
+    // Modal Avatar Zoom (MLBB style) — tutup jika klik di luar
+    const avatarZoomModal = document.getElementById('modalAvatarZoom');
+    if (avatarZoomModal) {
+        avatarZoomModal.addEventListener('click', function(e) {
+            if (e.target === this) closeAvatarLightbox();
         });
     }
 

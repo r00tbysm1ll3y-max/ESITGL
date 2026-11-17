@@ -38,6 +38,7 @@ const Mapper = {
         points: parseInt(a.points, 10) || 0,
         status: a.status || 'pending',
         persetujuan: true,
+        avatar_url: a.avatarUrl || a.avatar || a.avatar_url || '',
         game_profiles: a.gameProfiles ? (typeof a.gameProfiles === 'string' ? a.gameProfiles : JSON.stringify(a.gameProfiles)) : undefined
     }),
     athleteFromDb: (row) => ({
@@ -68,6 +69,7 @@ const Mapper = {
         teamName: row.team_name,
         points: row.points || 0,
         status: row.status || 'pending',
+        avatarUrl: row.avatar_url || row.avatarUrl || row.avatar || '',
         gameProfiles: row.game_profiles ? (typeof row.game_profiles === 'string' ? JSON.parse(row.game_profiles) : row.game_profiles) : (row.gameProfiles || {})
     }),
     eventToDb: (e) => ({
@@ -275,7 +277,7 @@ const Api = {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'x-api-version': '7',
-                        'x-vercel-blob-access': 'private',
+                        'x-vercel-blob-access': 'public',
                         'content-type': mimeType
                     },
                     body
@@ -284,9 +286,6 @@ const Api = {
                 if (res.ok) {
                     const blobData = await res.json();
                     if (blobData && blobData.url) {
-                        if (blobData.url.includes('.private.blob.vercel-storage.com')) {
-                            return `/api/blob?url=${encodeURIComponent(blobData.url)}`;
-                        }
                         return blobData.url;
                     }
                 }
