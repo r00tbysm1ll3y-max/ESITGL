@@ -1323,150 +1323,6 @@ function renderEventsView() {
     const container = document.getElementById('eventGridContainer');
     if (!container) return;
 
-    // Summary Stats Bar
-    const summaryBar = document.getElementById('eventSummaryBar');
-    if (summaryBar) {
-        const stats = [
-            { label: 'Total Event', val: events.length, icon: 'fa-trophy', cls: 'bg-[#DC2626] border-red-700 text-white' },
-            { label: 'Upcoming', val: events.filter(e => e.status === 'Upcoming').length, icon: 'fa-clock', cls: 'bg-amber-50 border-amber-200 text-amber-800' },
-            { label: 'Berlangsung', val: events.filter(e => e.status === 'Ongoing').length, icon: 'fa-circle-dot', cls: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
-            { label: 'Selesai', val: events.filter(e => e.status === 'Selesai').length, icon: 'fa-flag-checkered', cls: 'bg-slate-100 border-slate-200 text-slate-600' }
-        ];
-        summaryBar.innerHTML = stats.map(s => `
-            <div class="${s.cls} border rounded-xl p-3.5 flex items-center gap-3">
-                <i class="fa-solid ${s.icon} text-lg opacity-80 shrink-0"></i>
-                <div>
-                    <div class="font-extrabold text-2xl leading-none">${s.val}</div>
-                    <div class="text-[11px] font-semibold opacity-70 mt-0.5">${s.label}</div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    if (filtered.length === 0) {
-        container.innerHTML = `
-            <div class="col-span-3 bg-white border border-[#E2E8F0] rounded-2xl p-12 text-center">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
-                    <i class="fa-solid fa-calendar-xmark text-2xl text-slate-400"></i>
-                </div>
-                <h3 class="font-extrabold text-base text-[#0F172A] mb-1">Tidak Ada Event</h3>
-                <p class="text-sm text-slate-500">Belum ada jadwal event untuk status yang dipilih.</p>
-            </div>`;
-        return;
-    }
-
-    const gameColors = {
-        'MLBB': 'bg-blue-600', 'Mobile Legends': 'bg-blue-600',
-        'Free Fire': 'bg-orange-500', 'FF': 'bg-orange-500',
-        'PUBG Mobile': 'bg-yellow-600', 'PUBGM': 'bg-yellow-600',
-        'eFootball': 'bg-green-600', 'Honor of Kings': 'bg-purple-600',
-        'HOK': 'bg-purple-600', 'Arena of Valor': 'bg-teal-600',
-        'AOV': 'bg-teal-600', 'MCGG': 'bg-pink-600', 'Valorant': 'bg-rose-600',
-    };
-
-    container.innerHTML = filtered.map(ev => {
-        let statusDot = '', statusText = '', statusRingCls = '';
-        if (ev.status === 'Upcoming') {
-            statusDot = 'bg-amber-400'; statusText = 'Upcoming';
-            statusRingCls = 'bg-amber-50 text-amber-900 border-amber-200';
-        } else if (ev.status === 'Ongoing') {
-            statusDot = 'bg-emerald-400 animate-pulse'; statusText = 'Live';
-            statusRingCls = 'bg-emerald-50 text-emerald-900 border-emerald-200';
-        } else {
-            statusDot = 'bg-slate-400'; statusText = 'Selesai';
-            statusRingCls = 'bg-slate-100 text-slate-600 border-slate-200';
-        }
-
-        const gameTags = (ev.games && ev.games.length)
-            ? ev.games.map(g => `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black text-white uppercase ${gameColors[g] || 'bg-slate-700'}">${g}</span>`).join('')
-            : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black text-white uppercase bg-slate-700">${ev.division || 'Esports'}</span>`;
-
-        const bannerHtml = ev.imageUrl
-            ? `<div class="h-44 overflow-hidden rounded-t-2xl bg-[#0F172A] relative">
-                <img src="${ev.imageUrl}" alt="${ev.title}" loading="lazy" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">${gameTags}</div>
-                <div class="absolute bottom-3 left-3">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black border ${statusRingCls}">
-                        <span class="w-1.5 h-1.5 rounded-full ${statusDot}"></span>${statusText}
-                    </span>
-                </div>
-               </div>`
-            : `<div class="h-44 overflow-hidden rounded-t-2xl relative" style="background: linear-gradient(135deg, ${ev.imageColor || '#0F172A'} 0%, #1E293B 60%, #0F172A 100%);">
-                <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0); background-size: 24px 24px;"></div>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <div class="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
-                        <i class="fa-solid fa-gamepad text-3xl text-white/70"></i>
-                    </div>
-                </div>
-                <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">${gameTags}</div>
-                <div class="absolute top-3 right-3">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black border bg-black/50 backdrop-blur-sm text-white border-white/20">
-                        <span class="w-1.5 h-1.5 rounded-full ${statusDot}"></span>${statusText}
-                    </span>
-                </div>
-               </div>`;
-
-        const infoGrid = [
-            ev.prizePool ? `<div class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
-                <i class="fa-solid fa-medal text-amber-500 text-sm shrink-0"></i>
-                <div><div class="text-[9px] font-bold uppercase text-amber-700">Hadiah</div><div class="text-xs font-black text-amber-900 leading-tight">${ev.prizePool}</div></div>
-              </div>` : '',
-            ev.slots ? `<div class="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
-                <i class="fa-solid fa-users text-blue-500 text-sm shrink-0"></i>
-                <div><div class="text-[9px] font-bold uppercase text-blue-700">Slot</div><div class="text-xs font-black text-blue-900">${ev.slots} Tim</div></div>
-              </div>` : '',
-            ev.fee ? `<div class="flex items-center gap-2 px-3 py-1.5 ${ev.fee === 'Gratis' ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'} border rounded-lg">
-                <i class="fa-solid fa-ticket ${ev.fee === 'Gratis' ? 'text-emerald-500' : 'text-slate-500'} text-sm shrink-0"></i>
-                <div><div class="text-[9px] font-bold uppercase ${ev.fee === 'Gratis' ? 'text-emerald-700' : 'text-slate-600'}">Daftar</div><div class="text-xs font-black ${ev.fee === 'Gratis' ? 'text-emerald-900' : 'text-slate-800'}">${ev.fee}</div></div>
-              </div>` : '',
-            ev.format ? `<div class="flex items-center gap-2 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-lg">
-                <i class="fa-solid fa-sitemap text-purple-500 text-sm shrink-0"></i>
-                <div><div class="text-[9px] font-bold uppercase text-purple-700">Format</div><div class="text-xs font-black text-purple-900">${ev.format}</div></div>
-              </div>` : ''
-        ].filter(Boolean).join('');
-
-        const ctaContact = (ev.contact || 'https://wa.me/6287840800351');
-        const waMsg = `Halo Admin PENGKAB ESI Trenggalek, saya ingin mendaftar di turnamen: ${ev.title} (${ev.date}).`;
-        const ctaUrl = `${ctaContact}?text=${encodeURIComponent(waMsg)}`;
-        const ctaHtml = ev.status !== 'Selesai'
-            ? `<a href="${ctaUrl}" target="_blank" rel="noopener" class="flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide bg-[#DC2626] hover:bg-[#B91C1C] text-white flex items-center justify-center gap-2 transition shadow-sm shadow-red-600/20"><i class="fa-brands fa-whatsapp text-sm"></i><span>Daftar Sekarang</span></a>`
-            : `<button disabled class="flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-wide bg-slate-100 text-slate-400 cursor-not-allowed"><i class="fa-solid fa-flag-checkered mr-1.5"></i>Selesai</button>`;
-
-        return `
-            <article class="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition duration-200 group">
-                ${bannerHtml}
-                <div class="p-4 sm:p-5 flex flex-col flex-1 gap-3">
-                    <div>
-                        <h3 class="font-extrabold text-base sm:text-lg text-[#0F172A] leading-snug mb-1 group-hover:text-[#DC2626] transition line-clamp-2 cursor-pointer" onclick="openEventDetail(${ev.id})">${ev.title}</h3>
-                        ${ev.organizer ? `<p class="text-[11px] text-slate-500 font-medium"><i class="fa-solid fa-building mr-1 text-[#DC2626]"></i>${ev.organizer}</p>` : ''}
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700">
-                            <i class="fa-regular fa-calendar text-[#DC2626] text-xs shrink-0"></i><span>${ev.date}</span>
-                        </div>
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700">
-                            <i class="fa-solid fa-location-dot text-amber-500 text-xs shrink-0"></i><span>${ev.location}</span>
-                        </div>
-                    </div>
-                    ${infoGrid ? `<div class="grid grid-cols-2 gap-2">${infoGrid}</div>` : ''}
-                    ${ev.description ? `<p class="text-xs text-slate-600 leading-relaxed line-clamp-3">${ev.description}</p>` : ''}
-                    <div class="flex gap-2 mt-auto pt-1">
-                        <button onclick="openEventDetail(${ev.id})" class="px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wide bg-[#0F172A] hover:bg-slate-700 text-white flex items-center justify-center gap-1.5 transition shrink-0">
-                            <i class="fa-solid fa-eye text-xs"></i><span>Detail</span>
-                        </button>
-                        ${ctaHtml}
-                    </div>
-                </div>
-            </article>`;
-    }).join('');
-}
-
-function renderEventsView() {
-    const filtered = events.filter(ev => eventStatusFilter === 'Semua' ? true : ev.status === eventStatusFilter);
-    const container = document.getElementById('eventGridContainer');
-    if (!container) return;
-
     if (filtered.length === 0) {
         container.innerHTML = `<div class="col-span-3 bg-white border border-[#E2E8F0] rounded-xl p-8 text-center text-sm text-slate-500">Tidak ada jadwal event untuk kategori status ini.</div>`;
         return;
@@ -2047,13 +1903,6 @@ function openNewsArticle(id, updateHash = true) {
 }
 
 // Helper: dapatkan URL shareable untuk artikel
-function getArticleUrl(articleId) {
-    return `${window.location.origin}${window.location.pathname}#berita/${articleId}`;
-}
-function getEventUrl(eventId) {
-    return `${window.location.origin}${window.location.pathname}#event/${eventId}`;
-}
-
 function renderArticleDetailPage(id) {
     const article = news.find(n => n.id == id) || news[0];
     if (!article) return;
@@ -6035,13 +5884,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Modal Detail Event — tutup jika klik di luar
-    const eventDetailModal = document.getElementById('eventDetailModal');
-    if (eventDetailModal) {
-        eventDetailModal.addEventListener('click', function(e) {
-            if (e.target === this) closeEventDetail();
-        });
-    }
+    // Event Detail — menggunakan full-page view (bukan modal), klik luar tidak berlaku
 
     // Modal Pratinjau Berita — tutup jika klik di luar
     const newsPreviewModal = document.getElementById('newsPreviewModal');
