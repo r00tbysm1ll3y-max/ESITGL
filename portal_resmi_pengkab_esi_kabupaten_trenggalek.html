@@ -2628,8 +2628,8 @@
                                                 <!-- Opsi 1: Upload File -->
                                                 <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-[#DC2626] rounded-xl p-4 cursor-pointer bg-white hover:bg-red-50/20 transition text-center min-h-[92px]">
                                                     <i class="fa-solid fa-cloud-arrow-up text-xl text-slate-400 mb-1"></i>
-                                                    <span class="text-xs font-bold text-[#0F172A]">Pilih Foto dari Komputer / HP</span>
-                                                    <span class="text-[10px] text-slate-400 mt-0.5">Mendukung JPG, JPEG, PNG (Auto WebP ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¤ 500KB)</span>
+                                                    <span class="text-xs font-bold text-[#0F172A]">Pilih Foto &amp; Atur Crop Cover</span>
+                                                    <span class="text-[10px] text-slate-400 mt-0.5">Mendukung JPG, JPEG, PNG, WebP (Bisa pilih &amp; geser bagian foto)</span>
                                                     <input type="file" id="newsImageFileInput" accept="image/png,image/jpeg,image/webp,image/*" onchange="previewNewsImage(event)" class="hidden">
                                                 </label>
 
@@ -2638,26 +2638,41 @@
                                                     <label class="text-[11px] font-bold text-slate-600 mb-1.5 flex items-center gap-1.5">
                                                         <i class="fa-solid fa-link text-[#DC2626]"></i> Atau Tempel Link URL Gambar:
                                                     </label>
-                                                    <input type="url" id="newsImageUrlInput" placeholder="Contoh: https://domain.com/foto.jpg"
-                                                        oninput="handleNewsImageUrl(this.value)"
-                                                        class="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none">
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="url" id="newsImageUrlInput" placeholder="Contoh: https://domain.com/foto.jpg"
+                                                            oninput="handleNewsImageUrl(this.value)"
+                                                            class="flex-1 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0F172A] focus:bg-white focus:border-[#0F172A] focus:outline-none">
+                                                        <button type="button" onclick="openCoverCropperModal()" title="Crop Bagian Gambar dari URL"
+                                                            class="px-2.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition shrink-0">
+                                                            <i class="fa-solid fa-crop"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             <!-- Live Preview Box -->
-                                            <div id="newsImagePreviewContainer" class="hidden pt-2 flex items-center gap-4">
-                                                <div class="relative w-36 h-24 rounded-xl overflow-hidden border-2 border-[#DC2626] shadow-sm shrink-0">
+                                            <div id="newsImagePreviewContainer" class="hidden pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-3.5">
+                                                <div class="relative w-40 h-24 rounded-xl overflow-hidden border-2 border-[#DC2626] shadow-sm shrink-0 bg-slate-900">
                                                     <img id="newsImagePreview" src="" alt="Pratinjau Sampul" class="w-full h-full object-cover">
                                                     <button type="button" onclick="clearNewsImagePreview()" title="Hapus Gambar Sampul"
-                                                        class="absolute top-1 right-1 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs shadow">
+                                                        class="absolute top-1.5 right-1.5 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs shadow-md">
                                                         <i class="fa-solid fa-xmark"></i>
                                                     </button>
                                                 </div>
-                                                <div class="text-xs">
-                                                    <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200 inline-block mb-1">
-                                                        <i class="fa-solid fa-check mr-1"></i> Foto Sampul Siap
-                                                    </span>
-                                                    <p class="text-slate-600 font-medium">Foto ini akan ditampilkan sesuai pilihan posisi di bawah.</p><div id="newsImageOptimizedInfo" class="mt-1"></div>
+                                                <div class="text-xs flex-1">
+                                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                                        <span class="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200 inline-flex items-center gap-1">
+                                                            <i class="fa-solid fa-check"></i> Foto Sampul Siap
+                                                        </span>
+                                                        <button type="button" onclick="openCoverCropperModal()"
+                                                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-black bg-[#0F172A] hover:bg-slate-800 text-white transition shadow-xs active:scale-95">
+                                                            <i class="fa-solid fa-crop-simple text-amber-400"></i> Atur / Crop Ulang Bagian Sampul
+                                                        </button>
+                                                    </div>
+                                                    <p class="text-slate-600 font-medium">Foto ini akan ditampilkan sebagai banner utama di atas artikel dan kartu Beranda.</p>
+                                                    <div id="newsImageOptimizedInfo" class="mt-1"></div>
+                                                </div>
+                                            </div>
                                                 </div>
                                             </div>
 
@@ -3535,6 +3550,112 @@
         </div>
     </div>
 
+    
+    <!-- ==================== MODAL CROP FOTO SAMPUL BERITA ==================== -->
+    <div id="modalCoverCropper" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md">
+        <div class="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+            <!-- Modal Header -->
+            <div class="bg-[#0F172A] text-white px-5 py-4 flex items-center justify-between border-b-2 border-[#DC2626]">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-red-600/30 text-red-400 flex items-center justify-center text-sm font-black border border-red-500/30">
+                        <i class="fa-solid fa-crop-simple"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-extrabold text-sm sm:text-base text-white">Atur &amp; Crop Foto Sampul Berita</h3>
+                        <p class="text-[11px] text-slate-400">Pilih bagian foto terbaik yang ingin dijadikan cover berita.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCoverCropperModal()" aria-label="Tutup"
+                    class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-[#DC2626] text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Canvas & Viewport) -->
+            <div class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                <!-- Aspect Ratio Selector -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                    <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-split-up-and-left text-[#DC2626]"></i>
+                        Rasio Potongan:
+                    </span>
+                    <div class="inline-flex rounded-xl p-1 bg-slate-100 border border-slate-200 text-xs font-bold gap-1" id="cropperAspectButtons">
+                        <button type="button" onclick="setCropperAspectRatio(16/9, this)" class="px-3 py-1 rounded-lg bg-white text-[#DC2626] shadow-sm font-black transition">16:9 (Berita)</button>
+                        <button type="button" onclick="setCropperAspectRatio(4/3, this)" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition font-bold">4:3</button>
+                        <button type="button" onclick="setCropperAspectRatio(1/1, this)" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition font-bold">1:1 (Persegi)</button>
+                        <button type="button" onclick="setCropperAspectRatio(2/1, this)" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition font-bold">2:1 (Lebar)</button>
+                        <button type="button" onclick="setCropperAspectRatio(0, this)" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition font-bold">Bebas</button>
+                    </div>
+                </div>
+
+                <!-- Interactive Viewport Container -->
+                <div class="relative w-full aspect-[16/9] max-h-[360px] bg-slate-900 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center border-2 border-slate-800 select-none touch-none" id="cropperViewport">
+                    <canvas id="cropperCanvas" class="max-w-full max-h-full cursor-grab active:cursor-grabbing"></canvas>
+                    
+                    <!-- Guide Overlay & Rule of Thirds -->
+                    <div class="absolute inset-0 pointer-events-none border border-white/20">
+                        <div class="w-full h-full grid grid-cols-3 grid-rows-3 opacity-25">
+                            <div class="border-r border-b border-white"></div>
+                            <div class="border-r border-b border-white"></div>
+                            <div class="border-b border-white"></div>
+                            <div class="border-r border-b border-white"></div>
+                            <div class="border-r border-b border-white"></div>
+                            <div class="border-b border-white"></div>
+                            <div class="border-r border-b border-white"></div>
+                            <div class="border-r border-b border-white"></div>
+                            <div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Helper Drag Hint -->
+                <div class="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-hand-pointer text-slate-400"></i>
+                        <span>Geser / Drag gambar untuk menentukan fokus tampilan</span>
+                    </span>
+                    <span id="cropperDimensionInfo" class="font-mono text-slate-400">16:9 (Standar Berita)</span>
+                </div>
+
+                <!-- Zoom Controls & Quick Align Buttons -->
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-magnifying-glass-plus text-slate-400"></i> Zoom:
+                        </span>
+                        <input type="range" id="cropperZoomSlider" min="1" max="3" step="0.05" value="1"
+                            oninput="onCropperZoomChange(parseFloat(this.value))"
+                            class="w-full accent-[#DC2626] cursor-pointer">
+                        <span id="cropperZoomVal" class="text-xs font-mono font-bold text-slate-700 w-10 text-right">100%</span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/80">
+                        <span class="text-[11px] font-bold text-slate-500">Fokus Cepat:</span>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="quickAlignCropper('top')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-[11px] font-bold transition">Atas</button>
+                            <button type="button" onclick="quickAlignCropper('center')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-[11px] font-bold transition">Tengah</button>
+                            <button type="button" onclick="quickAlignCropper('bottom')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-[11px] font-bold transition">Bawah</button>
+                            <button type="button" onclick="resetCropperTransform()" class="px-2.5 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-[11px] font-bold transition">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+                <button type="button" onclick="closeCoverCropperModal()"
+                    class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-200/70 text-slate-700 font-bold text-xs transition">
+                    Batal
+                </button>
+                <button type="button" onclick="applyCoverCrop()"
+                    class="px-6 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-extrabold text-xs shadow-md shadow-red-600/30 transition flex items-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Terapkan Pemotongan (Crop &amp; Simpan)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== 7. TOAST NOTIFICATION (PENGGANTI ALERT) ==================== -->
     <div id="toastNotification"
         class="fixed top-20 right-4 z-50 hidden max-w-xs sm:max-w-sm bg-[#0F172A] text-white border-l-4 border-emerald-500 px-4 py-3 rounded-lg">
@@ -3968,11 +4089,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261117vv" defer></script>
-    <script src="js/config.js?v=20261117vv" defer></script>
-    <script src="js/supabaseClient.js?v=20261117vv" defer></script>
-    <script src="js/api.js?v=20261117vv" defer></script>
-    <script src="js/app.js?v=20261117vv" defer></script>
+    <script src="js/seedData.js?v=20261117ww" defer></script>
+    <script src="js/config.js?v=20261117ww" defer></script>
+    <script src="js/supabaseClient.js?v=20261117ww" defer></script>
+    <script src="js/api.js?v=20261117ww" defer></script>
+    <script src="js/app.js?v=20261117ww" defer></script>
 </body>
 
 </html>

@@ -1728,7 +1728,7 @@ function formatNewsContent(raw, article) {
                 figureClass = 'my-4 sm:ml-6 sm:float-right sm:max-w-sm rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm';
             }
 
-            return `\n\n<figure class="${figureClass}"><img src="${cleanUrl}" alt="${cleanCaption}" loading="lazy" class="w-full max-h-96 object-cover"><figcaption class="py-2.5 px-4 text-center text-xs text-slate-500 italic bg-white border-t border-slate-100 font-medium"><i class="fa-regular fa-image mr-1 text-[#DC2626]"></i> ${cleanCaption}</figcaption></figure>\n\n`;
+            return `\n\n<figure class="${figureClass}"><img src="${cleanUrl}" alt="${cleanCaption}" loading="lazy" onerror="this.onerror=null;this.src='assets/images/logo-esi.png'" class="w-full max-h-96 object-cover"><figcaption class="py-2.5 px-4 text-center text-xs text-slate-500 italic bg-white border-t border-slate-100 font-medium"><i class="fa-regular fa-image mr-1 text-[#DC2626]"></i> ${cleanCaption}</figcaption></figure>\n\n`;
         })
         .replace(/!\[([^\]]*)\]\(([^)]+)\)/gi, (match, caption, url) => {
             return `\n\n<figure class="my-6 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm"><img src="${url.trim()}" alt="${caption.trim()}" loading="lazy" class="w-full max-h-96 object-cover">${caption ? `<figcaption class="py-2.5 px-4 text-center text-xs text-slate-500 italic bg-white border-t border-slate-100 font-medium"><i class="fa-regular fa-image mr-1 text-[#DC2626]"></i> ${caption.trim()}</figcaption>` : ''}</figure>\n\n`;
@@ -3932,6 +3932,22 @@ async function deleteEvent(id) {
 // Admin Tab 3: Kelola Berita
 let newsSelectedImageBase64 = '';
 
+// ==================== CONTROLLER CROP FOTO SAMPUL BERITA ====================
+let _cropperState = {
+    rawSource: '',
+    img: null,
+    aspectRatio: 16 / 9,
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    isDragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    dragStartOffsetX: 0,
+    dragStartOffsetY: 0,
+    listenersAttached: false
+};
+
 async function previewNewsImage(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -3942,48 +3958,26 @@ async function previewNewsImage(e) {
         return;
     }
 
-    showToast('Mengompresi Foto Berita...', 'Sedang mengonversi dan mengompresi ke format WebP tajam & ringan.');
-
-    try {
-        const res = await compressImageToWebP(file, {
-            maxDimension: 1600,
-            targetMaxBytes: 500 * 1024,
-            initialQuality: 0.82
-        });
-
-        newsSelectedImageBase64 = res.dataUrl;
-
-        const container = document.getElementById('newsImagePreviewContainer');
-        const img = document.getElementById('newsImagePreview');
-        const badge = document.getElementById('newsImageOptimizedInfo');
-
-        if (container && img) {
-            img.src = res.dataUrl;
-            container.classList.remove('hidden');
-        }
-
-        if (badge) {
-            badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"><i class="fa-solid fa-bolt"></i> Auto WebP: ${formatBytes(res.originalSize)} ➔ ${formatBytes(res.compressedSize)} (Hemat ${res.savingsPercent}%)</span>`;
-        }
-
-        const urlInput = document.getElementById('newsImageUrlInput');
-        if (urlInput) urlInput.value = '';
-
-        showToast('Foto Berita Teroptimasi', `Berhasil dikonversi ke WebP: ${formatBytes(res.originalSize)} ➔ ${formatBytes(res.compressedSize)} (Hemat ${res.savingsPercent}%).`);
-    } catch (err) {
-        console.error('Error saat kompresi foto berita:', err);
-        showToast('Gagal Memproses Gambar', err.message || 'Gagal memproses foto berita.');
-        clearNewsImagePreview();
-    }
+    showToast('Membuka Foto...', 'Mempersiapkan alat pemotong foto sampul.');
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const rawDataUrl = evt.target.result;
+        openCoverCropperModal(rawDataUrl);
+    };
+    reader.onerror = function() {
+        showToast('Gagal Membaca File', 'Terjadi kesalahan saat membaca file foto.');
+    };
+    reader.readAsDataURL(file);
 }
 
 function handleNewsImageUrl(url) {
     const trimmed = url.trim();
     if (!trimmed) {
         clearNewsImagePreview();
+    currentDraftInlineImages = {};
         return;
     }
-    newsSelectedImageBase64 = '';
+    newsSelectedImageBase64 = trimmed;
     const fileInput = document.getElementById('newsImageFileInput');
     if (fileInput) fileInput.value = '';
 
@@ -3995,7 +3989,7 @@ function handleNewsImageUrl(url) {
         container.classList.remove('hidden');
     }
     if (badge) {
-        badge.innerHTML = '<span class="text-[11px] font-medium text-slate-500">Tautan Gambar Eksternal</span>';
+        badge.innerHTML = '<span class="text-[11px] font-medium text-slate-500">Tautan Gambar Eksternal • Klik "Atur / Crop Ulang" jika ingin memotong</span>';
     }
 }
 
@@ -4009,6 +4003,256 @@ function clearNewsImagePreview() {
     if (container) container.classList.add('hidden');
     const badge = document.getElementById('newsImageOptimizedInfo');
     if (badge) badge.innerHTML = '';
+}
+
+function openCoverCropperModal(imageSource) {
+    let src = imageSource;
+    if (!src) {
+        src = newsSelectedImageBase64 || (document.getElementById('newsImageUrlInput')?.value || '').trim();
+    }
+    if (!src) {
+        const fileInput = document.getElementById('newsImageFileInput');
+        if (fileInput) fileInput.click();
+        return;
+    }
+
+    _cropperState.rawSource = src;
+    _cropperState.zoom = 1;
+    _cropperState.offsetX = 0;
+    _cropperState.offsetY = 0;
+    _cropperState.isDragging = false;
+
+    const slider = document.getElementById('cropperZoomSlider');
+    if (slider) slider.value = 1;
+    const zoomText = document.getElementById('cropperZoomVal');
+    if (zoomText) zoomText.textContent = '100%';
+
+    const modal = document.getElementById('modalCoverCropper');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    showToast('Memuat Gambar...', 'Mempersiapkan editor foto sampul.');
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        _cropperState.img = img;
+        initCropperCanvas();
+        drawCropper();
+    };
+    img.onerror = function() {
+        showToast('Gagal Memuat Foto', 'URL gambar tidak dapat diakses atau diblokir CORS. Coba unggah file langsung dari perangkat.');
+        closeCoverCropperModal();
+    };
+    img.src = src;
+}
+
+function closeCoverCropperModal() {
+    const modal = document.getElementById('modalCoverCropper');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    _cropperState.isDragging = false;
+}
+
+function initCropperCanvas() {
+    const canvas = document.getElementById('cropperCanvas');
+    if (!canvas) return;
+
+    if (!_cropperState.listenersAttached) {
+        _cropperState.listenersAttached = true;
+
+        canvas.addEventListener('pointerdown', function(e) {
+            e.preventDefault();
+            _cropperState.isDragging = true;
+            _cropperState.dragStartX = e.clientX;
+            _cropperState.dragStartY = e.clientY;
+            _cropperState.dragStartOffsetX = _cropperState.offsetX;
+            _cropperState.dragStartOffsetY = _cropperState.offsetY;
+            if (canvas.setPointerCapture) {
+                try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+            }
+        });
+
+        canvas.addEventListener('pointermove', function(e) {
+            if (!_cropperState.isDragging) return;
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0) return;
+            const scaleFactor = canvas.width / rect.width;
+            const dx = (e.clientX - _cropperState.dragStartX) * scaleFactor;
+            const dy = (e.clientY - _cropperState.dragStartY) * scaleFactor;
+            _cropperState.offsetX = _cropperState.dragStartOffsetX + dx;
+            _cropperState.offsetY = _cropperState.dragStartOffsetY + dy;
+            drawCropper();
+        });
+
+        const stopDrag = function(e) {
+            _cropperState.isDragging = false;
+            if (canvas.releasePointerCapture) {
+                try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+            }
+        };
+
+        canvas.addEventListener('pointerup', stopDrag);
+        canvas.addEventListener('pointercancel', stopDrag);
+
+        canvas.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.08 : -0.08;
+            const newZoom = Math.max(1, Math.min(3, _cropperState.zoom + delta));
+            onCropperZoomChange(newZoom);
+        }, { passive: false });
+    }
+
+    let ratio = _cropperState.aspectRatio;
+    if (!ratio || ratio <= 0) {
+        ratio = (_cropperState.img && _cropperState.img.naturalWidth && _cropperState.img.naturalHeight)
+            ? (_cropperState.img.naturalWidth / _cropperState.img.naturalHeight)
+            : (16 / 9);
+    }
+
+    const targetWidth = 1280;
+    const targetHeight = Math.round(targetWidth / ratio);
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const viewport = document.getElementById('cropperViewport');
+    if (viewport) {
+        viewport.style.aspectRatio = String(ratio);
+    }
+}
+
+function drawCropper() {
+    const canvas = document.getElementById('cropperCanvas');
+    if (!canvas || !_cropperState.img) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = _cropperState.img;
+    const baseScale = Math.max(canvas.width / img.width, canvas.height / img.height);
+    const scale = baseScale * _cropperState.zoom;
+    const drawW = img.width * scale;
+    const drawH = img.height * scale;
+
+    const maxOffsetX = Math.max(0, (drawW - canvas.width) / 2);
+    const maxOffsetY = Math.max(0, (drawH - canvas.height) / 2);
+
+    _cropperState.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, _cropperState.offsetX));
+    _cropperState.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, _cropperState.offsetY));
+
+    const drawX = (canvas.width - drawW) / 2 + _cropperState.offsetX;
+    const drawY = (canvas.height - drawH) / 2 + _cropperState.offsetY;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+}
+
+function setCropperAspectRatio(ratio, btnEl) {
+    _cropperState.aspectRatio = ratio;
+
+    const btnContainer = document.getElementById('cropperAspectButtons');
+    if (btnContainer) {
+        btnContainer.querySelectorAll('button').forEach(b => {
+            b.className = "px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition font-bold";
+        });
+    }
+    if (btnEl) {
+        btnEl.className = "px-3 py-1 rounded-lg bg-white text-[#DC2626] shadow-sm font-black transition";
+    }
+
+    const info = document.getElementById('cropperDimensionInfo');
+    if (info) {
+        if (Math.abs(ratio - 16/9) < 0.01) info.textContent = '16:9 (Standar Berita)';
+        else if (Math.abs(ratio - 4/3) < 0.01) info.textContent = '4:3 (Klasik)';
+        else if (Math.abs(ratio - 1) < 0.01) info.textContent = '1:1 (Persegi)';
+        else if (Math.abs(ratio - 2) < 0.01) info.textContent = '2:1 (Lebar / Banner)';
+        else info.textContent = 'Bebas (Rasio Asli Foto)';
+    }
+
+    _cropperState.offsetX = 0;
+    _cropperState.offsetY = 0;
+    initCropperCanvas();
+    drawCropper();
+}
+
+function onCropperZoomChange(val) {
+    _cropperState.zoom = Math.max(1, Math.min(3, Number(val) || 1));
+    const slider = document.getElementById('cropperZoomSlider');
+    if (slider) slider.value = _cropperState.zoom;
+    const zoomText = document.getElementById('cropperZoomVal');
+    if (zoomText) zoomText.textContent = `${Math.round(_cropperState.zoom * 100)}%`;
+    drawCropper();
+}
+
+function quickAlignCropper(position) {
+    if (!_cropperState.img) return;
+    const canvas = document.getElementById('cropperCanvas');
+    if (!canvas) return;
+
+    const baseScale = Math.max(canvas.width / _cropperState.img.width, canvas.height / _cropperState.img.height);
+    const scale = baseScale * _cropperState.zoom;
+    const drawH = _cropperState.img.height * scale;
+    const maxOffsetY = Math.max(0, (drawH - canvas.height) / 2);
+
+    if (position === 'top') {
+        _cropperState.offsetY = maxOffsetY;
+    } else if (position === 'bottom') {
+        _cropperState.offsetY = -maxOffsetY;
+    } else {
+        _cropperState.offsetX = 0;
+        _cropperState.offsetY = 0;
+    }
+    drawCropper();
+}
+
+function resetCropperTransform() {
+    _cropperState.zoom = 1;
+    _cropperState.offsetX = 0;
+    _cropperState.offsetY = 0;
+    const slider = document.getElementById('cropperZoomSlider');
+    if (slider) slider.value = 1;
+    const zoomText = document.getElementById('cropperZoomVal');
+    if (zoomText) zoomText.textContent = '100%';
+    drawCropper();
+}
+
+function applyCoverCrop() {
+    const canvas = document.getElementById('cropperCanvas');
+    if (!canvas) return;
+
+    let croppedDataUrl = '';
+    try {
+        croppedDataUrl = canvas.toDataURL('image/webp', 0.88);
+        if (!croppedDataUrl.startsWith('data:image/webp')) {
+            croppedDataUrl = canvas.toDataURL('image/jpeg', 0.90);
+        }
+    } catch (e) {
+        console.warn('Canvas export error:', e);
+        showToast('Gagal Menyimpan Potongan', 'Tidak dapat mengambil hasil potong dari gambar eksternal karena batasan keamanan browser.');
+        closeCoverCropperModal();
+        return;
+    }
+
+    newsSelectedImageBase64 = croppedDataUrl;
+
+    const previewImg = document.getElementById('newsImagePreview');
+    const previewContainer = document.getElementById('newsImagePreviewContainer');
+    const badge = document.getElementById('newsImageOptimizedInfo');
+    const urlInput = document.getElementById('newsImageUrlInput');
+
+    if (urlInput) urlInput.value = '';
+    if (previewImg) previewImg.src = croppedDataUrl;
+    if (previewContainer) previewContainer.classList.remove('hidden');
+
+    if (badge) {
+        badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"><i class="fa-solid fa-crop-simple"></i> Foto Sampul Dicrop &amp; Dioptimasi (${canvas.width}x${canvas.height})</span>`;
+    }
+
+    closeCoverCropperModal();
+    showToast('Foto Sampul Diterapkan', 'Bagian foto yang Anda pilih berhasil dipotong dan siap digunakan sebagai cover.');
 }
 
 // Alat Bantu Sisipkan Gambar & Format ke Teks Artikel (Modal Interaktif Tanpa Browser Prompt)
@@ -4123,7 +4367,7 @@ function showInlinePhotoPreview(src, infoText) {
     }
 }
 
-function confirmInsertInlinePhoto() {
+async function confirmInsertInlinePhoto() {
     if (!currentInlinePhotoData) {
         showToast('Foto Belum Dipilih', 'Silakan pilih foto dari perangkat atau masukkan URL foto terlebih dahulu.');
         return;
@@ -4137,15 +4381,28 @@ function confirmInsertInlinePhoto() {
     const textarea = document.getElementById('newsContentInput');
     if (!textarea) return;
 
+    let finalPhotoUrl = currentInlinePhotoData;
+
+    // Jika berupa Base64 (upload file), coba upload langsung ke cloud Vercel Blob
+    if (currentInlinePhotoData.startsWith('data:')) {
+        showToast('Mengunggah Foto...', 'Sedang mengunggah foto dokumentasi ke cloud storage.');
+        try {
+            const cloudUrl = await Api.uploadStorageImage(currentInlinePhotoData, 'news-inline');
+            if (cloudUrl) {
+                finalPhotoUrl = cloudUrl;
+            }
+        } catch (uploadErr) {
+            console.warn('Direct upload inline image to storage failed, using draft key:', uploadErr);
+        }
+    }
+
     let tag = '';
-    // Jika data adalah URL eksternal biasa
-    if (currentInlinePhotoData.startsWith('http://') || currentInlinePhotoData.startsWith('https://') || currentInlinePhotoData.startsWith('assets/')) {
-        tag = `\n\n[gambar: ${currentInlinePhotoData} | ${caption} | ${align}]\n\n`;
+    if (finalPhotoUrl.startsWith('http://') || finalPhotoUrl.startsWith('https://') || finalPhotoUrl.startsWith('assets/')) {
+        tag = `\n\n[gambar: ${finalPhotoUrl} | ${caption} | ${align}]\n\n`;
     } else {
-        // Jika data adalah Base64 dari upload file lokal, simpan ke registry dengan ID singkat agar teks tidak kotor
         const count = Object.keys(currentDraftInlineImages).length + 1;
         const photoKey = 'foto-' + count;
-        currentDraftInlineImages[photoKey] = currentInlinePhotoData;
+        currentDraftInlineImages[photoKey] = finalPhotoUrl;
         tag = `\n\n[gambar: ${photoKey} | ${caption} | ${align}]\n\n`;
     }
 
@@ -4240,6 +4497,9 @@ function editNews(id) {
     const sourceInput = document.getElementById('newsSourceInput');
     if (sourceInput) sourceInput.value = article.source || article.sourceUrl || '';
 
+    // Muat registry foto inline yang tersimpan
+    currentDraftInlineImages = article.inlineImages ? { ...article.inlineImages } : {};
+
     // Isi foto sampul ke preview
     if (article.imageUrl) {
         newsSelectedImageBase64 = article.imageUrl;
@@ -4323,6 +4583,28 @@ async function handleAdminAddNews(e) {
     const authorVal = (document.getElementById('newsAuthorInput')?.value || '').trim() || 'Humas PENGKAB ESI Trenggalek';
     const sourceVal = (document.getElementById('newsSourceInput')?.value || '').trim();
 
+    // 1. Resolve semua foto inline draft (foto-X atau data:image) agar menjadi link cloud permanen
+    let resolvedContent = content;
+    if (typeof currentDraftInlineImages === 'object' && Object.keys(currentDraftInlineImages).length > 0) {
+        for (const [key, val] of Object.entries(currentDraftInlineImages)) {
+            if (typeof val === 'string') {
+                if (val.startsWith('data:')) {
+                    try {
+                        const cloudUrl = await Api.uploadStorageImage(val, 'news-inline');
+                        if (cloudUrl) {
+                            currentDraftInlineImages[key] = cloudUrl;
+                            resolvedContent = resolvedContent.split(key).join(cloudUrl);
+                        }
+                    } catch (err) {
+                        console.warn('Gagal upload foto inline draft saat publikasi:', err);
+                    }
+                } else if (val.startsWith('http://') || val.startsWith('https://')) {
+                    resolvedContent = resolvedContent.split(key).join(val);
+                }
+            }
+        }
+    }
+
     const articlePayload = {
         title: document.getElementById('newsTitleInput').value.trim(),
         category: document.getElementById('newsCatInput').value,
@@ -4331,7 +4613,8 @@ async function handleAdminAddNews(e) {
         imageUrl: finalImageUrl,
         imagePosition: imagePosition,
         excerpt,
-        content
+        content: resolvedContent,
+        inlineImages: { ...currentDraftInlineImages }
     };
 
     if (editId) {
@@ -4352,6 +4635,7 @@ async function handleAdminAddNews(e) {
     }
 
     news = await Api.getNews();
+    currentDraftInlineImages = {};
     cancelEditNews();
     renderAdminNews();
     renderNewsView();
@@ -6214,6 +6498,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (avatarZoomModal) {
         avatarZoomModal.addEventListener('click', function(e) {
             if (e.target === this) closeAvatarLightbox();
+        });
+    }
+
+    // Modal Sisipkan Foto Dokumentasi Inline
+    const inlinePhotoModal = document.getElementById('modalInsertInlinePhoto');
+    if (inlinePhotoModal) {
+        inlinePhotoModal.addEventListener('click', function(e) {
+            if (e.target === this) closeInlinePhotoModal();
+        });
+    }
+
+    // Modal Crop & Atur Foto Sampul Berita
+    const cropperModal = document.getElementById('modalCoverCropper');
+    if (cropperModal) {
+        cropperModal.addEventListener('click', function(e) {
+            if (e.target === this) closeCoverCropperModal();
         });
     }
 

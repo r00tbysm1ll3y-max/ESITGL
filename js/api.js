@@ -92,21 +92,27 @@ const Mapper = {
     newsToDb: (n) => ({
         title: n.title,
         category: n.category,
+        author: n.author || 'Humas PENGKAB ESI Trenggalek',
+        source: n.source || '',
         image_url: n.imageUrl || n.image_url || '',
         image_position: n.imagePosition || n.image_position || 'top',
         date: n.date,
         excerpt: n.excerpt,
-        content: n.content
+        content: n.content,
+        inline_images: n.inlineImages ? (typeof n.inlineImages === 'string' ? n.inlineImages : JSON.stringify(n.inlineImages)) : undefined
     }),
     newsFromDb: (row) => ({
         id: row.id,
         title: row.title,
         category: row.category,
+        author: row.author || 'Humas PENGKAB ESI Trenggalek',
+        source: row.source || '',
         imageUrl: row.image_url || row.imageUrl || '',
         imagePosition: row.image_position || row.imagePosition || 'top',
         date: row.date,
         excerpt: row.excerpt,
-        content: row.content
+        content: row.content,
+        inlineImages: row.inline_images ? (typeof row.inline_images === 'string' ? JSON.parse(row.inline_images) : row.inline_images) : (row.inlineImages || {})
     })
 };
 
@@ -388,14 +394,34 @@ const Api = {
     },
 
     async _uploadNewsImages(newsData) {
-        // Upload foto sampul
+        // 1. Upload foto sampul jika format base64
         if (newsData.imageUrl && typeof newsData.imageUrl === 'string' && newsData.imageUrl.startsWith('data:')) {
             try {
                 const uploadedUrl = await this.uploadStorageImage(newsData.imageUrl, 'news');
                 if (uploadedUrl) newsData.imageUrl = uploadedUrl;
             } catch (err) { console.warn('Auto upload news banner failed:', err); }
         }
-        // Upload foto inline di konten
+
+        // 2. Upload inlineImages dictionary jika ada
+        if (newsData.inlineImages && typeof newsData.inlineImages === 'object') {
+            for (const [key, val] of Object.entries(newsData.inlineImages)) {
+                if (typeof val === 'string' && val.startsWith('data:')) {
+                    try {
+                        const cloudUrl = await this.uploadStorageImage(val, 'news-inline');
+                        if (cloudUrl) {
+                            newsData.inlineImages[key] = cloudUrl;
+                            if (newsData.content && newsData.content.includes(key)) {
+                                newsData.content = newsData.content.split(key).join(cloudUrl);
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Auto upload inline draft image failed:', err);
+                    }
+                }
+            }
+        }
+
+        // 3. Upload foto inline langsung di konten (format data:image/)
         if (newsData.content && typeof newsData.content === 'string' && newsData.content.includes('data:image/')) {
             try {
                 const imgDataRegex = /(data:image\/[A-Za-z-+]+;base64,[A-Za-z0-9+/=]+)/g;
@@ -408,6 +434,7 @@ const Api = {
                 }
             } catch (err) { console.warn('Auto upload inline news photos failed:', err); }
         }
+
         return newsData;
     },
 
