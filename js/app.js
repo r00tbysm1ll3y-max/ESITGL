@@ -1837,7 +1837,7 @@ function formatNewsContent(raw, article) {
     if (!raw) return '';
 
     // 1. Gambar format [gambar: URL_OR_KEY | Keterangan | align] atau [gambar: URL_OR_KEY | Keterangan] atau ![Keterangan](URL)
-    let processed = String(raw).replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    let processed = String(raw).replace(/\n/g, '\n').replace(/\r/g, '\n')
         .replace(/\[gambar:\s*([^\|\]]+)\s*\|\s*([^\|\]]+)(?:\s*\|\s*([^\]]+))?\]/gi, (match, urlOrKey, caption, align) => {
             let cleanUrl = urlOrKey.trim();
             const cleanCaption = caption.trim();
@@ -3561,7 +3561,7 @@ function exportAthletesCSV() {
         ].map(v => `"${(v || '').toString().replace(/"/g, '""')}"`);
     });
 
-    const csv = '\uFEFF' + [headers.map(h => `"${h}"`).join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const csv = '\uFEFF' + [headers.map(h => `"${h}"`).join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -3612,34 +3612,179 @@ async function deleteAthlete(id) {
 }
 
 // Admin Tab 2: Kelola Event
+// =========================================================================
+// AUTO IMAGE COMPRESSION & WEBP CONVERTER ENGINE (NEWS & TOURNAMENTS)
+// =========================================================================
+
+/**
+ * Format ukuran byte ke teks yang mudah dibaca (B, KB, MB)
+ */
+function formatBytes(bytes) {
+    if (!bytes || bytes <= 0) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+/**
+ * Auto Image Compression & WebP Converter
+ * Mengonversi otomatis gambar JPG, JPEG, PNG, dan WebP ke format WebP berkualitas tinggi
+ * Target ukuran file <= 500 KB tanpa kehilangan detail/ketajaman visual (Visually Lossless)
+ * Preservasi rasio aspek secara presisi untuk banner berita & poster turnamen.
+ *
+ * @param {File|Blob} file - Objek file gambar input
+ * @param {Object} [options] - Opsi kompresi
+ * @param {number} [options.maxDimension=1600] - Batas resolusi sisi terpanjang
+ * @param {number} [options.targetMaxBytes=512000] - Target ukuran maksimal (500 KB)
+ * @param {number} [options.initialQuality=0.82] - Kualitas awal WebP (0.80 - 0.85)
+ * @returns {Promise<{
+ *   dataUrl: string,
+ *   originalSize: number,
+ *   compressedSize: number,
+ *   width: number,
+ *   height: number,
+ *   savingsPercent: number,
+ *   format: string
+ * }>}
+ */
+function compressImageToWebP(file, options = {}) {
+    const maxDim = options.maxDimension || 1600;
+    const targetMaxBytes = options.targetMaxBytes || (500 * 1024); // 500 KB
+    const initialQuality = options.initialQuality || 0.82;
+
+    return new Promise((resolve, reject) => {
+        if (!file || !file.type || !file.type.startsWith('image/')) {
+            return reject(new Error('File yang dipilih bukan merupakan format gambar yang valid.'));
+        }
+
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Gagal membaca file gambar dari perangkat.'));
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onerror = () => reject(new Error('Gagal memproses file gambar. Pastikan file tidak rusak.'));
+            img.onload = () => {
+                let { width, height } = img;
+
+                // 1. Hitung rasio aspek proporsional (Tanpa merusak rasio/dimensi asli)
+                if (width > maxDim || height > maxDim) {
+                    if (width >= height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+
+                // 2. Siapkan canvas resolusi proporsional
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d', { alpha: true });
+
+                if (!ctx) {
+                    return reject(new Error('Konteks Canvas 2D tidak tersedia di browser.'));
+                }
+
+                // Interpolasi citra bermutu tinggi untuk ketajaman grafis maksimal
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // 3. Konversi ke WebP dan uji ukuran file secara adaptif
+                let currentQuality = initialQuality;
+                let dataUrl = '';
+                let byteLength = 0;
+                let isWebpSupported = true;
+
+                // Verifikasi dukungan WebP di browser
+                const testExport = canvas.toDataURL('image/webp', 0.8);
+                if (!testExport.startsWith('data:image/webp')) {
+                    isWebpSupported = false;
+                }
+
+                const mimeType = isWebpSupported ? 'image/webp' : 'image/jpeg';
+
+                // Optimasi bertingkat: capai target <= 500 KB dengan kualitas visual tetap tajam
+                while (currentQuality >= 0.55) {
+                    dataUrl = canvas.toDataURL(mimeType, currentQuality);
+                    const base64Content = dataUrl.split(',')[1] || '';
+                    byteLength = Math.round(base64Content.length * 0.75);
+
+                    if (byteLength <= targetMaxBytes || currentQuality <= 0.60) {
+                        break;
+                    }
+                    currentQuality -= 0.08;
+                }
+
+                const originalSize = file.size || byteLength;
+                const compressedSize = byteLength;
+                const savingsPercent = originalSize > compressedSize
+                    ? Math.round(((originalSize - compressedSize) / originalSize) * 100)
+                    : 0;
+
+                resolve({
+                    dataUrl,
+                    originalSize,
+                    compressedSize,
+                    width,
+                    height,
+                    savingsPercent,
+                    format: isWebpSupported ? 'WebP' : 'JPEG (Fallback)'
+                });
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 // ==================== ADMIN: POSTER EVENT UPLOAD ====================
 let adminEventPosterBase64 = '';
 
-function previewEventPoster(input) {
+async function previewEventPoster(input) {
     const file = input.files && input.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-        showToast('File Terlalu Besar', 'Ukuran poster maksimal 5MB.');
+    if (file.size > 15 * 1024 * 1024) {
+        showToast('File Terlalu Besar', 'Maksimal ukuran file foto adalah 15MB.');
         input.value = '';
         return;
     }
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        adminEventPosterBase64 = e.target.result;
-        const preview = document.getElementById('evPosterPreviewImg');
-        const wrap = document.getElementById('evPosterPreviewWrap');
-        const prompt = document.getElementById('evPosterUploadPrompt');
-        const clearRow = document.getElementById('evPosterClearRow');
-        const fileName = document.getElementById('evPosterFileName');
-        if (preview) preview.src = e.target.result;
+    const preview = document.getElementById('evPosterPreviewImg');
+    const wrap = document.getElementById('evPosterPreviewWrap');
+    const prompt = document.getElementById('evPosterUploadPrompt');
+    const clearRow = document.getElementById('evPosterClearRow');
+    const fileName = document.getElementById('evPosterFileName');
+
+    showToast('Mengompresi Poster...', 'Mengonversi gambar ke format WebP tajam & hemat storage.');
+
+    try {
+        const res = await compressImageToWebP(file, {
+            maxDimension: 1600,
+            targetMaxBytes: 500 * 1024,
+            initialQuality: 0.85
+        });
+
+        adminEventPosterBase64 = res.dataUrl;
+
+        if (preview) preview.src = res.dataUrl;
         if (wrap) wrap.classList.remove('hidden');
         if (prompt) prompt.classList.add('hidden');
         if (clearRow) clearRow.classList.remove('hidden');
-        if (fileName) fileName.textContent = file.name;
-    };
-    reader.readAsDataURL(file);
+        if (fileName) {
+            fileName.innerHTML = `<span class="text-slate-800 font-bold">${file.name}</span> <span class="text-emerald-600 font-bold ml-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">WebP ${formatBytes(res.compressedSize)} (Hemat ${res.savingsPercent}%)</span>`;
+        }
+
+        showToast('Poster Teroptimasi Otomatis', `Berhasil dikonversi ke WebP: ${formatBytes(res.originalSize)} ➔ ${formatBytes(res.compressedSize)} (Hemat ${res.savingsPercent}%).`);
+    } catch (err) {
+        console.error('Error saat kompresi poster turnamen:', err);
+        showToast('Gagal Memproses Gambar', err.message || 'Gagal memproses file poster.');
+        clearEventPoster();
+    }
 }
 
 function clearEventPoster() {
@@ -3649,9 +3794,11 @@ function clearEventPoster() {
     const wrap = document.getElementById('evPosterPreviewWrap');
     const prompt = document.getElementById('evPosterUploadPrompt');
     const clearRow = document.getElementById('evPosterClearRow');
+    const fileName = document.getElementById('evPosterFileName');
     if (wrap) wrap.classList.add('hidden');
     if (prompt) prompt.classList.remove('hidden');
     if (clearRow) clearRow.classList.add('hidden');
+    if (fileName) fileName.innerHTML = '';
 }
 
 async function handleAdminAddEvent(e) {
@@ -3785,41 +3932,55 @@ async function deleteEvent(id) {
 // Admin Tab 3: Kelola Berita
 let newsSelectedImageBase64 = '';
 
-function previewNewsImage(e) {
+async function previewNewsImage(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-        showToast('File Terlalu Besar', 'Maksimal ukuran foto adalah 3MB.');
+    if (file.size > 15 * 1024 * 1024) {
+        showToast('File Terlalu Besar', 'Maksimal ukuran foto adalah 15MB.');
         e.target.value = '';
         return;
     }
 
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-        newsSelectedImageBase64 = evt.target.result;
+    showToast('Mengompresi Foto Berita...', 'Sedang mengonversi dan mengompresi ke format WebP tajam & ringan.');
+
+    try {
+        const res = await compressImageToWebP(file, {
+            maxDimension: 1600,
+            targetMaxBytes: 500 * 1024,
+            initialQuality: 0.82
+        });
+
+        newsSelectedImageBase64 = res.dataUrl;
+
         const container = document.getElementById('newsImagePreviewContainer');
         const img = document.getElementById('newsImagePreview');
+        const badge = document.getElementById('newsImageOptimizedInfo');
+
         if (container && img) {
-            img.src = newsSelectedImageBase64;
+            img.src = res.dataUrl;
             container.classList.remove('hidden');
         }
+
+        if (badge) {
+            badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"><i class="fa-solid fa-bolt"></i> Auto WebP: ${formatBytes(res.originalSize)} ➔ ${formatBytes(res.compressedSize)} (Hemat ${res.savingsPercent}%)</span>`;
+        }
+
         const urlInput = document.getElementById('newsImageUrlInput');
         if (urlInput) urlInput.value = '';
-    };
-    reader.readAsDataURL(file);
+
+        showToast('Foto Berita Teroptimasi', `Berhasil dikonversi ke WebP: ${formatBytes(res.originalSize)} ➔ ${formatBytes(res.compressedSize)} (Hemat ${res.savingsPercent}%).`);
+    } catch (err) {
+        console.error('Error saat kompresi foto berita:', err);
+        showToast('Gagal Memproses Gambar', err.message || 'Gagal memproses foto berita.');
+        clearNewsImagePreview();
+    }
 }
 
 function handleNewsImageUrl(url) {
     const trimmed = url.trim();
     if (!trimmed) {
         clearNewsImagePreview();
-
-    const authorInput = document.getElementById('newsAuthorInput');
-    if (authorInput) authorInput.value = '';
-
-    const sourceInput = document.getElementById('newsSourceInput');
-    if (sourceInput) sourceInput.value = '';
         return;
     }
     newsSelectedImageBase64 = '';
@@ -3828,9 +3989,13 @@ function handleNewsImageUrl(url) {
 
     const container = document.getElementById('newsImagePreviewContainer');
     const img = document.getElementById('newsImagePreview');
+    const badge = document.getElementById('newsImageOptimizedInfo');
     if (container && img) {
         img.src = trimmed;
         container.classList.remove('hidden');
+    }
+    if (badge) {
+        badge.innerHTML = '<span class="text-[11px] font-medium text-slate-500">Tautan Gambar Eksternal</span>';
     }
 }
 
@@ -3842,6 +4007,8 @@ function clearNewsImagePreview() {
     if (urlInput) urlInput.value = '';
     const container = document.getElementById('newsImagePreviewContainer');
     if (container) container.classList.add('hidden');
+    const badge = document.getElementById('newsImageOptimizedInfo');
+    if (badge) badge.innerHTML = '';
 }
 
 // Alat Bantu Sisipkan Gambar & Format ke Teks Artikel (Modal Interaktif Tanpa Browser Prompt)
@@ -3908,22 +4075,33 @@ function switchInlinePhotoTab(tab) {
     }
 }
 
-function handleInlinePhotoFile(e) {
+async function handleInlinePhotoFile(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-        showToast('File Terlalu Besar', 'Maksimal ukuran foto adalah 3MB.');
+    if (file.size > 15 * 1024 * 1024) {
+        showToast('File Terlalu Besar', 'Maksimal ukuran foto adalah 15MB.');
         e.target.value = '';
         return;
     }
 
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-        currentInlinePhotoData = evt.target.result;
-        showInlinePhotoPreview(currentInlinePhotoData, file.name);
-    };
-    reader.readAsDataURL(file);
+    showToast('Mengompresi Foto...', 'Sedang mengonversi dan mengompresi foto ke format WebP.');
+
+    try {
+        const res = await compressImageToWebP(file, {
+            maxDimension: 1400,
+            targetMaxBytes: 400 * 1024,
+            initialQuality: 0.82
+        });
+
+        currentInlinePhotoData = res.dataUrl;
+        const infoText = `WebP ${formatBytes(res.compressedSize)} (Hemat ${res.savingsPercent}%) • Siap disisipkan`;
+        showInlinePhotoPreview(currentInlinePhotoData, infoText);
+        showToast('Foto Artikel Teroptimasi', `Format WebP: ${formatBytes(res.originalSize)} ➔ ${formatBytes(res.compressedSize)} (Hemat ${res.savingsPercent}%).`);
+    } catch (err) {
+        console.error('Error saat kompresi foto artikel inline:', err);
+        showToast('Gagal Memproses Foto', err.message || 'Gagal memproses foto.');
+    }
 }
 
 function handleInlinePhotoUrl(val) {

@@ -2502,7 +2502,7 @@
                                         <div class="sm:col-span-2">
                                             <label class="block text-xs font-bold text-[#0F172A] mb-2">
                                                 <i class="fa-solid fa-image text-[#DC2626] mr-1"></i> Poster / Banner Event
-                                                <span class="text-slate-400 font-normal">(Opsional - maks. 5MB)</span>
+                                                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"><i class="fa-solid fa-bolt mr-0.5"></i> Auto-Compress WebP ≤ 500KB</span>
                                             </label>
                                             <div class="border-2 border-dashed border-slate-300 hover:border-[#DC2626] rounded-xl p-5 bg-[#F8FAFC] transition-colors cursor-pointer" onclick="document.getElementById('evPosterInput').click()">
                                                 <div id="evPosterPreviewWrap" class="hidden mb-3">
@@ -2511,9 +2511,9 @@
                                                 <div id="evPosterUploadPrompt" class="text-center">
                                                     <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2 block"></i>
                                                     <p class="text-sm font-bold text-slate-600">Klik untuk upload poster turnamen</p>
-                                                    <p class="text-xs text-slate-400 mt-1">JPG, PNG, atau WebP — Maks 5MB. Ukuran ideal: 800×600px</p>
+                                                    <p class="text-xs text-slate-400 mt-1">Mendukung JPG, JPEG, PNG, WebP (Otomatis dikonversi ke WebP tajam &amp; hemat storage ≤ 500KB)</p>
                                                 </div>
-                                                <input type="file" id="evPosterInput" accept="image/*" class="hidden" onchange="previewEventPoster(this)">
+                                                <input type="file" id="evPosterInput" accept="image/png,image/jpeg,image/webp,image/*" class="hidden" onchange="previewEventPoster(this)">
                                             </div>
                                             <div class="mt-2 flex items-center gap-2 hidden" id="evPosterClearRow">
                                                 <span id="evPosterFileName" class="text-xs text-emerald-700 font-bold flex-1 truncate"></span>
@@ -2633,8 +2633,8 @@
                                                 <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 hover:border-[#DC2626] rounded-xl p-4 cursor-pointer bg-white hover:bg-red-50/20 transition text-center min-h-[92px]">
                                                     <i class="fa-solid fa-cloud-arrow-up text-xl text-slate-400 mb-1"></i>
                                                     <span class="text-xs font-bold text-[#0F172A]">Pilih Foto dari Komputer / HP</span>
-                                                    <span class="text-[10px] text-slate-400 mt-0.5">JPG, PNG, WebP (Maks. 3MB)</span>
-                                                    <input type="file" id="newsImageFileInput" accept="image/*" onchange="previewNewsImage(event)" class="hidden">
+                                                    <span class="text-[10px] text-slate-400 mt-0.5">Mendukung JPG, JPEG, PNG (Auto WebP ≤ 500KB)</span>
+                                                    <input type="file" id="newsImageFileInput" accept="image/png,image/jpeg,image/webp,image/*" onchange="previewNewsImage(event)" class="hidden">
                                                 </label>
 
                                                 <!-- Opsi 2: Tempel URL Gambar -->
@@ -2661,7 +2661,7 @@
                                                     <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200 inline-block mb-1">
                                                         <i class="fa-solid fa-check mr-1"></i> Foto Sampul Siap
                                                     </span>
-                                                    <p class="text-slate-600 font-medium">Foto ini akan ditampilkan sesuai pilihan posisi di bawah.</p>
+                                                    <p class="text-slate-600 font-medium">Foto ini akan ditampilkan sesuai pilihan posisi di bawah.</p><div id="newsImageOptimizedInfo" class="mt-1"></div>
                                                 </div>
                                             </div>
 
@@ -3418,11 +3418,11 @@
 
                     <!-- Pilihan A: Upload File -->
                     <div id="inlinePhotoUploadBox" class="border-2 border-dashed border-slate-300 hover:border-[#DC2626] rounded-xl p-4 text-center cursor-pointer bg-slate-50 hover:bg-red-50/20 transition relative">
-                        <input type="file" id="inlinePhotoFileInput" accept="image/*" onchange="handleInlinePhotoFile(event)"
+                        <input type="file" id="inlinePhotoFileInput" accept="image/png,image/jpeg,image/webp,image/*" onchange="handleInlinePhotoFile(event)"
                             class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                         <i class="fa-solid fa-image text-2xl text-slate-400 mb-1"></i>
                         <p class="font-bold text-[#0F172A]">Klik untuk memilih foto dari perangkat</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Mendukung JPG, PNG, WebP (Maks. 3MB)</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Mendukung JPG, JPEG, PNG, WebP (Auto-Kompresi WebP ≤ 500KB)</p>
                     </div>
 
                     <!-- Pilihan B: Tempel Link URL -->
@@ -3852,11 +3852,11 @@
         </div>
     </div>
 
-    <script src="js/seedData.js?v=20261117gg" defer></script>
-    <script src="js/config.js?v=20261117gg" defer></script>
-    <script src="js/supabaseClient.js?v=20261117gg" defer></script>
-    <script src="js/api.js?v=20261117gg" defer></script>
-    <script src="js/app.js?v=20261117gg" defer></script>
+    <script src="js/seedData.js?v=20261117hh" defer></script>
+    <script src="js/config.js?v=20261117hh" defer></script>
+    <script src="js/supabaseClient.js?v=20261117hh" defer></script>
+    <script src="js/api.js?v=20261117hh" defer></script>
+    <script src="js/app.js?v=20261117hh" defer></script>
 </body>
 
 </html>
