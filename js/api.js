@@ -1,4 +1,4 @@
-﻿/**
+/**
  * API SERVICE LAYER Ã¢â‚¬â€ Vercel Blob Store (Primary)
  *
  * Semua data utama (athletes, events, news, registrations) disimpan di Vercel Blob

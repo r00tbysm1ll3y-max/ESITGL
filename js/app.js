@@ -2222,38 +2222,43 @@ function renderCommentsHtml(articleId, comments) {
     if (identityBox) {
         if (isAdminLoggedIn) {
             identityBox.innerHTML = `
-                <div class="flex items-center gap-2.5 text-xs text-slate-700 bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs">
-                    <div class="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                <div class="flex items-center gap-3 bg-white border border-slate-200/90 px-3.5 py-2.5 rounded-xl shadow-2xs w-full">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#DC2626] to-red-500 text-white flex items-center justify-center text-xs shrink-0 shadow-xs">
                         <i class="fa-solid fa-shield-halved"></i>
                     </div>
-                    <div>
-                        <span class="text-slate-400 text-[10px] block font-medium">Berkomentar sebagai:</span>
-                        <div class="flex items-center gap-1.5">
-                            <span class="font-bold text-[#0F172A]">Administrator ESI Trenggalek</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-[#DC2626] border border-red-200">
-                                <i class="fa-solid fa-shield-halved text-[9px] mr-1"></i>Admin / Pengurus
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-extrabold text-xs sm:text-sm text-[#0F172A] leading-tight">Administrator ESI Trenggalek</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-[#DC2626] border border-red-200 inline-flex items-center gap-1 shrink-0">
+                                <i class="fa-solid fa-shield-halved text-[9px]"></i> Admin / Pengurus
                             </span>
                         </div>
+                        <span class="text-slate-400 text-[10px] block mt-0.5 font-medium">Berkomentar sebagai perwakilan Pengkab ESI</span>
                     </div>
                 </div>
             `;
         } else if (loggedMember) {
             const shortName = loggedMember.nickname || loggedMember.fullName || 'Member';
             identityBox.innerHTML = `
-                <div class="flex items-center gap-2.5 text-xs text-slate-700 bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-2xs">
-                    <div class="w-8 h-8 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-black text-xs shrink-0">
+                <div class="flex items-center gap-3 bg-white border border-slate-200/90 px-3.5 py-2.5 rounded-xl shadow-2xs w-full">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0F172A] to-slate-700 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                         ${shortName.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                        <span class="text-slate-400 text-[10px] block font-medium">Berkomentar sebagai:</span>
-                        <span class="font-bold text-[#0F172A] text-sm">${shortName}</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-extrabold text-xs sm:text-sm text-[#0F172A] leading-tight">${escapeHtml(shortName)}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1 shrink-0">
+                                <i class="fa-solid fa-circle-check text-[9px]"></i> Anggota Terverifikasi
+                            </span>
+                        </div>
+                        <span class="text-slate-400 text-[10px] block mt-0.5 font-medium">Berkomentar sebagai Anggota Resmi ESI</span>
                     </div>
                 </div>
             `;
         } else {
             identityBox.innerHTML = `
                 <div class="w-full sm:max-w-xs">
-                    <label for="commentAuthorInput" class="block text-[11px] font-bold text-[#0F172A] uppercase tracking-wider mb-1">
+                    <label for="commentAuthorInput" class="block text-[11px] font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">
                         Nama Anda <span class="text-[#DC2626]">*</span>
                     </label>
                     <div class="relative">
@@ -2287,7 +2292,7 @@ function renderCommentsHtml(articleId, comments) {
         const initial = (c.author || 'U').charAt(0).toUpperCase();
         // Hanya Admin / Pengurus yang mendapatkan badge
         const roleBadgeHtml = c.isAdmin
-            ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-[#DC2626] border border-red-200 inline-flex items-center gap-1">
+            ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-[#DC2626] border border-red-200 inline-flex items-center gap-1 shrink-0">
                 <i class="fa-solid fa-shield-halved text-[9px]"></i> Admin / Pengurus
                </span>`
             : '';
@@ -2295,40 +2300,41 @@ function renderCommentsHtml(articleId, comments) {
         // Render Replies
         const repliesHtml = (c.replies && c.replies.length > 0)
             ? `
-                <div class="mt-4 pt-3.5 border-t border-slate-100 space-y-3 pl-3 sm:pl-5 border-l-2 border-red-200">
+                <div class="mt-3.5 pt-3 border-t border-slate-100 space-y-2.5 pl-0 sm:pl-[52px]">
                     ${c.replies.map(r => {
                         const rInitial = (r.author || 'U').charAt(0).toUpperCase();
-                        // Hanya Admin / Pengurus yang mendapatkan badge
                         const rBadge = r.isAdmin
-                            ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-50 text-[#DC2626] border border-red-200 inline-flex items-center gap-1">
-                                <i class="fa-solid fa-shield-halved text-[8px]"></i> Admin / Pengurus
+                            ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-50 text-[#DC2626] border border-red-200 inline-flex items-center gap-1 shrink-0">
+                                <i class="fa-solid fa-shield-halved text-[8px]"></i> Admin
                                </span>`
                             : '';
 
                         return `
-                            <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-3 sm:p-3.5 shadow-2xs">
-                                <div class="flex items-start justify-between gap-2 mb-1.5">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 rounded-md bg-[#0F172A] text-white flex items-center justify-center font-bold text-[10px] shrink-0">
-                                            ${rInitial}
-                                        </div>
+                            <div class="bg-slate-50/90 border border-slate-200/80 rounded-xl p-3 sm:p-3.5">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-7 h-7 rounded-full ${r.isAdmin ? 'bg-gradient-to-tr from-[#DC2626] to-red-500' : 'bg-gradient-to-tr from-[#0F172A] to-slate-700'} text-white flex items-center justify-center font-bold text-[10px] shrink-0 shadow-xs ring-1 ring-white">
+                                        ${r.isAdmin ? '<i class="fa-solid fa-shield-halved text-[9px]"></i>' : rInitial}
+                                    </div>
+                                    <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="font-bold text-xs text-[#0F172A]">${escapeHtml(r.author)}</span>
+                                            <span class="font-bold text-xs text-[#0F172A] leading-tight break-words">${escapeHtml(r.author)}</span>
                                             ${rBadge}
                                         </div>
-                                    </div>
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <span class="text-[10px] text-slate-400">${escapeHtml(r.date)}</span>
-                                        ${isAdminLoggedIn ? `
-                                            <button type="button" onclick="deleteArticleReply('${c.id}', '${r.id}')" title="Hapus Balasan (Admin)"
-                                                class="text-[10px] font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-1.5 py-0.5 rounded transition flex items-center gap-1">
-                                                <i class="fa-solid fa-trash text-[9px]"></i>
-                                                <span>Hapus</span>
-                                            </button>
-                                        ` : ''}
+                                        <span class="text-[10px] text-slate-400 mt-0.5 block">${escapeHtml(r.date)}</span>
                                     </div>
                                 </div>
-                                <p class="text-xs text-slate-700 leading-relaxed pl-8 whitespace-pre-line">${escapeHtml(r.content)}</p>
+                                <div class="mt-2 text-xs text-slate-700 leading-relaxed whitespace-pre-line break-words pl-0 sm:pl-9">
+                                    ${escapeHtml(r.content)}
+                                </div>
+                                ${isAdminLoggedIn ? `
+                                    <div class="mt-2 pt-2 border-t border-slate-200/60 flex justify-end pl-0 sm:pl-9">
+                                        <button type="button" onclick="deleteArticleReply('${c.id}', '${r.id}')" title="Hapus Balasan (Admin)"
+                                            class="inline-flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition">
+                                            <i class="fa-regular fa-trash-can text-[10px]"></i>
+                                            <span>Hapus Balasan</span>
+                                        </button>
+                                    </div>
+                                ` : ''}
                             </div>
                         `;
                     }).join('')}
@@ -2338,13 +2344,13 @@ function renderCommentsHtml(articleId, comments) {
 
         // Form Balasan (Inline Reply Box)
         const replyBoxHtml = `
-            <div id="replyBox-${c.id}" class="hidden mt-3 pt-3 border-t border-slate-100 bg-amber-50/50 p-3 sm:p-4 rounded-xl border border-amber-200">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+            <div id="replyBox-${c.id}" class="hidden mt-3 pt-3 border-t border-slate-100 bg-red-50/40 p-3.5 sm:p-4 rounded-xl border border-red-200/80 sm:ml-[52px]">
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5 truncate">
                         <i class="fa-solid fa-reply text-xs text-[#DC2626]"></i>
-                        Membalas komentar <span class="text-[#DC2626]">@${escapeHtml(c.author)}</span>
+                        <span>Membalas <span class="text-[#DC2626]">@${escapeHtml(c.author)}</span></span>
                     </span>
-                    <button type="button" onclick="toggleReplyBox('${c.id}')" class="text-xs text-slate-400 hover:text-slate-600">
+                    <button type="button" onclick="toggleReplyBox('${c.id}')" class="text-xs text-slate-400 hover:text-slate-700 p-1">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -2352,21 +2358,22 @@ function renderCommentsHtml(articleId, comments) {
                     ${(!loggedMember && !isAdminLoggedIn) ? `
                         <div>
                             <input type="text" id="replyAuthor-${c.id}" required placeholder="Nama Anda *"
-                                class="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 focus:border-[#DC2626] text-xs text-[#0F172A]">
+                                class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 focus:border-[#DC2626] focus:outline-none text-xs text-[#0F172A] font-medium shadow-2xs">
                         </div>
                     ` : ''}
                     <div>
-                        <textarea id="replyText-${c.id}" required rows="2" placeholder="Tulis balasan Anda..."
-                            class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 focus:border-[#DC2626] text-xs text-[#0F172A] leading-relaxed resize-y"></textarea>
+                        <textarea id="replyText-${c.id}" required rows="2" placeholder="Tulis balasan Anda di sini..."
+                            class="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 focus:border-[#DC2626] focus:outline-none text-xs text-[#0F172A] leading-relaxed resize-y shadow-2xs"></textarea>
                     </div>
-                    <div class="flex items-center justify-end gap-2">
+                    <div class="flex items-center justify-end gap-2 pt-1">
                         <button type="button" onclick="toggleReplyBox('${c.id}')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200 transition">
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-200/70 transition">
                             Batal
                         </button>
                         <button type="submit"
                             class="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-xs">
-                            <i class="fa-solid fa-paper-plane text-[10px]"></i> Kirim Balasan
+                            <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                            <span>Kirim Balasan</span>
                         </button>
                     </div>
                 </form>
@@ -2374,41 +2381,46 @@ function renderCommentsHtml(articleId, comments) {
         `;
 
         return `
-            <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition">
-                <!-- Header Komentar -->
-                <div class="flex items-start justify-between gap-3 mb-2.5">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0F172A] to-slate-700 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                            ${initial}
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="font-extrabold text-xs sm:text-sm text-[#0F172A]">${escapeHtml(c.author)}</span>
-                                ${roleBadgeHtml}
-                            </div>
-                            <span class="text-[10px] text-slate-400 mt-0.5 block flex items-center gap-1">
-                                <i class="fa-regular fa-clock text-[9px]"></i> ${escapeHtml(c.date)}
-                            </span>
-                        </div>
+            <div class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 transition">
+                <!-- Header Komentar: Avatar, Nama, Badge, Tanggal -->
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full ${c.isAdmin ? 'bg-gradient-to-tr from-[#DC2626] to-red-500' : 'bg-gradient-to-tr from-[#0F172A] to-slate-700'} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ring-2 ring-white">
+                        ${c.isAdmin ? '<i class="fa-solid fa-shield-halved text-xs"></i>' : initial}
                     </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button type="button" onclick="toggleReplyBox('${c.id}')"
-                            class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-[#DC2626] hover:bg-red-50 border border-slate-200 hover:border-red-200 transition flex items-center gap-1">
-                            <i class="fa-solid fa-reply text-[10px]"></i>
-                            <span>Balas</span>
-                        </button>
-                        ${isAdminLoggedIn ? `
-                            <button type="button" onclick="deleteArticleComment('${c.id}')" title="Hapus Komentar (Admin)"
-                                class="px-2.5 py-1 rounded-lg text-xs font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 transition flex items-center gap-1">
-                                <i class="fa-solid fa-trash text-[10px]"></i>
-                                <span>Hapus</span>
-                            </button>
-                        ` : ''}
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-extrabold text-xs sm:text-sm text-[#0F172A] leading-tight break-words">${escapeHtml(c.author)}</span>
+                            ${roleBadgeHtml}
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
+                            <i class="fa-regular fa-clock text-[10px]"></i>
+                            <span>${escapeHtml(c.date)}</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Isi Komentar -->
-                <p class="text-xs sm:text-sm text-slate-700 leading-relaxed pl-11 whitespace-pre-line">${escapeHtml(c.content)}</p>
+                <div class="mt-3 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words pl-0 sm:pl-[52px]">
+                    ${escapeHtml(c.content)}
+                </div>
+
+                <!-- Footer Action Bar: Balas & Hapus -->
+                <div class="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between pl-0 sm:pl-[52px]">
+                    <button type="button" onclick="toggleReplyBox('${c.id}')"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-[#DC2626] hover:bg-red-50/80 active:bg-red-100 transition">
+                        <i class="fa-solid fa-reply text-[11px] text-[#DC2626]"></i>
+                        <span>Balas</span>
+                        ${(c.replies && c.replies.length > 0) ? `<span class="ml-1 px-1.5 py-0.2 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">${c.replies.length}</span>` : ''}
+                    </button>
+
+                    ${isAdminLoggedIn ? `
+                        <button type="button" onclick="deleteArticleComment('${c.id}')" title="Hapus Komentar (Admin)"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition">
+                            <i class="fa-regular fa-trash-can text-xs"></i>
+                            <span>Hapus</span>
+                        </button>
+                    ` : ''}
+                </div>
 
                 <!-- Box Balasan (Form) -->
                 ${replyBoxHtml}
