@@ -1,0 +1,24 @@
+{
+  "name": "esi-trenggalek",
+  "version": "1.0.0",
+  "description": "Portal Resmi PENGKAB ESI Kabupaten Trenggalek",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve . -l 3000",
+    "dev": "serve . -l 3000"
+  },
+  "keywords": [
+    "esports",
+    "esi-trenggalek",
+    "supabase",
+    "vercel"
+  ],
+  "author": "PENGKAB ESI Trenggalek",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
