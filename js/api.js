@@ -286,39 +286,174 @@ const Api = {
 
     // ==================== STORAGE & MEDIA MANAGEMENT ====================
     /**
-     * Hapus gambar dari Supabase Storage jika merupakan URL file cloud storage Supabase
+     * Unggah gambar ke Cloud Storage (Vercel Blob / Supabase Storage)
+     * Menerima base64 dataURL, File, atau Blob
+     * Mengembalikan URL cloud publik/proxy yang siap ditampilkan di tag <img>
+     */
+    async uploadStorageImage(fileOrDataUrl, folder = 'general') {
+        if (!fileOrDataUrl) return null;
+
+        // 1. Prioritas: Vercel Blob Storage
+        if (typeof isVercelBlobConfigured === 'function' && isVercelBlobConfigured()) {
+            try {
+                let body = null;
+                let mimeType = 'image/webp';
+
+                if (typeof fileOrDataUrl === 'string' && fileOrDataUrl.startsWith('data:')) {
+                    const matches = fileOrDataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                    if (matches) {
+                        mimeType = matches[1];
+                        const bstr = atob(matches[2]);
+                        let n = bstr.length;
+                        const u8arr = new Uint8Array(n);
+                        while (n--) {
+                            u8arr[n] = bstr.charCodeAt(n);
+                        }
+                        body = u8arr;
+                    }
+                } else if (fileOrDataUrl instanceof Blob || (typeof File !== 'undefined' && fileOrDataUrl instanceof File)) {
+                    body = fileOrDataUrl;
+                    if (fileOrDataUrl.type) mimeType = fileOrDataUrl.type;
+                }
+
+                if (body) {
+                    const ext = mimeType.split('/')[1] || 'webp';
+                    const cleanFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '');
+                    const filename = `${cleanFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                    const blobAccess = (CONFIG.VERCEL_BLOB && CONFIG.VERCEL_BLOB.ACCESS) || 'private';
+
+                    const res = await fetch(`https://blob.vercel-storage.com/${filename}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${CONFIG.VERCEL_BLOB.TOKEN}`,
+                            'x-api-version': '7',
+                            'x-vercel-blob-access': blobAccess,
+                            'content-type': mimeType
+                        },
+                        body: body
+                    });
+
+                    if (res.ok) {
+                        const blobData = await res.json();
+                        if (blobData && blobData.url) {
+                            // Jika private store di Vercel, arahkan ke proxy /api/blob agar dapat diakses publik
+                            if (blobAccess === 'private' && blobData.url.includes('.private.blob.vercel-storage.com')) {
+                                return `/api/blob?url=${encodeURIComponent(blobData.url)}`;
+                            }
+                            return blobData.url;
+                        }
+                    } else {
+                        console.warn('Vercel Blob upload response not ok:', res.status, res.statusText);
+                    }
+                }
+            } catch (err) {
+                console.warn('Vercel Blob upload failed, fallback to local/supabase:', err);
+            }
+        }
+
+        // 2. Fallback: Supabase Storage jika dikonfigurasi
+        if (supabaseClient && supabaseClient.storage) {
+            try {
+                // Implementasi Supabase Storage upload
+                const bucket = 'posters';
+                const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+                let uploadBody = fileOrDataUrl;
+                if (typeof fileOrDataUrl === 'string' && fileOrDataUrl.startsWith('data:')) {
+                    const matches = fileOrDataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                    if (matches) {
+                        const bstr = atob(matches[2]);
+                        let n = bstr.length;
+                        const u8arr = new Uint8Array(n);
+                        while (n--) u8arr[n] = bstr.charCodeAt(n);
+                        uploadBody = new Blob([u8arr], { type: matches[1] });
+                    }
+                }
+                const { data, error } = await supabaseClient.storage.from(bucket).upload(filename, uploadBody, {
+                    contentType: 'image/webp',
+                    upsert: true
+                });
+                if (!error && data) {
+                    const { data: pubData } = supabaseClient.storage.from(bucket).getPublicUrl(filename);
+                    if (pubData && pubData.publicUrl) return pubData.publicUrl;
+                }
+            } catch (err) {
+                console.warn('Supabase storage upload failed:', err);
+            }
+        }
+
+        // 3. Fallback: Kembalikan dataUrl asli (mode offline / localStorage)
+        return typeof fileOrDataUrl === 'string' ? fileOrDataUrl : null;
+    },
+
+    /**
+     * Hapus gambar dari Cloud Storage (Vercel Blob / Supabase Storage)
      * Aman dipanggil untuk base64 / data:image / blob: / assets/ lokal (tidak akan error)
      */
     async deleteStorageImage(imageUrl) {
         if (!imageUrl || typeof imageUrl !== 'string') return false;
 
         // Skip jika base64 inline, blob URL, atau aset lokal portal
-        if (imageUrl.startsWith('data:') || imageUrl.startsWith('blob:') || imageUrl.startsWith('assets/') || imageUrl.startsWith('./') || imageUrl.startsWith('/')) {
+        if (imageUrl.startsWith('data:') || imageUrl.startsWith('blob:') || imageUrl.startsWith('assets/') || imageUrl.startsWith('./')) {
             return true;
         }
 
-        if (!supabaseClient || !supabaseClient.storage) {
+        // 1. Cek & Hapus dari Vercel Blob Storage jika URL adalah Vercel Blob atau proxy /api/blob
+        if (imageUrl.includes('blob.vercel-storage.com') || imageUrl.includes('/api/blob')) {
+            if (typeof isVercelBlobConfigured === 'function' && isVercelBlobConfigured()) {
+                try {
+                    let targetUrl = imageUrl;
+                    if (imageUrl.includes('/api/blob?url=')) {
+                        try {
+                            const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'http://localhost';
+                            const parsed = new URL(imageUrl, origin);
+                            targetUrl = parsed.searchParams.get('url') || imageUrl;
+                        } catch (_) {
+                            const match = imageUrl.match(/[?&]url=([^&]+)/);
+                            if (match) targetUrl = decodeURIComponent(match[1]);
+                        }
+                    }
+
+                    if (targetUrl.includes('blob.vercel-storage.com')) {
+                        const res = await fetch('https://blob.vercel-storage.com/delete', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${CONFIG.VERCEL_BLOB.TOKEN}`,
+                                'x-api-version': '7',
+                                'content-type': 'application/json'
+                            },
+                            body: JSON.stringify({ urls: [targetUrl] })
+                        });
+                        return res.ok;
+                    }
+                } catch (err) {
+                    console.warn('Vercel Blob delete error:', err);
+                }
+            }
             return false;
         }
 
-        try {
-            // Contoh URL Supabase: https://xxxx.supabase.co/storage/v1/object/public/<bucket>/<path>
-            const urlObj = new URL(imageUrl);
-            const pathParts = urlObj.pathname.split('/');
-            const publicIdx = pathParts.indexOf('public');
-            if (publicIdx !== -1 && pathParts.length > publicIdx + 2) {
-                const bucket = pathParts[publicIdx + 1];
-                const filePath = decodeURIComponent(pathParts.slice(publicIdx + 2).join('/'));
-                const { error } = await supabaseClient.storage.from(bucket).remove([filePath]);
-                if (error) {
-                    console.warn(`Supabase Storage remove error (${bucket}/${filePath}):`, error);
-                    return false;
+        // 2. Cek & Hapus dari Supabase Storage jika merupakan URL cloud storage Supabase
+        if (supabaseClient && supabaseClient.storage) {
+            try {
+                // Contoh URL Supabase: https://xxxx.supabase.co/storage/v1/object/public/<bucket>/<path>
+                const urlObj = new URL(imageUrl);
+                const pathParts = urlObj.pathname.split('/');
+                const publicIdx = pathParts.indexOf('public');
+                if (publicIdx !== -1 && pathParts.length > publicIdx + 2) {
+                    const bucket = pathParts[publicIdx + 1];
+                    const filePath = decodeURIComponent(pathParts.slice(publicIdx + 2).join('/'));
+                    const { error } = await supabaseClient.storage.from(bucket).remove([filePath]);
+                    if (error) {
+                        console.warn(`Supabase Storage remove error (${bucket}/${filePath}):`, error);
+                        return false;
+                    }
+                    return true;
                 }
-                return true;
+            } catch (err) {
+                console.warn('Gagal menghapus gambar dari Supabase cloud storage:', err);
             }
-        } catch (err) {
-            console.warn('Gagal menghapus gambar dari cloud storage:', err);
         }
+
         return false;
     },
 
@@ -370,6 +505,16 @@ const Api = {
     },
 
     async createEvent(eventData) {
+        // Upload gambar poster ke Cloud Storage (Vercel Blob / Supabase) jika berupa dataURL
+        if (eventData.imageUrl && typeof eventData.imageUrl === 'string' && eventData.imageUrl.startsWith('data:')) {
+            try {
+                const uploadedUrl = await this.uploadStorageImage(eventData.imageUrl, 'events');
+                if (uploadedUrl) eventData.imageUrl = uploadedUrl;
+            } catch (err) {
+                console.warn('Auto upload poster failed:', err);
+            }
+        }
+
         if (supabaseClient) {
             try {
                 const payload = Mapper.eventToDb(eventData);
@@ -588,6 +733,32 @@ const Api = {
     },
 
     async createNews(newsData) {
+        // Upload foto sampul ke Cloud Storage (Vercel Blob / Supabase) jika berupa dataURL
+        if (newsData.imageUrl && typeof newsData.imageUrl === 'string' && newsData.imageUrl.startsWith('data:')) {
+            try {
+                const uploadedUrl = await this.uploadStorageImage(newsData.imageUrl, 'news');
+                if (uploadedUrl) newsData.imageUrl = uploadedUrl;
+            } catch (err) {
+                console.warn('Auto upload news banner failed:', err);
+            }
+        }
+
+        // Upload foto inline di konten jika ada data:image/...
+        if (newsData.content && typeof newsData.content === 'string' && newsData.content.includes('data:image/')) {
+            try {
+                const imgDataRegex = /(data:image\/[A-Za-z-+]+;base64,[A-Za-z0-9+/=]+)/g;
+                const matches = [...new Set(newsData.content.match(imgDataRegex) || [])];
+                for (const b64 of matches) {
+                    const cloudUrl = await this.uploadStorageImage(b64, 'news-inline');
+                    if (cloudUrl && cloudUrl !== b64) {
+                        newsData.content = newsData.content.split(b64).join(cloudUrl);
+                    }
+                }
+            } catch (err) {
+                console.warn('Auto upload inline news photos failed:', err);
+            }
+        }
+
         if (supabaseClient) {
             try {
                 const payload = Mapper.newsToDb(newsData);
@@ -614,6 +785,32 @@ const Api = {
     },
 
     async updateNews(id, newsData) {
+        // Upload foto sampul ke Cloud Storage (Vercel Blob / Supabase) jika berupa dataURL
+        if (newsData.imageUrl && typeof newsData.imageUrl === 'string' && newsData.imageUrl.startsWith('data:')) {
+            try {
+                const uploadedUrl = await this.uploadStorageImage(newsData.imageUrl, 'news');
+                if (uploadedUrl) newsData.imageUrl = uploadedUrl;
+            } catch (err) {
+                console.warn('Auto upload updated news banner failed:', err);
+            }
+        }
+
+        // Upload foto inline di konten jika ada data:image/...
+        if (newsData.content && typeof newsData.content === 'string' && newsData.content.includes('data:image/')) {
+            try {
+                const imgDataRegex = /(data:image\/[A-Za-z-+]+;base64,[A-Za-z0-9+/=]+)/g;
+                const matches = [...new Set(newsData.content.match(imgDataRegex) || [])];
+                for (const b64 of matches) {
+                    const cloudUrl = await this.uploadStorageImage(b64, 'news-inline');
+                    if (cloudUrl && cloudUrl !== b64) {
+                        newsData.content = newsData.content.split(b64).join(cloudUrl);
+                    }
+                }
+            } catch (err) {
+                console.warn('Auto upload inline news photos failed:', err);
+            }
+        }
+
         if (supabaseClient) {
             try {
                 const payload = Mapper.newsToDb(newsData);

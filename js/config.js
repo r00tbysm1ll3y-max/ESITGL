@@ -33,6 +33,13 @@ const CONFIG = {
     DEMO_ADMIN: {
         email: "admin@esitrenggalek.id",
         password: "admin123"
+    },
+
+    // Vercel Blob Storage Integration
+    VERCEL_BLOB: {
+        STORE_ID: window.ENV_BLOB_STORE_ID || "store_LPwrIMxJmWXm9ltj",
+        TOKEN: window.ENV_BLOB_READ_WRITE_TOKEN || "vercel_blob_rw_LPwrIMxJmWXm9ltj_vCdKTxYyVZ7Dv2niukddQ1bF0v4J1s",
+        ACCESS: "private" // 'private' | 'public' (sesuai tipe store di Vercel Dashboard)
     }
 };
 
@@ -46,6 +53,16 @@ const CONFIG = {
         // ignore
     }
 })();
+
+// Cek apakah Vercel Blob sudah dikonfigurasi
+function isVercelBlobConfigured() {
+    return Boolean(
+        CONFIG.VERCEL_BLOB &&
+        CONFIG.VERCEL_BLOB.TOKEN &&
+        CONFIG.VERCEL_BLOB.TOKEN.startsWith('vercel_blob_') &&
+        !CONFIG.VERCEL_BLOB.TOKEN.includes('your-token')
+    );
+}
 
 // Cek apakah Supabase sudah dikonfigurasi dengan benar
 function isSupabaseConfigured() {
