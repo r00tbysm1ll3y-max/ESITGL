@@ -6541,7 +6541,7 @@ function renderRosterInputsByConfig(rosterConfig) {
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Nama Lengkap (Otomatis) ${r.required ? '<span class="text-red-500">*</span>' : ''}</label>
-                    <input type="text" id="roster_name_${i}" ${r.required ? 'required' : ''} placeholder="Nama Lengkap Otomatis" readonly
+                    <input type="text" id="roster_name_${i}" placeholder="Nama Lengkap Otomatis" readonly
                         class="w-full px-3 py-2 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-800 font-extrabold focus:outline-none transition">
                 </div>
                 <div>
@@ -6648,7 +6648,7 @@ function renderEventRegistrationPage(eventId) {
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Nama Lengkap (Otomatis) ${r.required ? '<span class="text-red-500">*</span>' : ''}</label>
-                        <input type="text" id="roster_name_${i}" ${r.required ? 'required' : ''} placeholder="Nama Lengkap Otomatis" readonly
+                        <input type="text" id="roster_name_${i}" placeholder="Nama Lengkap Otomatis" readonly
                             class="w-full px-3 py-2 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-800 font-extrabold focus:outline-none transition">
                     </div>
                     <div>
@@ -6733,15 +6733,6 @@ function lookupRosterMember(slotIndex, usernameVal) {
     const feedbackEl = document.getElementById(`roster_feedback_${slotIndex}`);
     if (!nameEl) return;
 
-    const roles = [
-        'Kapten Tim (Pemain 1)',
-        'Pemain 2',
-        'Pemain 3',
-        'Pemain 4',
-        'Pemain 5',
-        'Cadangan'
-    ];
-
     const q = (usernameVal || '').trim().toLowerCase();
     if (!q) {
         nameEl.value = '';
@@ -6750,6 +6741,28 @@ function lookupRosterMember(slotIndex, usernameVal) {
         if (feedbackEl) feedbackEl.innerHTML = '<span class="text-slate-400">Ketik username akun ESI untuk memuat nama otomatis</span>';
         return;
     }
+
+    // Jika athletes belum ter-load, fetch dulu lalu ulangi lookup
+    if (!Array.isArray(athletes) || athletes.length === 0) {
+        if (feedbackEl) feedbackEl.innerHTML = '<span class="text-slate-400 animate-pulse"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Memuat data atlet...</span>';
+        Api.getAthletes().then(list => {
+            athletes = list || [];
+            lookupRosterMember(slotIndex, usernameVal);
+        }).catch(() => {
+            if (feedbackEl) feedbackEl.innerHTML = '<span class="text-amber-600">Gagal memuat data. Ketik nama manual.</span>';
+            nameEl.readOnly = false;
+        });
+        return;
+    }
+
+    const roles = [
+        'Kapten Tim (Pemain 1)',
+        'Pemain 2',
+        'Pemain 3',
+        'Pemain 4',
+        'Pemain 5',
+        'Cadangan'
+    ];
 
     // 1. Validasi: Cegah username duplikat di dalam satu tim
     const currentEv = events.find(e => e.id == activeRegisterEventId) || events[0];
