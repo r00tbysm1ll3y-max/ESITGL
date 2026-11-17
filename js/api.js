@@ -127,22 +127,36 @@ const Api = {
     },
 
     getLocalAthletes() {
+        const deletedAthleteIdsKey = 'esi_deleted_athlete_ids';
+        let deletedAthleteIds = [];
+        try {
+            deletedAthleteIds = JSON.parse(localStorage.getItem(deletedAthleteIdsKey) || '[]').map(String);
+        } catch (e) {
+            deletedAthleteIds = [];
+        }
+
         const saved = localStorage.getItem(CONFIG.STORAGE_KEYS.ATHLETES);
         let list = [];
         if (!saved) {
-            list = typeof INITIAL_ATHLETES !== 'undefined' ? [...INITIAL_ATHLETES] : [];
+            list = typeof INITIAL_ATHLETES !== 'undefined' 
+                ? INITIAL_ATHLETES.filter(a => !deletedAthleteIds.includes(String(a.id)))
+                : [];
             localStorage.setItem(CONFIG.STORAGE_KEYS.ATHLETES, JSON.stringify(list));
             return list;
         }
         try {
             list = JSON.parse(saved);
             if (!Array.isArray(list)) list = [];
-            if (list.length === 0 && typeof INITIAL_ATHLETES !== 'undefined' && INITIAL_ATHLETES.length > 0) {
-                list = [...INITIAL_ATHLETES];
-                localStorage.setItem(CONFIG.STORAGE_KEYS.ATHLETES, JSON.stringify(list));
-            } else if (typeof INITIAL_ATHLETES !== 'undefined') {
+            
+            // Filter out any previously deleted athletes
+            list = list.filter(a => !deletedAthleteIds.includes(String(a.id)));
+
+            if (typeof INITIAL_ATHLETES !== 'undefined') {
                 let updated = false;
                 INITIAL_ATHLETES.forEach(seed => {
+                    // JANGAN masukkan kembali atlet yang sengaja telah dihapus oleh admin
+                    if (deletedAthleteIds.includes(String(seed.id))) return;
+
                     const idx = list.findIndex(a => a.id == seed.id || (a.username && a.username === seed.username));
                     if (idx === -1) {
                         list.push(seed);
@@ -158,7 +172,9 @@ const Api = {
             }
             return list;
         } catch (e) {
-            return typeof INITIAL_ATHLETES !== 'undefined' ? [...INITIAL_ATHLETES] : [];
+            return typeof INITIAL_ATHLETES !== 'undefined' 
+                ? INITIAL_ATHLETES.filter(a => !deletedAthleteIds.includes(String(a.id))) 
+                : [];
         }
     },
 
@@ -266,6 +282,8 @@ const Api = {
     },
 
     async deleteAthlete(id) {
+        const idStr = String(id);
+
         if (supabaseClient) {
             try {
                 const { error } = await supabaseClient
@@ -278,8 +296,22 @@ const Api = {
             }
         }
 
+        // Catat ID atlet yang dihapus agar INITIAL_ATHLETES tidak meng-seed ulang atlet ini
+        const deletedAthleteIdsKey = 'esi_deleted_athlete_ids';
+        let deletedAthleteIds = [];
+        try {
+            deletedAthleteIds = JSON.parse(localStorage.getItem(deletedAthleteIdsKey) || '[]').map(String);
+        } catch (e) {
+            deletedAthleteIds = [];
+        }
+        if (!deletedAthleteIds.includes(idStr)) {
+            deletedAthleteIds.push(idStr);
+            localStorage.setItem(deletedAthleteIdsKey, JSON.stringify(deletedAthleteIds));
+        }
+
+        // Hapus dari localStorage
         let local = this.getLocalAthletes();
-        local = local.filter(a => a.id != id);
+        local = local.filter(a => String(a.id) !== idStr);
         localStorage.setItem(CONFIG.STORAGE_KEYS.ATHLETES, JSON.stringify(local));
         return true;
     },
@@ -1239,6 +1271,9 @@ const Api = {
 
     // ==================== 7. RESET DATA ====================
     async resetToSeedData() {
+        localStorage.removeItem('esi_deleted_athlete_ids');
+        localStorage.removeItem('esi_deleted_event_ids');
+        localStorage.removeItem('esi_deleted_news_ids');
         localStorage.setItem(CONFIG.STORAGE_KEYS.ATHLETES, JSON.stringify(INITIAL_ATHLETES));
         localStorage.setItem(CONFIG.STORAGE_KEYS.EVENTS, JSON.stringify(INITIAL_EVENTS));
         localStorage.setItem(CONFIG.STORAGE_KEYS.NEWS, JSON.stringify(INITIAL_NEWS));
