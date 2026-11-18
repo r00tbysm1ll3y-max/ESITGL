@@ -92,7 +92,7 @@ const Mapper = {
     newsToDb: (n) => ({
         title: n.title,
         category: n.category,
-        author: n.author || 'Humas PENGKAB ESI Trenggalek',
+        author: n.author || 'Humas ESI Trenggalek',
         source: n.source || '',
         image_url: n.imageUrl || n.image_url || '',
         image_position: n.imagePosition || n.image_position || 'top',
@@ -105,7 +105,7 @@ const Mapper = {
         id: row.id,
         title: row.title,
         category: row.category,
-        author: row.author || 'Humas PENGKAB ESI Trenggalek',
+        author: row.author || 'Humas ESI Trenggalek',
         source: row.source || '',
         imageUrl: row.image_url || row.imageUrl || '',
         imagePosition: row.image_position || row.imagePosition || 'top',

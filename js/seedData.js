@@ -1,4 +1,4 @@
-// Data Awal Atlet Binaan Resmi PENGKAB ESI Trenggalek (dengan Multi-Game Profiles)
+// Data Awal Atlet Binaan Resmi ESI Trenggalek (dengan Multi-Game Profiles)
 const INITIAL_ATHLETES = [
     {
         id: 1,
@@ -276,7 +276,7 @@ const INITIAL_EVENTS = [
         format: "Knockout / Best of 3 (BO3)",
         rosterFormat: "5 Pemain Utama + Hingga 3 Cadangan (5 vs 5)",
         category: "Pelajar SMP & SMA/SMK se-Trenggalek",
-        organizer: "PENGKAB ESI Trenggalek",
+        organizer: "ESI Trenggalek",
         imageUrl: "",
         imageColor: "#1e1b4b",
         description: "Kejuaraan resmi pelajar cabang Mobile Legends: Bang Bang tingkat SMP dan SMA/SMK sederajat se-Kabupaten Trenggalek. Memperebutkan Piala Bergilir dan Golden Ticket Seleksi Atlet Porprov Jawa Timur 2027.",
@@ -298,7 +298,7 @@ const INITIAL_EVENTS = [
         format: "Battle Royale Squad (6 Match Point System)",
         rosterFormat: "4 Pemain Utama + Hingga 3 Cadangan (Squad 4 vs 4)",
         category: "Pelajar SMP & SMA/SMK se-Trenggalek",
-        organizer: "PENGKAB ESI Trenggalek",
+        organizer: "ESI Trenggalek",
         imageUrl: "",
         imageColor: "#7c2d12",
         description: "Kejuaraan resmi pelajar cabang Free Fire Battle Royale tingkat SMP dan SMA/SMK se-Kabupaten Trenggalek. Menentukan skuad terbaik perwakilan Trenggalek menuju kejuaraan pelajar Jawa Timur.",
@@ -320,7 +320,7 @@ const INITIAL_EVENTS = [
         format: "1 vs 1 Single Elimination (Match Time 10 Menit)",
         rosterFormat: "1 Pemain Utama (Solo) / 2 Pemain (Co-op)",
         category: "Pelajar SMP & SMA/SMK se-Trenggalek",
-        organizer: "PENGKAB ESI Trenggalek",
+        organizer: "ESI Trenggalek",
         imageUrl: "",
         imageColor: "#065f46",
         description: "Kejuaraan cabang eFootball sepakbola konsol/mobile resmi pelajar se-Kabupaten Trenggalek. Pembinaan atlet perorangan menuju Pelatcab Esports Trenggalek.",
@@ -342,7 +342,7 @@ const INITIAL_EVENTS = [
         format: "Battle Royale / Squad 4 vs 4",
         rosterFormat: "4 Pemain Utama + Hingga 3 Cadangan (Squad 4 vs 4)",
         category: "Umum & Komunitas Trenggalek",
-        organizer: "PENGKAB ESI Trenggalek",
+        organizer: "ESI Trenggalek",
         imageUrl: "",
         imageColor: "#1e1b4b",
         description: "Turnamen test uji coba resmi cabang Free Fire se-Kabupaten Trenggalek. Pengujian otomatisasi roster pemain dan verifikasi ID in-game atlet.",
@@ -358,7 +358,7 @@ const INITIAL_NEWS = [
         "category": "Kompetisi",
         "isoDate": "2026-11-16",
         "date": "16 November 2026",
-        "author": "Humas PENGKAB ESI Trenggalek",
+        "author": "Humas ESI Trenggalek",
         "imageUrl": "assets/images/news-piala-pelajar.webp",
         "imageCaption": "Turnamen Piala Pelajar Esports Season 2 Tahun 2026 di SMKN 2 Trenggalek. (Sumber: Humas ESI Trenggalek)",
         "imagePosition": "top",
@@ -372,8 +372,8 @@ const INITIAL_NEWS = [
             "PorprovJatim2027",
             "PelajarTrenggalek"
         ],
-        "excerpt": "PENGKAB ESI Trenggalek menggelar Piala Pelajar Esports Season 2 Tahun 2026 di SMKN 2 Trenggalek. Ajang bergengsi ini melibatkan langsung OSIS dan 6 komunitas esports lokal dalam menjaring bibit atlet menuju Porprov Jatim 2027.",
-        "content": "TRENGGALEK – Pengurus Kabupaten Esports Indonesia (PENGKAB ESI) Trenggalek terus menunjukkan komitmen nyata dalam membangun ekosistem olahraga elektronik yang sehat, berprestasi, dan terstruktur di wilayah Bumi Menak Sopal. Melalui perhelatan bergengsi bertajuk \"Piala Pelajar Esports Season 2 Tahun 2026\", ESI Trenggalek menghadirkan kolaborasi apik dengan melibatkan pelajar dan komunitas lokal dalam seluruh rangkaian kompetisi.\n\nKompetisi yang dijadwalkan berlangsung pada 14–16 Desember 2026 bertempat di SMKN 2 Trenggalek ini mempertandingkan tiga cabang gim resmi:\n1. Mobile Legends: Bang Bang (MLBB)\n2. Free Fire (FF)\n3. eFootball Console PS4\n\nAjang ini dibuka secara gratis bagi seluruh pelajar aktif tingkat SMP dan SMA sederajat se-Kabupaten Trenggalek, sebagai wujud komitmen pembinaan usia dini dan pemerataan kesempatan bagi talenta muda daerah.\n\n### Pelibatan Pelajar dalam Manajemen Event\nSalah satu terobosan progresif dalam turnamen musim kedua ini adalah pelibatan langsung OSIS SMKN 2 Trenggalek serta perwakilan pelajar sekolah lain dalam jajaran panitia pelaksana. ESI Trenggalek memandang bahwa pembinaan dunia esports tidak hanya terbatas pada pembentukan atlet di arena tanding, melainkan juga pembangunan ekosistem pendukung seperti kepanitiaan, shoutcaster, hingga manajemen event. Pelajar diberikan pembelajaran dan pengalaman praktis mengelola turnamen berstandar resmi.\n\n### Sinergi 6 Komunitas Esports Lokal Trenggalek\nGuna memperkokoh ekosistem akar rumput, ESI Trenggalek turut menggandeng enam komunitas esports lokal yang selama ini aktif menggerakkan pegiat gim di Trenggalek, yaitu:\n• PD E-Sports Community\n• Free Fire Trenggalek Community\n• JJ Community Trenggalek\n• Hobi Olahraga Esports\n• Battle of Wars\n• Playbox Sadewa\n\n### Tiket Emas Menuju Porprov Jatim 2027\nPiala Pelajar Season 2 bukan sekadar panggung kompetisi biasa, melainkan sarana scouting resmi PENGKAB ESI Trenggalek. Para juara dan pemain terbaik (MVP) akan memperoleh Golden Ticket untuk mengikuti Seleksi Daerah (Selekda) atlet Puslatkab ESI Trenggalek dalam persiapan menghadapi Pekan Olahraga Provinsi (Porprov) Jawa Timur 2027 mendatang.\n\nMelalui sinergi lintas sektor antara pengurus cabang olahraga, institusi pendidikan, dan komunitas lokal ini, ESI Trenggalek optimis mampu mencetak atlet esports berkarakter tangguh, berprestasi, serta membanggakan Kabupaten Trenggalek di kancah regional maupun nasional."
+        "excerpt": "ESI Trenggalek menggelar Piala Pelajar Esports Season 2 Tahun 2026 di SMKN 2 Trenggalek. Ajang bergengsi ini melibatkan langsung OSIS dan 6 komunitas esports lokal dalam menjaring bibit atlet menuju Porprov Jatim 2027.",
+        "content": "TRENGGALEK – Pengurus ESI Trenggalek terus menunjukkan komitmen nyata dalam membangun ekosistem olahraga elektronik yang sehat, berprestasi, dan terstruktur di wilayah Bumi Menak Sopal. Melalui perhelatan bergengsi bertajuk \"Piala Pelajar Esports Season 2 Tahun 2026\", ESI Trenggalek menghadirkan kolaborasi apik dengan melibatkan pelajar dan komunitas lokal dalam seluruh rangkaian kompetisi.\n\nKompetisi yang dijadwalkan berlangsung pada 14–16 Desember 2026 bertempat di SMKN 2 Trenggalek ini mempertandingkan tiga cabang gim resmi:\n1. Mobile Legends: Bang Bang (MLBB)\n2. Free Fire (FF)\n3. eFootball Console PS4\n\nAjang ini dibuka secara gratis bagi seluruh pelajar aktif tingkat SMP dan SMA sederajat se-Kabupaten Trenggalek, sebagai wujud komitmen pembinaan usia dini dan pemerataan kesempatan bagi talenta muda daerah.\n\n### Pelibatan Pelajar dalam Manajemen Event\nSalah satu terobosan progresif dalam turnamen musim kedua ini adalah pelibatan langsung OSIS SMKN 2 Trenggalek serta perwakilan pelajar sekolah lain dalam jajaran panitia pelaksana. ESI Trenggalek memandang bahwa pembinaan dunia esports tidak hanya terbatas pada pembentukan atlet di arena tanding, melainkan juga pembangunan ekosistem pendukung seperti kepanitiaan, shoutcaster, hingga manajemen event. Pelajar diberikan pembelajaran dan pengalaman praktis mengelola turnamen berstandar resmi.\n\n### Sinergi 6 Komunitas Esports Lokal Trenggalek\nGuna memperkokoh ekosistem akar rumput, ESI Trenggalek turut menggandeng enam komunitas esports lokal yang selama ini aktif menggerakkan pegiat gim di Trenggalek, yaitu:\n• PD E-Sports Community\n• Free Fire Trenggalek Community\n• JJ Community Trenggalek\n• Hobi Olahraga Esports\n• Battle of Wars\n• Playbox Sadewa\n\n### Tiket Emas Menuju Porprov Jatim 2027\nPiala Pelajar Season 2 bukan sekadar panggung kompetisi biasa, melainkan sarana scouting resmi ESI Trenggalek. Para juara dan pemain terbaik (MVP) akan memperoleh Golden Ticket untuk mengikuti Seleksi Daerah (Selekda) atlet Puslatkab ESI Trenggalek dalam persiapan menghadapi Pekan Olahraga Provinsi (Porprov) Jawa Timur 2027 mendatang.\n\nMelalui sinergi lintas sektor antara pengurus cabang olahraga, institusi pendidikan, dan komunitas lokal ini, ESI Trenggalek optimis mampu mencetak atlet esports berkarakter tangguh, berprestasi, serta membanggakan Kabupaten Trenggalek di kancah regional maupun nasional."
     },
     {
         "id": 2,
@@ -418,7 +418,7 @@ const INITIAL_NEWS = [
             "PrestasiDaerah"
         ],
         "excerpt": "Prestasi membanggakan ditorehkan kontingen esports Trenggalek pada Porprov Jatim IX 2025 di Kota Batu. Atlet muda Muhammad Zaidane Alfarizi berhasil meraih medali perunggu di nomor eksebisi EA Sports FC Mobile.",
-        "content": "KOTA BATU — Kontingen cabang olahraga esports Kabupaten Trenggalek berhasil menorehkan prestasi membanggakan pada ajang Pekan Olahraga Provinsi (Porprov) Jawa Timur IX 2025 yang dipusatkan di Kota Batu, Malang Raya.\n\nMedali perunggu berhasil dipersembahkan oleh atlet muda berbakat asal Trenggalek, Muhammad Zaidane Alfarizi, yang bertanding pada nomor cabang gim EA Sports FC Mobile. Keberhasilan ini menjadi pembuktian bahwa talenta esports Trenggalek mampu bersaing ketat dengan daerah-daerah mapan lainnya di Jawa Timur seperti Kota Surabaya, Kabupaten Malang, dan Sidoarjo.\n\n### Perjuangan Menembus Papan Atas Jawa Timur\nPerjalanan Zaidane meraih medali perunggu dilalui dengan perjuangan sengit sejak fase penyisihan grup hingga perempat final. Di tengah keterbatasan fasilitas dan adaptasi teknis di venue pertandingan, mental tanding Zaidane tetap kokoh saat menumbangkan lawan-lawan unggulan dari kontingen kota lain.\n\nKetua Pengkab ESI Trenggalek menyampaikan apresiasi dan rasa bangganya atas capaian bersejarah ini:\n> \"Medali perunggu Porprov ini adalah buah dari kerja keras, disiplin latihan, dan mental juang luar biasa dari atlet kita. Ini menjadi bukti konkret bahwa anak-anak muda Trenggalek punya potensi emas di panggung olahraga prestasi provinsi. Kita jadikan ini pelecut semangat menuju Porprov berikutnya!\"\n\n### Apresiasi dari KONI Kabupaten Trenggalek\nKomite Olahraga Nasional Indonesia (KONI) Kabupaten Trenggalek turut menyambut gembira perolehan medali dari cabang olahraga elektronik ini. Capaian ini semakin mempertegas status esports sebagai cabang olahraga resmi yang berorientasi medali dan layak mendapatkan porsi pembinaan berkelanjutan di daerah."
+        "content": "KOTA BATU — Kontingen cabang olahraga esports Kabupaten Trenggalek berhasil menorehkan prestasi membanggakan pada ajang Pekan Olahraga Provinsi (Porprov) Jawa Timur IX 2025 yang dipusatkan di Kota Batu, Malang Raya.\n\nMedali perunggu berhasil dipersembahkan oleh atlet muda berbakat asal Trenggalek, Muhammad Zaidane Alfarizi, yang bertanding pada nomor cabang gim EA Sports FC Mobile. Keberhasilan ini menjadi pembuktian bahwa talenta esports Trenggalek mampu bersaing ketat dengan daerah-daerah mapan lainnya di Jawa Timur seperti Kota Surabaya, Kabupaten Malang, dan Sidoarjo.\n\n### Perjuangan Menembus Papan Atas Jawa Timur\nPerjalanan Zaidane meraih medali perunggu dilalui dengan perjuangan sengit sejak fase penyisihan grup hingga perempat final. Di tengah keterbatasan fasilitas dan adaptasi teknis di venue pertandingan, mental tanding Zaidane tetap kokoh saat menumbangkan lawan-lawan unggulan dari kontingen kota lain.\n\nKetua ESI Trenggalek menyampaikan apresiasi dan rasa bangganya atas capaian bersejarah ini:\n> \"Medali perunggu Porprov ini adalah buah dari kerja keras, disiplin latihan, dan mental juang luar biasa dari atlet kita. Ini menjadi bukti konkret bahwa anak-anak muda Trenggalek punya potensi emas di panggung olahraga prestasi provinsi. Kita jadikan ini pelecut semangat menuju Porprov berikutnya!\"\n\n### Apresiasi dari KONI Kabupaten Trenggalek\nKomite Olahraga Nasional Indonesia (KONI) Kabupaten Trenggalek turut menyambut gembira perolehan medali dari cabang olahraga elektronik ini. Capaian ini semakin mempertegas status esports sebagai cabang olahraga resmi yang berorientasi medali dan layak mendapatkan porsi pembinaan berkelanjutan di daerah."
     },
     {
         "id": 4,
@@ -483,7 +483,7 @@ const INITIAL_NEWS = [
             "BibitAtlet"
         ],
         "excerpt": "Penyelenggaraan perdana Piala Pelajar Esports Season 1 di SMKN 2 Trenggalek berjalan semarak. Puluhan tim dari berbagai kecamatan berkompetisi memperebutkan gelar juara antarpelajar se-Trenggalek.",
-        "content": "TRENGGALEK — Perhelatan perdana turnamen \"Piala Pelajar Esports Season 1 Kabupaten Trenggalek Tahun 2023\" yang digelar di aula serbaguna SMKN 2 Trenggalek resmi ditutup dengan sukses besar.\n\nAjang kompetisi yang diselenggarakan secara swadaya bersama komunitas lokal dan pihak sekolah ini berhasil menarik antusiasme ratusan pelajar perwakilan SMP, MTs, SMA, SMK, dan MA dari berbagai kecamatan, termasuk wilayah pesisir Watulimo, Munjungan, hingga Panggul.\n\n### Langkah Awal Database Atlet Binaan\nMelalui ajang ini, ESI Trenggalek mulai menyusun database profil atlet usia dini yang memiliki potensi mekanik dan kecerdasan taktis di atas rata-rata. Pemenang turnamen musim pertama ini dinobatkan sebagai duta pelajar esports Trenggalek yang berhak mengikuti pembinaan intensif Puslatkab.\n\nKeberhasilan musim perdana ini menjadi landasan kuat bagi PENGKAB ESI Trenggalek untuk menjadikannya sebagai agenda tahunan resmi di kalender olahraga daerah Bumi Menak Sopal."
+        "content": "TRENGGALEK — Perhelatan perdana turnamen \"Piala Pelajar Esports Season 1 Kabupaten Trenggalek Tahun 2023\" yang digelar di aula serbaguna SMKN 2 Trenggalek resmi ditutup dengan sukses besar.\n\nAjang kompetisi yang diselenggarakan secara swadaya bersama komunitas lokal dan pihak sekolah ini berhasil menarik antusiasme ratusan pelajar perwakilan SMP, MTs, SMA, SMK, dan MA dari berbagai kecamatan, termasuk wilayah pesisir Watulimo, Munjungan, hingga Panggul.\n\n### Langkah Awal Database Atlet Binaan\nMelalui ajang ini, ESI Trenggalek mulai menyusun database profil atlet usia dini yang memiliki potensi mekanik dan kecerdasan taktis di atas rata-rata. Pemenang turnamen musim pertama ini dinobatkan sebagai duta pelajar esports Trenggalek yang berhak mengikuti pembinaan intensif Puslatkab.\n\nKeberhasilan musim perdana ini menjadi landasan kuat bagi ESI Trenggalek untuk menjadikannya sebagai agenda tahunan resmi di kalender olahraga daerah Bumi Menak Sopal."
     },
     {
         "id": 7,

@@ -341,7 +341,7 @@ function renderHomeView() {
                         </div>
                         <div class="text-[11px] text-slate-500 font-medium mb-3 flex items-center gap-1.5 truncate">
                             <i class="fa-solid fa-user-pen text-[#DC2626] text-[10px]"></i>
-                            <span>Oleh: <strong class="text-slate-700">${item.author || 'Humas PENGKAB ESI Trenggalek'}</strong></span>
+                            <span>Oleh: <strong class="text-slate-700">${item.author || 'Humas ESI Trenggalek'}</strong></span>
                         </div>
                         <h3 class="font-bold text-base md:text-lg text-[#0F172A] leading-snug mb-2 cursor-pointer hover:text-[#DC2626] transition" onclick="openNewsArticle(${item.id})">${item.title}</h3>
                         <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">${item.excerpt}</p>
@@ -1187,7 +1187,7 @@ async function handleAthleteRegistration(e) {
             </div>
         `;
 
-        const waMessage = `Halo Admin PENGKAB ESI Trenggalek, saya baru saja mendaftar sebagai anggota resmi ESI Trenggalek:\n- No. Registrasi: ${regNo}\n- Nama: ${fullName}\n- Nickname: ${nickname} (${gameId})\n- Divisi: ${division}\n- Asal: ${institution}\n- Domisili: Kec. ${kecamatan}, Trenggalek\nMohon validasi pendaftaran saya. Terima kasih!`;
+        const waMessage = `Halo Admin ESI Trenggalek, saya baru saja mendaftar sebagai anggota resmi ESI Trenggalek:\n- No. Registrasi: ${regNo}\n- Nama: ${fullName}\n- Nickname: ${nickname} (${gameId})\n- Divisi: ${division}\n- Asal: ${institution}\n- Domisili: Kec. ${kecamatan}, Trenggalek\nMohon validasi pendaftaran saya. Terima kasih!`;
         document.getElementById('waConfirmLink').href = `https://wa.me/6287840800351?text=${encodeURIComponent(waMessage)}`;
 
         showToast('Pendaftaran Berhasil', 'Data anggota Anda telah tersimpan dan masuk antrean verifikasi.');
@@ -1936,7 +1936,7 @@ function renderArticleDetailPage(id) {
     if (badge) badge.textContent = article.category || 'Berita';
     if (rTime) rTime.innerHTML = `<i class="fa-regular fa-clock"></i> ${article.readTime || '3 menit baca'}`;
     if (title) title.textContent = article.title;
-    const authorName = article.author || 'Humas PENGKAB ESI Trenggalek';
+    const authorName = article.author || 'Humas ESI Trenggalek';
     if (author) author.textContent = authorName;
 
     const detailAvatar = document.getElementById('detailAuthorAvatar');
@@ -2048,10 +2048,10 @@ function shareCurrentArticle(type) {
     const shareTitle = article ? article.title : 'Berita ESI Trenggalek';
 
     if (type === 'wa') {
-        const text = encodeURIComponent(`*${shareTitle}*\n\nBaca selengkapnya di Portal Resmi PENGKAB ESI Trenggalek:\n${pageUrl}`);
+        const text = encodeURIComponent(`*${shareTitle}*\n\nBaca selengkapnya di Portal Resmi ESI Trenggalek:\n${pageUrl}`);
         window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     } else if (type === 'telegram') {
-        const text = encodeURIComponent(`*${shareTitle}*\n\nPortal Resmi PENGKAB ESI Trenggalek`);
+        const text = encodeURIComponent(`*${shareTitle}*\n\nPortal Resmi ESI Trenggalek`);
         window.open(`https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${text}`, '_blank');
     } else if (type === 'facebook') {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`, '_blank');
@@ -2059,7 +2059,7 @@ function shareCurrentArticle(type) {
         if (navigator.share) {
             navigator.share({
                 title: shareTitle,
-                text: `${shareTitle} - Portal Resmi PENGKAB ESI Trenggalek`,
+                text: `${shareTitle} - Portal Resmi ESI Trenggalek`,
                 url: pageUrl
             }).catch(() => {});
         } else {
@@ -2249,7 +2249,7 @@ function renderCommentsHtml(articleId, comments) {
                                 <i class="fa-solid fa-shield-halved text-[9px]"></i> Admin / Pengurus
                             </span>
                         </div>
-                        <span class="text-slate-400 text-[10px] block mt-0.5 font-medium">Berkomentar sebagai perwakilan Pengkab ESI</span>
+                        <span class="text-slate-400 text-[10px] block mt-0.5 font-medium">Berkomentar sebagai perwakilan ESI Trenggalek</span>
                     </div>
                 </div>
             `;
@@ -2745,7 +2745,7 @@ function renderEventDetailPage(id) {
     const fee = ev.fee || 'Gratis / Free Entry';
     const slots = ev.slots ? parseInt(ev.slots, 10) : 32;
     const format = ev.format || 'Knockout / Best of 3 (BO3)';
-    const organizer = ev.organizer || 'PENGKAB ESI Trenggalek';
+    const organizer = ev.organizer || 'ESI Trenggalek';
     const category = ev.category || 'Umum & Pelajar Trenggalek';
     const rosterFormat = ev.rosterFormat || (
         ev.division && (ev.division.includes('Free Fire') || ev.division.includes('PUBG'))
@@ -3097,7 +3097,7 @@ async function handleAdminLogin(e) {
             if (passInput) passInput.value = '';
             updateHeaderAdminBadge();
             renderAdminView();
-            showToast('Login Berhasil', 'Selamat datang di Panel Admin PENGKAB ESI Trenggalek.');
+            showToast('Login Berhasil', 'Selamat datang di Panel Admin ESI Trenggalek.');
         } else {
             showToast('Login Gagal', res.message || 'Email atau kata sandi tidak sesuai.');
         }
@@ -3267,7 +3267,7 @@ function renderAdminAthletes() {
                     <div class="text-slate-400">${a.kecamatan ? 'Kec. ' + a.kecamatan : ''}</div>
                 </td>
                 <td class="px-3 py-2.5">
-                    <a href="https://wa.me/${(a.whatsapp||'').replace(/\D/g,'')}?text=Halo+${encodeURIComponent(a.nickname)}%2C+ini+dari+PENGKAB+ESI+Trenggalek." target="_blank"
+                    <a href="https://wa.me/${(a.whatsapp||'').replace(/\D/g,'')}?text=Halo+${encodeURIComponent(a.nickname)}%2C+ini+dari+ESI Trenggalek+ESI+Trenggalek." target="_blank"
                         class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-800 transition">
                         <i class="fa-brands fa-whatsapp"></i> ${a.whatsapp || '-'}
                     </a>
@@ -3815,7 +3815,7 @@ async function handleAdminAddEvent(e) {
         format: document.getElementById('evFormatInput')?.value.trim() || 'Knockout / Best of 3 (BO3)',
         rosterFormat: '5 Pemain Utama + 1 Cadangan',
         category: 'Umum & Pelajar Trenggalek',
-        organizer: 'PENGKAB ESI Trenggalek',
+        organizer: 'ESI Trenggalek',
         rules: document.getElementById('evRulesInput')?.value.trim() || '',
         contact: document.getElementById('evContactInput')?.value.trim() || '',
         imageUrl: adminEventPosterBase64 || ''
@@ -4583,7 +4583,7 @@ async function handleAdminAddNews(e) {
     const posRadio = document.querySelector('input[name="newsImagePosition"]:checked');
     const imagePosition = posRadio ? posRadio.value : 'top';
 
-    const authorVal = (document.getElementById('newsAuthorInput')?.value || '').trim() || 'Humas PENGKAB ESI Trenggalek';
+    const authorVal = (document.getElementById('newsAuthorInput')?.value || '').trim() || 'Humas ESI Trenggalek';
     const sourceVal = (document.getElementById('newsSourceInput')?.value || '').trim();
 
     // 1. Resolve semua foto inline draft (foto-X atau data:image) agar menjadi link cloud permanen
@@ -4666,7 +4666,7 @@ function renderAdminNews() {
                 <div class="min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-[11px] font-bold uppercase text-[#DC2626]">${n.category} • ${n.date}</span>
-                        <span class="text-[11px] text-slate-400 font-medium">• Penulis: <strong class="text-slate-700">${n.author || 'Humas PENGKAB ESI Trenggalek'}</strong></span>
+                        <span class="text-[11px] text-slate-400 font-medium">• Penulis: <strong class="text-slate-700">${n.author || 'Humas ESI Trenggalek'}</strong></span>
                     </div>
                     <h4 class="font-bold text-sm text-[#0F172A] mt-0.5 truncate">${n.title}</h4>
                 </div>
@@ -4705,7 +4705,7 @@ async function deleteNews(id) {
 function previewCurrentNewsDraft() {
     const title = (document.getElementById('newsTitleInput')?.value || '').trim();
     const category = document.getElementById('newsCatInput')?.value || 'Pengumuman';
-    const author = (document.getElementById('newsAuthorInput')?.value || '').trim() || 'Humas PENGKAB ESI Trenggalek';
+    const author = (document.getElementById('newsAuthorInput')?.value || '').trim() || 'Humas ESI Trenggalek';
     const source = (document.getElementById('newsSourceInput')?.value || '').trim();
     const content = (document.getElementById('newsContentInput')?.value || '').trim();
     const imageUrl = (typeof newsSelectedImageBase64 !== 'undefined' && newsSelectedImageBase64)
@@ -5013,7 +5013,7 @@ function renderMemberKtaCard() {
                 <i class="fa-solid fa-triangle-exclamation text-base mt-0.5 text-red-600 shrink-0"></i>
                 <div class="flex-1">
                     <p class="font-bold text-sm text-red-800">Status Pendaftaran Ditolak / Perlu Perbaikan</p>
-                    <p class="mt-0.5">Mohon hubungi Pengurus PENGKAB ESI Trenggalek untuk klarifikasi atau perbaikan berkas pendaftaran Anda.</p>
+                    <p class="mt-0.5">Mohon hubungi Pengurus ESI Trenggalek untuk klarifikasi atau perbaikan berkas pendaftaran Anda.</p>
                 </div>
             </div>
         `;
@@ -5024,7 +5024,7 @@ function renderMemberKtaCard() {
                 <i class="fa-solid fa-clock"></i> Menunggu Verifikasi
             </span>
         `;
-        const waMsg = `Halo Pengurus PENGKAB ESI Trenggalek, saya atas nama ${m.fullName} (${m.nickname} - Divisi ${m.division}) telah mendaftar di sistem ESI Trenggalek (No. Reg: ${regNo}). Mohon info proses verifikasi keanggotaan saya. Terima kasih!`;
+        const waMsg = `Halo Pengurus ESI Trenggalek, saya atas nama ${m.fullName} (${m.nickname} - Divisi ${m.division}) telah mendaftar di sistem ESI Trenggalek (No. Reg: ${regNo}). Mohon info proses verifikasi keanggotaan saya. Terima kasih!`;
         statusBannerHtml = `
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900">
                 <div class="flex items-start gap-3">
@@ -5062,7 +5062,7 @@ function renderMemberKtaCard() {
                         <img src="assets/images/logo-esi.png" alt="Logo Resmi ESI" class="w-11 h-11 sm:w-12 sm:h-12 object-contain drop-shadow-md shrink-0">
                         <div class="min-w-0">
                             <span class="block text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest text-[#DC2626]">KARTU TANDA ANGGOTA ELEKTRONIK</span>
-                            <h2 class="font-extrabold text-sm sm:text-base md:text-lg tracking-tight leading-tight truncate">PENGKAB ESI KABUPATEN TRENGGALEK</h2>
+                            <h2 class="font-extrabold text-sm sm:text-base md:text-lg tracking-tight leading-tight truncate">ESI KABUPATEN TRENGGALEK</h2>
                             <p class="text-[10px] sm:text-[11px] text-slate-400 truncate">Pengurus Kabupaten Esports Indonesia • ESI Trenggalek</p>
                         </div>
                     </div>
@@ -5124,7 +5124,7 @@ function renderMemberKtaCard() {
                                 ${statusBadgeHtml}
                             </div>
                             <div class="text-[10px] text-slate-400 text-right">
-                                PENGKAB ESI Trenggalek 2026
+                                ESI Trenggalek 2026
                             </div>
                         </div>
                     </div>
@@ -5794,7 +5794,7 @@ function updateKtaCaptionPreview() {
     if (!m) return;
     const preview = document.getElementById('ktaCaptionPreview');
     if (preview) {
-        preview.textContent = `Resmi terdaftar sebagai Atlet Esports PENGKAB ESI Trenggalek! Divisi ${m.division} • ${m.nickname} (#ESITrenggalek)`;
+        preview.textContent = `Resmi terdaftar sebagai Atlet Esports ESI Trenggalek! Divisi ${m.division} • ${m.nickname} (#ESITrenggalek)`;
     }
 }
 
@@ -5938,7 +5938,7 @@ function drawStoryCardCanvas(ctx, m, logoImg, regNo, rankText) {
     // Top organization subtitle
     ctx.fillStyle = '#F59E0B';
     ctx.font = '800 20px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('PENGURUS KABUPATEN ESPORTS INDONESIA (PENGKAB ESI)', W / 2, 275);
+    ctx.fillText('PENGURUS ESI KABUPATEN TRENGGALEK', W / 2, 275);
 
     // Main Title
     ctx.fillStyle = '#FFFFFF';
@@ -6161,7 +6161,7 @@ function drawHorizontalCardCanvas(ctx, m, logoImg, regNo, rankText) {
 
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '900 28px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('PENGKAB ESI KABUPATEN TRENGGALEK', 160, 120);
+    ctx.fillText('ESI KABUPATEN TRENGGALEK', 160, 120);
 
     // Reg No on Top Right
     ctx.textAlign = 'right';
@@ -6301,7 +6301,7 @@ function drawHorizontalCardCanvas(ctx, m, logoImg, regNo, rankText) {
     // Footer note
     ctx.fillStyle = '#64748B';
     ctx.font = '13px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('Pengurus Kabupaten Esports Indonesia (PENGKAB ESI) Trenggalek • Berafiliasi PBESI & KONI • #TrenggalekJuara', rightX, 645);
+    ctx.fillText('Pengurus ESI Trenggalek • Berafiliasi PBESI & KONI • #TrenggalekJuara', rightX, 645);
 }
 
 function downloadKtaPng() {
@@ -6366,7 +6366,7 @@ async function shareKtaDirectly() {
                     await navigator.share({
                         files: [file],
                         title: 'KTA Resmi ESI Kabupaten Trenggalek',
-                        text: `Saya resmi terdaftar sebagai Atlet Esports PENGKAB ESI Kabupaten Trenggalek! Divisi ${m.division}. Cek keabsahan data di https://esitrenggalek.id #ESITrenggalek #PBESI`
+                        text: `Saya resmi terdaftar sebagai Atlet Esports ESI KABUPATEN TRENGGALEK! Divisi ${m.division}. Cek keabsahan data di https://esitrenggalek.id #ESITrenggalek #PBESI`
                     });
                     showToast('KTA Berhasil Dibagikan', 'Pilih Instagram Stories atau media sosial Anda.');
                     return;
@@ -6392,7 +6392,7 @@ async function shareKtaDirectly() {
 function copyKtaCaption() {
     const m = loggedMember;
     if (!m) return;
-    const caption = `Resmi terdaftar sebagai Atlet Esports binaan PENGKAB ESI Kabupaten Trenggalek! 🎮🔥\n\nNama: ${m.fullName}\nIGN: ${m.nickname} (ID: ${m.gameId})\nDivisi: ${m.division}\nTim: ${m.teamName || 'Individu'}\nNo. Reg: ${getAthleteRegNo(m)}\n\nBerafiliasi Resmi PBESI & KONI Trenggalek.\nCek keabsahan atlet di: https://esitrenggalek.id\n\n#ESITrenggalek #PBESI #EsportsIndonesia #TrenggalekJuara #MenakSopal`;
+    const caption = `Resmi terdaftar sebagai Atlet Esports binaan ESI KABUPATEN TRENGGALEK! 🎮🔥\n\nNama: ${m.fullName}\nIGN: ${m.nickname} (ID: ${m.gameId})\nDivisi: ${m.division}\nTim: ${m.teamName || 'Individu'}\nNo. Reg: ${getAthleteRegNo(m)}\n\nBerafiliasi Resmi PBESI & KONI Trenggalek.\nCek keabsahan atlet di: https://esitrenggalek.id\n\n#ESITrenggalek #PBESI #EsportsIndonesia #TrenggalekJuara #MenakSopal`;
 
     navigator.clipboard.writeText(caption).then(() => {
         showToast('Caption Disalin', 'Teks caption telah disalin ke clipboard! Siap ditempel di Instagram.');
@@ -6438,7 +6438,7 @@ async function printKtaPhysical() {
             <div class="card-print">
                 <img src="${dataUrl}" alt="KTA Digital">
             </div>
-            <p class="note">Standar Ukuran Kartu ID (CR80: 85.6 x 53.98 mm) - PENGKAB ESI Trenggalek</p>
+            <p class="note">Standar Ukuran Kartu ID (CR80: 85.6 x 53.98 mm) - ESI Trenggalek</p>
             <script>
                 window.onload = function() {
                     window.print();
@@ -6944,8 +6944,8 @@ function renderEventRegistrationPage(eventId) {
 
     if (titleEl) titleEl.textContent = ev.title;
     if (divTextEl) divTextEl.textContent = ev.division || 'Esports';
-    if (descEl) descEl.textContent = ev.description || 'Pendaftaran tim resmi untuk kejuaraan esports PENGKAB ESI Trenggalek.';
-    if (orgEl) orgEl.textContent = ev.organizer || 'PENGKAB ESI Trenggalek';
+    if (descEl) descEl.textContent = ev.description || 'Pendaftaran tim resmi untuk kejuaraan esports ESI Trenggalek.';
+    if (orgEl) orgEl.textContent = ev.organizer || 'ESI Trenggalek';
     if (dateEl) dateEl.textContent = ev.date;
     if (locEl) locEl.textContent = ev.location;
     if (feeEl) feeEl.textContent = ev.fee || 'Gratis / Free Entry';
@@ -7884,7 +7884,7 @@ function exportTournamentTeamsExcel(eventId) {
         <body>
             <table style="border-collapse: collapse; width: 100%;">
                 <tr>
-                    <td colspan="13" style="font-size: 15pt; font-weight: bold; color: #0F172A; padding: 12px 0 4px 0;">DATA PENDAFTAR TURNAMEN - PENGKAB ESI KABUPATEN TRENGGALEK</td>
+                    <td colspan="13" style="font-size: 15pt; font-weight: bold; color: #0F172A; padding: 12px 0 4px 0;">DATA PENDAFTAR TURNAMEN - ESI KABUPATEN TRENGGALEK</td>
                 </tr>
                 <tr>
                     <td colspan="13" style="font-size: 12pt; font-weight: bold; color: #DC2626; padding-bottom: 4px;">${safeTitle} (${division})</td>
