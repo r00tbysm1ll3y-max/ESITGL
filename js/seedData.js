@@ -711,6 +711,7 @@ const INITIAL_TOURNAMENT_REGISTRATIONS = [
     {
         id: "tr_1794829000001",
         eventId: 1,
+        tournamentId: 1,
         eventTitle: "Piala Pelajar Esports Season 2 Tahun 2026",
         division: "MLBB",
         regNumber: "REG-TRN-2026-0001",
@@ -735,6 +736,7 @@ const INITIAL_TOURNAMENT_REGISTRATIONS = [
     {
         id: "tr_1794829000002",
         eventId: 1,
+        tournamentId: 1,
         eventTitle: "Piala Pelajar Esports Season 2 Tahun 2026",
         division: "MLBB",
         regNumber: "REG-TRN-2026-0002",

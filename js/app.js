@@ -7564,8 +7564,11 @@ async function handleTournamentRegistrationSubmit(e) {
             waConfirmBtn.href = `https://wa.me/6287840800351?text=${encodeURIComponent(waMsg)}`;
         }
 
-        // Jika admin panel sedang terbuka, perbarui pendaftar
-        if (isAdminLoggedIn) {
+        // Perbarui list dan badge pendaftar di admin jika aktif
+        if (typeof renderAdminEvents === 'function') {
+            renderAdminEvents();
+        }
+        if (isAdminLoggedIn && typeof renderAdminTournamentRegistrations === 'function') {
             renderAdminTournamentRegistrations(adminSelectedTournamentId || ev.id);
         }
 
@@ -7587,7 +7590,7 @@ async function handleTournamentRegistrationSubmit(e) {
 
 let adminActiveTournamentId = null;
 
-function openAdminTournamentRegsModal(eventId) {
+async function openAdminTournamentRegsModal(eventId) {
     if (!eventId && events.length > 0) eventId = events[0].id;
     adminActiveTournamentId = eventId;
     adminSelectedTournamentId = eventId;
@@ -7623,6 +7626,7 @@ function openAdminTournamentRegsModal(eventId) {
     const searchEl = document.getElementById('modalRegsSearchInput');
     if (searchEl) searchEl.value = '';
 
+    // Render instan dari local cache
     renderAdminTournamentRegistrationsInModal(eventId);
 
     const modal = document.getElementById('modalAdminTournamentRegistrations');
@@ -7630,6 +7634,14 @@ function openAdminTournamentRegsModal(eventId) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
+
+    // Sync data terbaru dari cloud di background
+    try {
+        const live = await Api.getTournamentRegistrations(eventId);
+        if (Array.isArray(live)) {
+            renderAdminTournamentRegistrationsInModal(eventId);
+        }
+    } catch (_) {}
 }
 
 function closeAdminTournamentRegsModal() {

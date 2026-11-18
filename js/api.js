@@ -385,7 +385,7 @@ const Api = {
         // Hapus pendaftaran turnamen terkait
         try {
             const regs = await this._storeGet('registrations') || [];
-            const filtered = regs.filter(r => String(r.tournamentId) !== String(id));
+            const filtered = regs.filter(r => String(r.eventId || r.tournamentId) !== String(id));
             if (filtered.length !== regs.length) {
                 await this._storePost('reset', 'registrations', { data: filtered });
             }
@@ -617,7 +617,7 @@ const Api = {
                 list = typeof INITIAL_TOURNAMENT_REGISTRATIONS !== 'undefined' ? [...INITIAL_TOURNAMENT_REGISTRATIONS] : [];
             }
             if (eventId) {
-                return list.filter(r => String(r.tournamentId) === String(eventId));
+                return list.filter(r => String(r.eventId || r.tournamentId) === String(eventId));
             }
             return list;
         } catch (_) {
@@ -628,19 +628,40 @@ const Api = {
     async getTournamentRegistrations(eventId = null) {
         let regs = await this._storeGet('registrations');
         if (!regs) regs = typeof INITIAL_TOURNAMENT_REGISTRATIONS !== 'undefined' ? [...INITIAL_TOURNAMENT_REGISTRATIONS] : [];
-        if (eventId) return regs.filter(r => String(r.tournamentId) === String(eventId));
+        if (eventId) return regs.filter(r => String(r.eventId || r.tournamentId) === String(eventId));
         return regs;
     },
 
     async createTournamentRegistration(regData) {
-        const newReg = { id: Date.now(), ...regData };
-        const result = await this._storePost('create', 'registrations', newReg);
+        const currentList = this.getLocalTournamentRegistrations();
+        const orderNum = currentList.length + 1;
+        const regNumber = regData.regNumber || `REG-TRN-${new Date().getFullYear()}-${String(orderNum).padStart(4, '0')}`;
+        const newReg = {
+            id: 'tr_' + Date.now(),
+            regNumber,
+            status: 'pending',
+            registeredAt: new Date().toISOString(),
+            ...regData,
+            tournamentId: regData.eventId || regData.tournamentId,
+            eventId: regData.eventId || regData.tournamentId
+        };
+
+        // 1. Simpan ke local cache terlebih dahulu agar data tidak pernah hilang
         try {
             const list = this.getLocalTournamentRegistrations();
-            list.push(result.item || newReg);
+            list.push(newReg);
             localStorage.setItem('esi_blob_cache_registrations', JSON.stringify(list));
         } catch (_) {}
-        return result.item;
+
+        // 2. Sync ke serverless Vercel Blob store jika online
+        try {
+            const result = await this._storePost('create', 'registrations', newReg);
+            if (result && result.item) return result.item;
+        } catch (err) {
+            console.warn('Gagal sync registrasi turnamen ke Blob (data tetap tersimpan di lokal):', err);
+        }
+
+        return newReg;
     },
 
     async updateTournamentRegistrationStatus(id, newStatus) {
