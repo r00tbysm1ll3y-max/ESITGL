@@ -2246,7 +2246,7 @@
 
         <!-- ==================== VIEW 8: DASHBOARD ADMIN (TERPROTEKSI LOGIN) ==================== -->
         <section id="view-admin" class="spa-view hidden">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+            <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-5 pb-24 md:py-12">
 
                 <!-- A. LOGIN FORM (Tampil jika belum login) -->
                 <div id="adminLoginBox" class="max-w-md mx-auto bg-white border border-[#E2E8F0] rounded-xl p-6 sm:p-8">
@@ -2356,16 +2356,16 @@
                         <div class="flex-1 min-w-0">
                             <!-- TAB 1: KELOLA DATA ATLET & POIN KLASEMEN -->
                             <div id="admin-panel-atlet"
-                                class="admin-panel bg-white border border-[#E2E8F0] rounded-xl p-5 md:p-6">
+                                class="admin-panel bg-white border border-[#E2E8F0] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm">
                                 <!-- Header -->
                                 <div class="flex flex-col gap-3 pb-4 mb-4 border-b border-[#E2E8F0]">
                                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                                         <div>
-                                            <h2 class="font-extrabold text-lg text-[#0F172A]">Kelola Data Atlet Terdaftar</h2>
+                                            <h2 class="font-extrabold text-base sm:text-lg text-[#0F172A]">Kelola Data Atlet Terdaftar</h2>
                                             <p class="text-xs text-slate-500 mt-0.5">Lihat data lengkap, verifikasi pendaftaran, update poin klasemen, dan ekspor data.</p>
                                         </div>
                                         <button onclick="exportAthletesCSV()"
-                                            class="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm">
+                                            class="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition shadow-sm">
                                             <i class="fa-solid fa-file-csv"></i> Export CSV / Excel
                                         </button>
                                     </div>
@@ -2374,30 +2374,32 @@
                                         <div class="relative flex-1">
                                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                                             <input type="text" id="adminAthleteSearch" oninput="renderAdminAthletes()" placeholder="Cari nama, nickname, divisi, sekolah..."
-                                                class="w-full pl-8 pr-3 py-2 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-slate-400">
+                                                class="w-full pl-8 pr-3 py-2 rounded-xl bg-[#F4F6F9] border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-slate-400">
                                         </div>
-                                        <select id="adminAthleteFilter" onchange="renderAdminAthletes()"
-                                            class="px-3 py-2 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-xs font-bold text-[#0F172A]">
-                                            <option value="all">Semua Status</option>
-                                            <option value="pending">Perlu Verifikasi (Pending)</option>
-                                            <option value="verified">Sudah Terverifikasi</option>
-                                        </select>
-                                        <select id="adminAthleteDivFilter" onchange="renderAdminAthletes()"
-                                            class="px-3 py-2 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-xs font-bold text-[#0F172A]">
-                                            <option value="all">Semua Divisi</option>
-                                            <option value="MLBB">MLBB</option>
-                                            <option value="Free Fire">Free Fire</option>
-                                            <option value="eFootball">eFootball</option>
-                                            <option value="PUBG Mobile">PUBG Mobile</option>
-                                            <option value="Valorant">Valorant</option>
-                                        </select>
+                                        <div class="grid grid-cols-2 sm:flex gap-2">
+                                            <select id="adminAthleteFilter" onchange="renderAdminAthletes()"
+                                                class="w-full sm:w-auto px-3 py-2 rounded-xl bg-[#F4F6F9] border border-[#E2E8F0] text-xs font-bold text-[#0F172A]">
+                                                <option value="all">Semua Status</option>
+                                                <option value="pending">Perlu Verifikasi (Pending)</option>
+                                                <option value="verified">Sudah Terverifikasi</option>
+                                            </select>
+                                            <select id="adminAthleteDivFilter" onchange="renderAdminAthletes()"
+                                                class="w-full sm:w-auto px-3 py-2 rounded-xl bg-[#F4F6F9] border border-[#E2E8F0] text-xs font-bold text-[#0F172A]">
+                                                <option value="all">Semua Divisi</option>
+                                                <option value="MLBB">MLBB</option>
+                                                <option value="Free Fire">Free Fire</option>
+                                                <option value="eFootball">eFootball</option>
+                                                <option value="PUBG Mobile">PUBG Mobile</option>
+                                                <option value="Valorant">Valorant</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <!-- Summary stats -->
-                                    <div id="adminAthleteSummary" class="flex flex-wrap gap-2 text-xs"></div>
+                                    <div id="adminAthleteSummary" class="flex flex-wrap gap-1.5 sm:gap-2 text-xs"></div>
                                 </div>
 
                                 <!-- Mobile Card List (hidden on sm+) -->
-                                <div id="adminAthleteCardList" class="sm:hidden space-y-3 px-1 py-2">
+                                <div id="adminAthleteCardList" class="sm:hidden space-y-3.5 py-1">
                                     <!-- Diisi otomatis via JS -->
                                 </div>
                                 <!-- Desktop Table (hidden on mobile) -->
@@ -2429,7 +2431,7 @@
 
                                 <!-- SUB-VIEW 1: DAFTAR TURNAMEN (DEFAULT AKTIF) -->
                                 <div id="adminEventListView" class="space-y-6">
-                                    <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 md:p-6 shadow-sm">
+                                    <div class="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm">
                                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-slate-200">
                                             <div>
                                                 <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 text-[#DC2626] text-[10px] font-black uppercase tracking-wider mb-1">
@@ -2643,7 +2645,7 @@
 
                                 <!-- SUB-VIEW 1: DAFTAR ARTIKEL (DEFAULT AKTIF) -->
                                 <div id="adminNewsListView" class="space-y-6">
-                                    <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 md:p-6 shadow-sm">
+                                    <div class="bg-white border border-[#E2E8F0] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm">
                                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-slate-200">
                                             <div>
                                                 <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 text-[#DC2626] text-[10px] font-black uppercase tracking-wider mb-1">
@@ -3011,7 +3013,7 @@
 
         <!-- ==================== VIEW 9: AREA ANGGOTA & ATLET ==================== -->
         <section id="view-member" class="spa-view hidden">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+            <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-5 pb-24 md:py-12">
 
                 <!-- A. FORM LOGIN ANGGOTA (Tampil Jika Belum Login) -->
                 <div id="memberLoginBox" class="max-w-md mx-auto bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-sm">
@@ -4373,11 +4375,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261118ah" defer></script>
-    <script src="js/config.js?v=20261118ah" defer></script>
-    <script src="js/supabaseClient.js?v=20261118ah" defer></script>
-    <script src="js/api.js?v=20261118ah" defer></script>
-    <script src="js/app.js?v=20261118ah" defer></script>
+    <script src="js/seedData.js?v=20261118ai" defer></script>
+    <script src="js/config.js?v=20261118ai" defer></script>
+    <script src="js/supabaseClient.js?v=20261118ai" defer></script>
+    <script src="js/api.js?v=20261118ai" defer></script>
+    <script src="js/app.js?v=20261118ai" defer></script>
 </body>
 
 </html>

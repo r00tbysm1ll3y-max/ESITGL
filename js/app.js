@@ -3298,16 +3298,16 @@ function renderAdminAkunPanel() {
                     <i class="fa-solid fa-trash text-[10px]"></i><span class="hidden sm:inline">Hapus</span>
                 </button>`;
         return `
-            <div class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition">
+            <div class="flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-5 py-3 hover:bg-slate-50/60 transition">
                 <div class="w-10 h-10 rounded-xl bg-[#0F172A] text-white font-black text-sm flex items-center justify-center shrink-0">${initials}</div>
                 <div class="min-w-0 flex-1">
                     <div class="font-bold text-sm text-[#0F172A] truncate">${acc.name}</div>
                     <div class="text-[11px] text-slate-500 font-mono truncate">${acc.email}</div>
                     <div class="mt-0.5">${roleBadge}</div>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <button onclick="openSetAdminPasswordModal('${acc.email}', '${acc.name.replace(/'/g, '\\\'')}')" title="Ubah kata sandi"
-                        class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-white text-xs font-bold border border-amber-200 hover:border-amber-500 transition active:scale-95">
+                        class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-white text-xs font-bold border border-amber-200 hover:border-amber-500 transition active:scale-95 shadow-2xs">
                         <i class="fa-solid fa-key text-[10px]"></i><span class="hidden sm:inline">Sandi</span>
                     </button>
                     ${deleteBtn}
@@ -3489,76 +3489,105 @@ function renderAdminAthletes() {
 
         const regNo = getAthleteRegNo(a);
 
-        // ── MOBILE CARD ──
+        // ── MOBILE CARD (Tertata Rapi & Proporsional di Semua Layar Mobile) ──
         const mobileCard = `
-            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-                <div class="flex items-start justify-between gap-3 mb-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-11 h-11 rounded-xl bg-[#0F172A] text-white font-black text-sm flex items-center justify-center shrink-0">
+            <div class="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-3.5 transition hover:border-slate-300">
+                <!-- Header Card: Avatar, Nama, No. Reg & Badge Status -->
+                <div class="flex items-start justify-between gap-2.5">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0F172A] to-slate-800 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs border border-slate-700">
                             ${(a.nickname || 'AT').substring(0, 2).toUpperCase()}
                         </div>
-                        <div class="min-w-0">
-                            <div class="font-black text-[#0F172A] text-sm truncate">${a.nickname}</div>
-                            <div class="text-[11px] text-slate-500 truncate">${a.fullName}</div>
-                            <span class="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-200">${regNo}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-black text-[#0F172A] text-sm truncate leading-tight">${a.nickname}</div>
+                            <div class="text-[11px] text-slate-500 truncate mt-0.5">${a.fullName}</div>
+                            <div class="mt-1">
+                                <span class="inline-block whitespace-nowrap text-[10px] font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 shadow-2xs">${regNo}</span>
+                            </div>
                         </div>
                     </div>
-                    ${statusBadge}
+                    <div class="shrink-0 pt-0.5">
+                        ${statusBadge}
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] mb-3">
+
+                <!-- Grid Informasi Atlet -->
+                <div class="bg-slate-50/80 border border-slate-200/70 rounded-xl p-3 grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
                     <div>
-                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Divisi</span>
-                        <div class="font-bold text-[#DC2626]">${a.division}</div>
+                        <span class="text-slate-400 uppercase tracking-wider font-bold text-[9px] block">Divisi Gim</span>
+                        <div class="font-extrabold text-[#DC2626] truncate">${a.division}</div>
                     </div>
                     <div>
-                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Game ID</span>
-                        <div class="font-mono text-slate-700">${a.gameId || '-'}</div>
+                        <span class="text-slate-400 uppercase tracking-wider font-bold text-[9px] block">Game ID</span>
+                        <div class="font-mono font-semibold text-slate-800 truncate">${a.gameId || '-'}</div>
                     </div>
                     <div>
-                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Tim</span>
-                        <div class="text-slate-700">${a.teamName || 'Non-Tim'}</div>
+                        <span class="text-slate-400 uppercase tracking-wider font-bold text-[9px] block">Tim Esports</span>
+                        <div class="font-semibold text-slate-700 truncate">${a.teamName || 'Non-Tim'}</div>
                     </div>
                     <div>
-                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Poin</span>
-                        <div class="font-black text-[#0F172A]">${a.points || 0}</div>
+                        <span class="text-slate-400 uppercase tracking-wider font-bold text-[9px] block">Poin Resmi</span>
+                        <div class="font-black text-[#0F172A]">${a.points || 0} PTS</div>
+                    </div>
+                    <div class="col-span-2 pt-1 border-t border-slate-200/60">
+                        <span class="text-slate-400 uppercase tracking-wider font-bold text-[9px] block">Instansi / Asal Daerah</span>
+                        <div class="text-slate-700 truncate font-medium">${a.institution || '-'}${a.kecamatan ? ' • Kec. ' + a.kecamatan : ''}</div>
                     </div>
                     <div class="col-span-2">
-                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Instansi / Domisili</span>
-                        <div class="text-slate-700 truncate">${a.institution || '-'}${a.kecamatan ? ' • Kec. ' + a.kecamatan : ''}</div>
-                    </div>
-                    <div class="col-span-2">
-                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">WhatsApp</span>
+                        <span class="text-slate-400 uppercase tracking-wider font-bold text-[9px] block">Kontak WhatsApp</span>
                         <a href="https://wa.me/${(a.whatsapp||'').replace(/\D/g,'')}?text=Halo+${encodeURIComponent(a.nickname)}%2C+ini+dari+ESI+Trenggalek." target="_blank"
-                            class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                            <i class="fa-brands fa-whatsapp text-xs"></i> ${a.whatsapp || '-'}
+                            class="inline-flex items-center gap-1.5 text-emerald-700 font-bold hover:underline">
+                            <i class="fa-brands fa-whatsapp text-emerald-600 text-xs"></i>
+                            <span>${a.whatsapp || '-'}</span>
                         </a>
                     </div>
                 </div>
-                <!-- Poin input row -->
-                <div class="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
-                    <span class="text-[11px] text-slate-500 font-bold">Edit Poin:</span>
-                    <input type="number" id="ptsInput-${a.id}" value="${a.points || 0}" min="0"
-                        class="w-20 px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-sm font-bold text-[#0F172A] text-center">
-                    <button onclick="updateAthletePoints(${a.id})" title="Simpan Poin"
-                        class="px-3 py-1.5 rounded-lg bg-[#0F172A] hover:bg-slate-700 text-white text-xs font-bold transition">
-                        <i class="fa-solid fa-floppy-disk"></i> Simpan
-                    </button>
+
+                <!-- Box Edit Poin Klasemen -->
+                <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-2xs">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <i class="fa-solid fa-trophy text-amber-500 text-xs shrink-0"></i>
+                        <span class="text-[11px] font-bold text-slate-700 whitespace-nowrap">Edit Poin:</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <input type="number" id="ptsInput-${a.id}" value="${a.points || 0}" min="0"
+                            class="w-20 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-xs font-black text-[#0F172A] text-center focus:bg-white focus:outline-none focus:border-slate-500">
+                        <button onclick="updateAthletePoints(${a.id})" title="Simpan Poin"
+                            class="px-3 py-1.5 rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+                            <i class="fa-solid fa-floppy-disk text-[11px]"></i>
+                            <span>Simpan</span>
+                        </button>
+                    </div>
                 </div>
-                <!-- Action buttons row -->
-                <div class="flex gap-2">
-                    <button onclick="showAthleteDetail(${a.id})"
-                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold transition">
-                        <i class="fa-solid fa-eye"></i> Detail
-                    </button>
-                    <button onclick="openAdminSetPasswordPrompt(${a.id})"
-                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-white text-xs font-bold transition">
-                        <i class="fa-solid fa-key"></i> Sandi
-                    </button>
-                    ${verifyBtn}
-                    <button onclick="deleteAthlete(${a.id})"
-                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white text-xs font-bold transition">
-                        <i class="fa-solid fa-trash"></i> Hapus
-                    </button>
+
+                <!-- Tombol Aksi Mobile (Tertata Lega & Proporsional) -->
+                <div class="pt-1">
+                    ${a.status === 'pending' ? `
+                    <!-- Tombol Utama Verifikasi untuk status Pending -->
+                    <button onclick="verifyAthlete(${a.id})"
+                        class="w-full flex items-center justify-center gap-2 py-2.5 mb-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs font-bold shadow-sm transition">
+                        <i class="fa-solid fa-circle-check text-sm"></i>
+                        <span>Verifikasi & Aktifkan Atlet</span>
+                    </button>` : ''}
+
+                    <!-- 3 Tombol Aksi Simetris (Grid 3 Kolom) -->
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="showAthleteDetail(${a.id})"
+                            class="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white text-xs font-bold transition border border-blue-100 active:scale-95">
+                            <i class="fa-solid fa-eye text-xs"></i>
+                            <span>Detail</span>
+                        </button>
+                        <button onclick="openAdminSetPasswordPrompt(${a.id})"
+                            class="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-600 text-amber-800 hover:text-white text-xs font-bold transition border border-amber-200 active:scale-95">
+                            <i class="fa-solid fa-key text-xs"></i>
+                            <span>Sandi</span>
+                        </button>
+                        <button onclick="deleteAthlete(${a.id})"
+                            class="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-50 hover:bg-red-600 text-red-700 hover:text-white text-xs font-bold transition border border-red-200 active:scale-95">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                            <span>Hapus</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -3655,9 +3684,9 @@ function showAthleteDetail(id) {
     if (!body) return;
 
     const row = (label, val) => val ? `
-        <div class="flex gap-2">
-            <span class="text-[10px] text-slate-400 uppercase tracking-wide font-bold w-32 shrink-0 pt-0.5">${label}</span>
-            <span class="text-xs font-semibold text-[#0F172A] flex-1">${val}</span>
+        <div class="flex flex-col sm:flex-row sm:items-start gap-0.5 sm:gap-2">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wide font-bold sm:w-32 shrink-0 pt-0.5">${label}</span>
+            <span class="text-xs font-semibold text-[#0F172A] flex-1 break-words">${val}</span>
         </div>` : '';
 
     const section = (title, icon, rows) => `
@@ -4306,43 +4335,46 @@ function renderAdminEvents() {
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                <div class="pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 flex flex-col sm:flex-row lg:flex-row items-stretch sm:items-center gap-2 shrink-0">
                     <!-- Tombol Utama: Kelola Pendaftar -->
                     <button onclick="openAdminTournamentRegsModal(${ev.id})"
-                        class="px-4 py-2 rounded-xl bg-[#0F172A] hover:bg-[#DC2626] text-white text-xs font-black transition flex items-center gap-2 shadow-sm group">
+                        class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#0F172A] hover:bg-[#DC2626] active:scale-[0.98] text-white text-xs font-black transition flex items-center justify-center gap-2 shadow-sm group">
                         <i class="fa-solid fa-users text-xs group-hover:scale-110 transition-transform"></i>
                         <span>Kelola Pendaftar</span>
                         <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black">${totalRegs}</span>
                     </button>
 
-                    <!-- Tombol Edit Turnamen -->
-                    <button onclick="editEvent(${ev.id})" title="Edit Turnamen"
-                        class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                        <span>Edit</span>
-                    </button>
+                    <!-- Baris Tombol Aksi Pendukung (Edit, Excel, Status, Hapus) -->
+                    <div class="flex items-center gap-2 justify-between sm:justify-start">
+                        <!-- Tombol Edit Turnamen -->
+                        <button onclick="editEvent(${ev.id})" title="Edit Turnamen"
+                            class="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-95">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            <span>Edit</span>
+                        </button>
 
-                    <!-- Tombol Ekspor Excel Cepat -->
-                    <button onclick="exportTournamentTeamsExcel(${ev.id})"
-                        title="Unduh Data Pendaftar Excel (.xls)"
-                        class="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition">
-                        <i class="fa-solid fa-file-excel text-sm"></i>
-                    </button>
+                        <!-- Tombol Ekspor Excel Cepat -->
+                        <button onclick="exportTournamentTeamsExcel(${ev.id})"
+                            title="Unduh Data Pendaftar Excel (.xls)"
+                            class="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition shadow-2xs shrink-0 active:scale-95">
+                            <i class="fa-solid fa-file-excel text-sm"></i>
+                        </button>
 
-                    <!-- Dropdown Ubah Status -->
-                    <select onchange="changeEventStatus(${ev.id}, this.value)"
-                        class="h-9 px-2.5 rounded-xl bg-[#F8FAFC] border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0F172A]">
-                        <option value="Upcoming" ${ev.status === 'Upcoming' ? 'selected' : ''}>Upcoming</option>
-                        <option value="Ongoing" ${ev.status === 'Ongoing' ? 'selected' : ''}>Ongoing</option>
-                        <option value="Selesai" ${ev.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
-                    </select>
+                        <!-- Dropdown Ubah Status -->
+                        <select onchange="changeEventStatus(${ev.id}, this.value)"
+                            class="flex-1 sm:flex-initial h-9 px-2.5 rounded-xl bg-[#F8FAFC] border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0F172A] shadow-2xs">
+                            <option value="Upcoming" ${ev.status === 'Upcoming' ? 'selected' : ''}>Upcoming</option>
+                            <option value="Ongoing" ${ev.status === 'Ongoing' ? 'selected' : ''}>Ongoing</option>
+                            <option value="Selesai" ${ev.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+                        </select>
 
-                    <!-- Tombol Hapus Event -->
-                    <button onclick="deleteEvent(${ev.id})"
-                        title="Hapus Turnamen"
-                        class="w-9 h-9 rounded-xl bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white border border-red-200 flex items-center justify-center transition">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
+                        <!-- Tombol Hapus Event -->
+                        <button onclick="deleteEvent(${ev.id})"
+                            title="Hapus Turnamen"
+                            class="w-9 h-9 rounded-xl bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white border border-red-200 flex items-center justify-center transition shadow-2xs shrink-0 active:scale-95">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -5151,21 +5183,21 @@ function renderAdminNews() {
                     <h4 class="font-bold text-sm text-[#0F172A] mt-0.5 truncate">${n.title}</h4>
                 </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 justify-end">
                 <button onclick="viewNewsFromAdmin(${n.id})" title="Pratinjau Artikel di Website"
-                    class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1">
+                    class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs active:scale-95">
                     <i class="fa-solid fa-eye text-[11px]"></i>
                     <span>Lihat</span>
                 </button>
                 <button onclick="editNews(${n.id})" title="Edit Berita Ini"
-                    class="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white text-xs font-bold transition flex items-center gap-1.5">
+                    class="flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs active:scale-95">
                     <i class="fa-solid fa-pen-to-square text-[11px]"></i>
                     <span>Edit</span>
                 </button>
                 <button onclick="deleteNews(${n.id})" title="Hapus Berita Ini"
-                    class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white text-xs font-bold transition flex items-center gap-1.5">
+                    class="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs active:scale-95">
                     <i class="fa-solid fa-trash-can text-[11px]"></i>
-                    <span>Hapus</span>
+                    <span class="sm:hidden">Hapus</span>
                 </button>
             </div>
         </div>
