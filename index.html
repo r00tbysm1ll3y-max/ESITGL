@@ -162,23 +162,23 @@
 
                 <!-- Right Action Buttons (Zero Overflow on Any Device) -->
                 <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <!-- Member / Atlet Button (Always Visible) -->
+                    <!-- Member / Atlet Button (Hidden on mobile < sm if Admin is logged in to keep header super clean) -->
                     <button onclick="navigateTo('member')" id="headerMemberBtn" aria-label="Login Member"
-                        class="h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap">
+                        class="h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap">
                         <i class="fa-solid fa-id-card text-xs"></i>
                         <span id="headerMemberText">Login Member</span>
                     </button>
 
                     <!-- Mobile / Tablet Quick Menu Button (Shown on screens < 1024px) -->
                     <button onclick="toggleMobileDrawer()" aria-label="Menu Navigasi"
-                        class="lg:hidden w-9 h-9 rounded-lg bg-[#1E293B] hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center justify-center shrink-0 transition">
+                        class="lg:hidden w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-lg bg-[#1E293B] hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center justify-center shrink-0 transition">
                         <i class="fa-solid fa-bars text-sm"></i>
                     </button>
 
-                    <!-- Admin Button (Disembunyikan dari UI publik, tampil otomatis saat admin login atau akses #admin) -->
+                    <!-- Admin Button (Disembunyikan dari UI publik, tampil otomatis saat admin login) -->
                     <button onclick="navigateTo('admin')" id="headerAdminBtn" aria-label="Dashboard Admin"
-                        class="hidden h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#1E293B] hover:bg-slate-700 text-white border border-slate-700 transition items-center gap-1.5 shrink-0 whitespace-nowrap">
-                        <i class="fa-solid fa-lock text-[#D97706]"></i>
+                        class="hidden h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#1E293B] hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition items-center gap-1.5 shrink-0 whitespace-nowrap">
+                        <i class="fa-solid fa-shield-halved text-[#D97706] text-xs"></i>
                         <span id="headerAdminText">Admin</span>
                     </button>
                 </div>
@@ -2379,54 +2379,54 @@
 
                 <!-- B. ADMIN WORKSPACE (Tampil setelah login berhasil) -->
                 <div id="adminWorkspace" class="hidden">
-                    <!-- Top Admin Header -->
+                    <!-- Top Admin Header (Compact & Mobile-Optimized) -->
                     <div
-                        class="bg-[#0F172A] text-white rounded-xl p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                <span class="text-[11px] font-bold uppercase tracking-wider text-[#D97706]">Panel Kontrol Admin</span>
-                                <span id="adminRoleBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-800 text-slate-300 border border-slate-700"></span>
+                        class="bg-[#0F172A] text-white rounded-2xl p-3 sm:p-5 mb-4 sm:mb-6 flex items-center justify-between gap-3 shadow-sm border border-slate-800">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-[#D97706]">Panel Admin</span>
+                                <span id="adminRoleBadge" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-slate-800 text-slate-300 border border-slate-700"></span>
                             </div>
-                            <h1 class="font-extrabold text-xl md:text-2xl">Dashboard Admin ESI Trenggalek</h1>
-                            <p id="adminUserGreeting" class="text-xs text-slate-400 mt-0.5"></p>
+                            <h1 class="font-extrabold text-sm sm:text-xl truncate text-white leading-tight">Dashboard Admin ESI Trenggalek</h1>
+                            <p id="adminUserGreeting" class="text-[11px] text-slate-400 truncate mt-0.5"></p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2.5">
+                        <div class="shrink-0">
                             <button onclick="handleAdminLogout()"
-                                class="px-4 py-2 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-right-from-bracket"></i>
-                                <span>Keluar</span>
+                                class="h-8 sm:h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 active:scale-95 shadow-sm">
+                                <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                                <span class="hidden sm:inline">Keluar</span>
                             </button>
                         </div>
                     </div>
 
                     <!-- Admin Layout: Sidebar / Tabs + Content -->
-                    <div class="flex flex-col lg:flex-row gap-6">
-                        <!-- Sidebar Navigation (240px di Desktop, Horizontal Tabs di Mobile) -->
+                    <div class="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                        <!-- Sidebar Navigation (Compact Chips on Mobile, Vertical Nav on Desktop) -->
                         <aside class="lg:w-60 shrink-0">
                             <div
-                                class="bg-white border border-[#E2E8F0] rounded-xl p-2 flex lg:flex-col gap-1.5 overflow-x-auto">
+                                class="bg-white border border-[#E2E8F0] rounded-xl p-1.5 sm:p-2 flex lg:flex-col gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar">
                                 <button onclick="switchAdminTab('atlet')" data-admintab="atlet"
-                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold bg-[#0F172A] text-white flex items-center justify-between gap-2 whitespace-nowrap">
-                                    <span><i class="fa-solid fa-users w-5"></i> Kelola Atlet</span>
+                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[#0F172A] text-white flex items-center justify-between gap-1.5 sm:gap-2 whitespace-nowrap shadow-xs">
+                                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-users w-4 sm:w-5"></i> <span class="hidden sm:inline">Kelola </span>Atlet</span>
                                     <span id="adminPendingBadge"
-                                        class="px-2 py-0.5 rounded-full text-[10px] bg-[#DC2626] text-white">0</span>
+                                        class="px-1.5 py-0.5 rounded-full text-[10px] bg-[#DC2626] text-white">0</span>
                                 </button>
                                 <button onclick="switchAdminTab('event')" data-admintab="event"
-                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-2 whitespace-nowrap">
-                                    <i class="fa-solid fa-calendar-days w-5"></i> Kelola Event
+                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                                    <i class="fa-solid fa-calendar-days w-4 sm:w-5"></i> <span class="hidden sm:inline">Kelola </span>Event
                                 </button>
                                 <button onclick="switchAdminTab('berita')" data-admintab="berita"
-                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-2 whitespace-nowrap">
-                                    <i class="fa-solid fa-newspaper w-5"></i> Kelola Berita
+                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                                    <i class="fa-solid fa-newspaper w-4 sm:w-5"></i> <span class="hidden sm:inline">Kelola </span>Berita
                                 </button>
                                 <button id="adminTabBtnDokumen" onclick="switchAdminTab('dokumen')" data-admintab="dokumen"
-                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-2 whitespace-nowrap">
-                                    <i class="fa-solid fa-folder-open w-5 text-[#D97706]"></i> Kelola Dokumen
+                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                                    <i class="fa-solid fa-folder-open w-4 sm:w-5 text-[#D97706]"></i> <span class="hidden sm:inline">Kelola </span>Dokumen
                                 </button>
                                 <button id="adminTabBtnAkun" onclick="switchAdminTab('akun')" data-admintab="akun"
-                                    class="admin-tab-btn hidden flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-amber-800 hover:bg-amber-50 flex items-center justify-between gap-2 whitespace-nowrap border border-amber-200">
-                                    <span><i class="fa-solid fa-users-gear w-5 text-amber-600"></i> Kelola Akun Admin</span>
-                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-amber-200 text-amber-900">Super</span>
+                                    class="admin-tab-btn hidden flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-amber-800 hover:bg-amber-50 flex items-center justify-between gap-1.5 sm:gap-2 whitespace-nowrap border border-amber-200">
+                                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-users-gear w-4 sm:w-5 text-amber-600"></i> <span class="hidden sm:inline">Kelola </span>Akun</span>
+                                    <span class="px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-black uppercase bg-amber-200 text-amber-900">Super</span>
                                 </button>
                             </div>
                         </aside>
@@ -4525,11 +4525,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261118ap" defer></script>
-    <script src="js/config.js?v=20261118ap" defer></script>
-    <script src="js/supabaseClient.js?v=20261118ap" defer></script>
-    <script src="js/api.js?v=20261118ap" defer></script>
-    <script src="js/app.js?v=20261118ap" defer></script>
+    <script src="js/seedData.js?v=20261118aq" defer></script>
+    <script src="js/config.js?v=20261118aq" defer></script>
+    <script src="js/supabaseClient.js?v=20261118aq" defer></script>
+    <script src="js/api.js?v=20261118aq" defer></script>
+    <script src="js/app.js?v=20261118aq" defer></script>
 </body>
 
 </html>

@@ -3231,6 +3231,7 @@ async function handleAdminLogout() {
 function updateHeaderAdminBadge() {
     const btn = document.getElementById('headerAdminBtn');
     const txt = document.getElementById('headerAdminText');
+    const memberBtn = document.getElementById('headerMemberBtn');
     const drawerBtn = document.getElementById('mobileDrawerAdminBtn');
 
     if (isAdminLoggedIn) {
@@ -3238,10 +3239,15 @@ function updateHeaderAdminBadge() {
             btn.classList.remove('hidden');
             btn.classList.add('flex');
         }
-        if (txt) txt.textContent = 'Panel Admin';
+        if (txt) txt.textContent = 'Admin';
         if (drawerBtn) {
             drawerBtn.classList.remove('hidden');
             drawerBtn.classList.add('flex');
+        }
+        // Pada layar mobile (< sm), sembunyikan tombol Member di header saat admin aktif agar tidak numpuk
+        if (memberBtn) {
+            memberBtn.classList.add('hidden', 'sm:flex');
+            memberBtn.classList.remove('flex');
         }
     } else {
         if (btn) {
@@ -3251,6 +3257,11 @@ function updateHeaderAdminBadge() {
         if (drawerBtn) {
             drawerBtn.classList.add('hidden');
             drawerBtn.classList.remove('flex');
+        }
+        // Kembalikan tombol Member saat admin logout
+        if (memberBtn) {
+            memberBtn.classList.remove('hidden');
+            memberBtn.classList.add('flex');
         }
     }
 }
@@ -3320,9 +3331,9 @@ function switchAdminTab(tabName) {
     adminActiveTab = tabName;
     document.querySelectorAll('.admin-tab-btn').forEach(btn => {
         if (btn.dataset.admintab === tabName) {
-            btn.className = "admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold bg-[#0F172A] text-white flex items-center justify-between gap-2 whitespace-nowrap";
+            btn.className = "admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-[#0F172A] text-white flex items-center justify-between gap-1.5 sm:gap-2 whitespace-nowrap shadow-xs";
         } else {
-            btn.className = "admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center justify-between gap-2 whitespace-nowrap";
+            btn.className = "admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center justify-between gap-1.5 sm:gap-2 whitespace-nowrap";
         }
     });
 
@@ -5718,8 +5729,12 @@ function updateHeaderMemberBadge() {
         const shortName = loggedMember.nickname || (loggedMember.fullName ? loggedMember.fullName.split(' ')[0] : 'Member');
         if (txt) txt.innerHTML = `<span class="truncate max-w-[80px] sm:max-w-none inline-block align-middle">${shortName}</span>`;
         if (btn) {
-            btn.className = "h-9 px-2.5 sm:px-3.5 rounded-lg text-xs font-bold bg-[#0F172A] hover:bg-slate-800 text-white border border-slate-700 transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap";
+            btn.className = "h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#0F172A] hover:bg-slate-800 text-white border border-slate-700 transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap";
             btn.title = `Login sebagai: ${loggedMember.fullName} (${loggedMember.nickname})`;
+            if (isAdminLoggedIn) {
+                btn.classList.add('hidden', 'sm:flex');
+                btn.classList.remove('flex');
+            }
         }
         if (drawerTxt) drawerTxt.textContent = `Akun Saya (${shortName})`;
 
@@ -5747,8 +5762,12 @@ function updateHeaderMemberBadge() {
     } else {
         if (txt) txt.textContent = 'Login Member';
         if (btn) {
-            btn.className = "h-9 px-2.5 sm:px-3.5 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap";
+            btn.className = "h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap";
             btn.title = 'Login Member / Atlet ESI Trenggalek';
+            if (isAdminLoggedIn) {
+                btn.classList.add('hidden', 'sm:flex');
+                btn.classList.remove('flex');
+            }
         }
         if (drawerTxt) drawerTxt.textContent = 'Login Member';
 
