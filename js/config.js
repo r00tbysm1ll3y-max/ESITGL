@@ -35,15 +35,22 @@ const CONFIG = {
             email: "robby@rawwy.ae",
             password: "!Rr19102213",
             name: "Robby Ihza Amanata",
-            role: "Super Admin"
+            role: "superadmin"
         },
         {
             email: "admin@esitrenggalek.id",
             password: "admin123",
             name: "Admin ESI Trenggalek",
-            role: "Pengurus"
+            role: "pengurus"
         }
     ],
+
+    // Verifikasi Keamanan 2-Langkah Khusus Super Admin
+    SUPER_ADMIN_SECURITY: {
+        email: "robby@rawwy.ae",
+        question: "Nama belakang anak",
+        answer: "Celeste"
+    },
 
     // Kredensial Login Admin Demo (fallback backward compatibility)
     DEMO_ADMIN: {

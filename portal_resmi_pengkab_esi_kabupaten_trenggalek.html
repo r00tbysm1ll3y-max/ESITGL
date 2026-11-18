@@ -2261,14 +2261,15 @@
 
                     <form onsubmit="handleAdminLogin(event)" class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Email Pengurus</label>
-                            <input type="email" id="adminEmailInput" placeholder="Masukkan email pengurus" required autocomplete="username"
+                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Email Pengurus / Super Admin</label>
+                            <input type="email" id="adminEmailInput" placeholder="Masukkan email..." required autocomplete="username"
+                                oninput="checkSuperAdminEmail(this.value)"
                                 class="w-full px-3.5 py-3 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] focus:border-[#0F172A] focus:bg-white focus:outline-none text-sm transition">
                         </div>
                         <div>
                             <label for="adminPassInput" class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Kata Sandi</label>
                             <div class="relative">
-                                <input type="password" id="adminPassInput" placeholder="Masukkan kata sandi" required autocomplete="current-password"
+                                <input type="password" id="adminPassInput" placeholder="Masukkan kata sandi..." required autocomplete="current-password"
                                     class="w-full pl-3.5 pr-10 py-3 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] focus:border-[#0F172A] focus:bg-white focus:outline-none text-sm transition">
                                 <button type="button" onclick="togglePasswordVisibility('adminPassInput')"
                                     class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
@@ -2277,6 +2278,23 @@
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Verifikasi Keamanan 2FA Khusus Super Admin -->
+                        <div id="adminSecurityBox" class="hidden p-3.5 rounded-xl bg-amber-50 border border-amber-300 space-y-2 transition-all">
+                            <div class="flex items-center gap-1.5 text-xs font-black text-amber-900">
+                                <i class="fa-solid fa-shield-halved text-amber-600"></i>
+                                <span>Verifikasi Keamanan Khusus Super Admin</span>
+                            </div>
+                            <div>
+                                <label for="adminSecurityAnswerInput" class="block text-[11px] font-bold text-amber-900 mb-1">
+                                    Pertanyaan Keamanan: Siapa nama belakang anak?
+                                </label>
+                                <input type="text" id="adminSecurityAnswerInput" placeholder="Ketik nama belakang anak..." autocomplete="off"
+                                    class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-amber-400 focus:border-amber-600 focus:outline-none text-sm text-[#0F172A] font-semibold">
+                            </div>
+                            <p class="text-[10px] text-amber-700 font-medium">Diperlukan untuk otentikasi hak akses tertinggi Super Admin.</p>
+                        </div>
+
                         <button type="submit"
                             class="w-full min-h-[48px] py-3 rounded-lg font-bold text-sm uppercase tracking-wider bg-[#0F172A] hover:bg-slate-800 text-white transition">
                             Masuk ke Panel Admin
@@ -2290,14 +2308,18 @@
                     <div
                         class="bg-[#0F172A] text-white rounded-xl p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <span class="text-[11px] font-bold uppercase tracking-wider text-[#D97706]">Panel Kontrol
-                                Pengurus</span>
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-[#D97706]">Panel Kontrol Admin</span>
+                                <span id="adminRoleBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-800 text-slate-300 border border-slate-700"></span>
+                            </div>
                             <h1 class="font-extrabold text-xl md:text-2xl">Dashboard Admin ESI Trenggalek</h1>
+                            <p id="adminUserGreeting" class="text-xs text-slate-400 mt-0.5"></p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2.5">
                             <button onclick="handleAdminLogout()"
-                                class="px-4 py-2 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition">
-                                <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
+                                class="px-4 py-2 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                <span>Keluar</span>
                             </button>
                         </div>
                     </div>
@@ -2321,6 +2343,11 @@
                                 <button onclick="switchAdminTab('berita')" data-admintab="berita"
                                     class="admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-2 whitespace-nowrap">
                                     <i class="fa-solid fa-newspaper w-5"></i> Kelola Berita
+                                </button>
+                                <button id="adminTabBtnAkun" onclick="switchAdminTab('akun')" data-admintab="akun"
+                                    class="admin-tab-btn hidden flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-amber-800 hover:bg-amber-50 flex items-center justify-between gap-2 whitespace-nowrap border border-amber-200">
+                                    <span><i class="fa-solid fa-user-shield w-5 text-amber-600"></i> Kelola Sandi Pengurus</span>
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-amber-200 text-amber-900">Super</span>
                                 </button>
                             </div>
                         </aside>
@@ -2931,6 +2958,109 @@
                                 </div>
                                 </div>
 
+                            </div>
+
+                            <!-- TAB 4: KELOLA AKUN PENGURUS & KEAMANAN (KHUSUS SUPER ADMIN) -->
+                            <div id="admin-panel-akun" class="admin-panel hidden space-y-6">
+                                <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 md:p-7 shadow-sm">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-6 border-b border-slate-200">
+                                        <div>
+                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider mb-1">
+                                                <i class="fa-solid fa-crown text-amber-500"></i> Hak Akses Super Admin
+                                            </div>
+                                            <h3 class="font-black text-xl text-[#0F172A]">Kelola Kata Sandi Akun Pengurus</h3>
+                                            <p class="text-xs text-slate-500 mt-0.5">Atur ulang atau ganti kata sandi akun admin pengurus biasa untuk menjaga keamanan portal ESI Trenggalek.</p>
+                                        </div>
+                                        <span class="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 flex items-center gap-1.5 self-start sm:self-auto">
+                                            <i class="fa-solid fa-lock text-slate-400"></i> Akses Terproteksi
+                                        </span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                        <!-- Kartu Info Akun Pengurus -->
+                                        <div class="lg:col-span-5 bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-12 h-12 rounded-xl bg-[#0F172A] text-white flex items-center justify-center text-xl shrink-0">
+                                                    <i class="fa-solid fa-user-gear text-amber-400"></i>
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Akun Pengurus Biasa</span>
+                                                    <h4 class="font-black text-sm text-[#0F172A] truncate">admin@esitrenggalek.id</h4>
+                                                    <span class="inline-block mt-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">Status: Aktif</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="text-xs text-slate-600 space-y-2 border-t border-slate-200 pt-3">
+                                                <p><i class="fa-solid fa-circle-info text-amber-600 mr-1.5"></i>Akun ini digunakan oleh staf pengurus daerah untuk verifikasi atlet, jadwal kompetisi, dan artikel.</p>
+                                                <p><i class="fa-solid fa-shield text-blue-600 mr-1.5"></i>Jika Anda mencurigai akun pengurus kebobolan, segera ganti kata sandinya di formulir ini.</p>
+                                            </div>
+
+                                            <div class="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1">
+                                                <div class="text-[10px] uppercase font-bold text-slate-400">Status Kata Sandi Saat Ini:</div>
+                                                <div id="pengurusPasswordStatusText" class="font-mono text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+                                                    <span>Memuat status...</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Form Ubah Password Akun Pengurus -->
+                                        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 md:p-6 space-y-5">
+                                            <div>
+                                                <h4 class="font-black text-base text-[#0F172A] flex items-center gap-2">
+                                                    <i class="fa-solid fa-key text-[#DC2626]"></i>
+                                                    <span>Ganti Kata Sandi Akun Pengurus</span>
+                                                </h4>
+                                                <p class="text-xs text-slate-500 mt-0.5">Kata sandi baru akan langsung berlaku untuk login <code>admin@esitrenggalek.id</code>.</p>
+                                            </div>
+
+                                            <form onsubmit="handleSuperAdminChangePengurusPassword(event)" class="space-y-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">
+                                                        Kata Sandi Baru untuk admin@esitrenggalek.id <span class="text-red-500">*</span>
+                                                    </label>
+                                                    <div class="relative">
+                                                        <input type="password" id="newPengurusPassInput" required placeholder="Masukkan kata sandi baru (min. 5 karakter)..."
+                                                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] font-medium transition">
+                                                        <button type="button" onclick="togglePasswordVisibility('newPengurusPassInput')"
+                                                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                                                            aria-label="Lihat Password" title="Lihat Password">
+                                                            <i class="fa-solid fa-eye text-sm" data-pass-toggle="newPengurusPassInput"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">
+                                                        Ulangi Kata Sandi Baru <span class="text-red-500">*</span>
+                                                    </label>
+                                                    <div class="relative">
+                                                        <input type="password" id="confirmPengurusPassInput" required placeholder="Ketik ulang kata sandi baru..."
+                                                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] font-medium transition">
+                                                        <button type="button" onclick="togglePasswordVisibility('confirmPengurusPassInput')"
+                                                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                                                            aria-label="Lihat Password" title="Lihat Password">
+                                                            <i class="fa-solid fa-eye text-sm" data-pass-toggle="confirmPengurusPassInput"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex flex-wrap items-center gap-3 pt-2">
+                                                    <button type="submit"
+                                                        class="px-5 py-2.5 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition active:scale-95">
+                                                        <i class="fa-solid fa-floppy-disk text-xs"></i>
+                                                        <span>Simpan Kata Sandi Pengurus</span>
+                                                    </button>
+                                                    <button type="button" onclick="handleResetPengurusPasswordToDefault()"
+                                                        class="px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                        <span>Reset ke Default (admin123)</span>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4197,11 +4327,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261118ae" defer></script>
-    <script src="js/config.js?v=20261118ae" defer></script>
-    <script src="js/supabaseClient.js?v=20261118ae" defer></script>
-    <script src="js/api.js?v=20261118ae" defer></script>
-    <script src="js/app.js?v=20261118ae" defer></script>
+    <script src="js/seedData.js?v=20261118af" defer></script>
+    <script src="js/config.js?v=20261118af" defer></script>
+    <script src="js/supabaseClient.js?v=20261118af" defer></script>
+    <script src="js/api.js?v=20261118af" defer></script>
+    <script src="js/app.js?v=20261118af" defer></script>
 </body>
 
 </html>

@@ -584,32 +584,90 @@ const Api = {
     //  5. AUTENTIKASI ADMIN
     // ================================================================
 
-    async loginAdmin(email, password) {
+    getPengurusPassword() {
+        try {
+            const custom = localStorage.getItem('esi_pengurus_custom_password');
+            if (custom && custom.trim()) return custom.trim();
+        } catch (_) {}
+        return "admin123";
+    },
+
+    updatePengurusPassword(newPassword) {
+        if (!newPassword || newPassword.length < 5) {
+            throw new Error('Kata sandi baru minimal 5 karakter.');
+        }
+        localStorage.setItem('esi_pengurus_custom_password', newPassword);
+        return true;
+    },
+
+    resetPengurusPassword() {
+        localStorage.removeItem('esi_pengurus_custom_password');
+        return true;
+    },
+
+    getCurrentAdminUser() {
+        try {
+            const raw = localStorage.getItem('esi_admin_current_user');
+            if (raw) return JSON.parse(raw);
+        } catch (_) {}
+        return null;
+    },
+
+    async loginAdmin(email, password, securityAnswer = '') {
         const cleanEmail = (email || '').trim().toLowerCase();
-        const accounts = CONFIG.ADMIN_ACCOUNTS || [CONFIG.DEMO_ADMIN];
-        const matched = accounts.find(acc => 
-            (acc.email || '').trim().toLowerCase() === cleanEmail && acc.password === password
-        );
 
-        if (matched) {
+        // 1. CEK KHUSUS SUPER ADMIN: robby@rawwy.ae
+        if (cleanEmail === 'robby@rawwy.ae') {
+            const superAcc = (CONFIG.ADMIN_ACCOUNTS || []).find(a => a.email === 'robby@rawwy.ae') || {
+                email: 'robby@rawwy.ae',
+                password: '!Rr19102213',
+                name: 'Robby Ihza Amanata',
+                role: 'superadmin'
+            };
+
+            if (password !== superAcc.password) {
+                return { success: false, message: 'Kata sandi Super Admin tidak sesuai.' };
+            }
+
+            // Verifikasi 2FA: Nama belakang anak
+            const expectedAnswer = ((CONFIG.SUPER_ADMIN_SECURITY && CONFIG.SUPER_ADMIN_SECURITY.answer) || 'Celeste').trim().toLowerCase();
+            const cleanAnswer = (securityAnswer || '').trim().toLowerCase();
+
+            if (!cleanAnswer) {
+                return { success: false, requireSecurity: true, message: 'Verifikasi Keamanan: Mohon masukkan nama belakang anak.' };
+            }
+
+            if (cleanAnswer !== expectedAnswer) {
+                return { success: false, requireSecurity: true, message: 'Jawaban verifikasi keamanan salah. Akses Super Admin ditolak.' };
+            }
+
+            const adminUser = {
+                email: 'robby@rawwy.ae',
+                name: 'Robby Rawwy',
+                role: 'superadmin'
+            };
             localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
-            try {
-                localStorage.setItem('esi_admin_current_user', JSON.stringify({
-                    email: matched.email,
-                    name: matched.name || 'Admin ESI',
-                    role: matched.role || 'Pengurus'
-                }));
-            } catch (_) {}
-            return { success: true, user: matched };
+            localStorage.setItem('esi_admin_current_user', JSON.stringify(adminUser));
+            return { success: true, user: adminUser, role: 'superadmin' };
         }
 
-        // Fallback backward compatibility
-        if (cleanEmail === (CONFIG.DEMO_ADMIN.email || '').toLowerCase() && password === CONFIG.DEMO_ADMIN.password) {
-            localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
-            return { success: true, isDemo: true };
+        // 2. CEK AKUN PENGURUS BIASA: admin@esitrenggalek.id
+        if (cleanEmail === 'admin@esitrenggalek.id') {
+            const activePengurusPass = this.getPengurusPassword();
+            if (password === activePengurusPass) {
+                const adminUser = {
+                    email: 'admin@esitrenggalek.id',
+                    name: 'Pengurus ESI Trenggalek',
+                    role: 'pengurus'
+                };
+                localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
+                localStorage.setItem('esi_admin_current_user', JSON.stringify(adminUser));
+                return { success: true, user: adminUser, role: 'pengurus' };
+            }
+            return { success: false, message: 'Kata sandi pengurus tidak sesuai atau telah diubah oleh Super Admin.' };
         }
 
-        return { success: false, message: 'Email atau kata sandi tidak sesuai.' };
+        return { success: false, message: 'Email atau kata sandi tidak terdaftar.' };
     },
 
     async logoutAdmin() {

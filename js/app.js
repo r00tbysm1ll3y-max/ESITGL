@@ -3076,10 +3076,22 @@ function closeEventDetail() {
 
 
 // ==================== 7. PANEL ADMIN ====================
+function checkSuperAdminEmail(email) {
+    const secBox = document.getElementById('adminSecurityBox');
+    if (!secBox) return;
+    const clean = (email || '').trim().toLowerCase();
+    if (clean === 'robby@rawwy.ae') {
+        secBox.classList.remove('hidden');
+    } else {
+        secBox.classList.add('hidden');
+    }
+}
+
 async function handleAdminLogin(e) {
     e.preventDefault();
     const email = document.getElementById('adminEmailInput').value.trim();
     const pass = document.getElementById('adminPassInput').value.trim();
+    const securityAnswer = (document.getElementById('adminSecurityAnswerInput')?.value || '').trim();
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
     if (submitBtn) {
@@ -3088,16 +3100,28 @@ async function handleAdminLogin(e) {
     }
 
     try {
-        const res = await Api.loginAdmin(email, pass);
+        const res = await Api.loginAdmin(email, pass, securityAnswer);
         if (res.success) {
             isAdminLoggedIn = true;
             const emailInput = document.getElementById('adminEmailInput');
             const passInput = document.getElementById('adminPassInput');
+            const secInput = document.getElementById('adminSecurityAnswerInput');
+            const secBox = document.getElementById('adminSecurityBox');
             if (emailInput) emailInput.value = '';
             if (passInput) passInput.value = '';
+            if (secInput) secInput.value = '';
+            if (secBox) secBox.classList.add('hidden');
+
             updateHeaderAdminBadge();
             renderAdminView();
-            showToast('Login Berhasil', 'Selamat datang di Panel Admin ESI Trenggalek.');
+            const roleName = res.role === 'superadmin' ? 'Super Admin' : 'Pengurus';
+            showToast('Login Berhasil', `Selamat datang di Panel Admin ESI Trenggalek (${roleName}).`);
+        } else if (res.requireSecurity) {
+            const secBox = document.getElementById('adminSecurityBox');
+            const secInput = document.getElementById('adminSecurityAnswerInput');
+            if (secBox) secBox.classList.remove('hidden');
+            if (secInput) secInput.focus();
+            showToast('Verifikasi Keamanan Diperlukan', res.message || 'Masukkan nama belakang anak.');
         } else {
             showToast('Login Gagal', res.message || 'Email atau kata sandi tidak sesuai.');
         }
@@ -3106,7 +3130,7 @@ async function handleAdminLogin(e) {
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Masuk Panel Admin';
+            submitBtn.innerHTML = 'Masuk ke Panel Admin';
         }
     }
 }
@@ -3116,8 +3140,12 @@ async function handleAdminLogout() {
     isAdminLoggedIn = false;
     const emailInput = document.getElementById('adminEmailInput');
     const passInput = document.getElementById('adminPassInput');
+    const secInput = document.getElementById('adminSecurityAnswerInput');
+    const secBox = document.getElementById('adminSecurityBox');
     if (emailInput) emailInput.value = '';
     if (passInput) passInput.value = '';
+    if (secInput) secInput.value = '';
+    if (secBox) secBox.classList.add('hidden');
     updateHeaderAdminBadge();
     renderAdminView();
     showToast('Keluar Sistem', 'Sesi admin telah diakhiri.');
@@ -3167,6 +3195,39 @@ function renderAdminView() {
     if (loginBox) loginBox.classList.add('hidden');
     if (workspace) workspace.classList.remove('hidden');
 
+    // Update Role & User Profile di Top Header
+    const adminUser = Api.getCurrentAdminUser() || { name: 'Admin ESI', email: '', role: 'pengurus' };
+    const isSuper = adminUser.role === 'superadmin';
+
+    const roleBadge = document.getElementById('adminRoleBadge');
+    if (roleBadge) {
+        if (isSuper) {
+            roleBadge.innerHTML = '<i class="fa-solid fa-crown text-amber-400 mr-1"></i> SUPER ADMIN';
+            roleBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40";
+        } else {
+            roleBadge.innerHTML = '<i class="fa-solid fa-shield text-emerald-400 mr-1"></i> PENGURUS DAERAH';
+            roleBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-800 text-slate-300 border border-slate-700";
+        }
+    }
+
+    const greetingEl = document.getElementById('adminUserGreeting');
+    if (greetingEl) {
+        greetingEl.textContent = `Login aktif: ${adminUser.name} (${adminUser.email})`;
+    }
+
+    // Tampilkan / Sembunyikan tab Kelola Password Pengurus khusus Super Admin
+    const tabBtnAkun = document.getElementById('adminTabBtnAkun');
+    if (tabBtnAkun) {
+        if (isSuper) {
+            tabBtnAkun.classList.remove('hidden');
+        } else {
+            tabBtnAkun.classList.add('hidden');
+            if (adminActiveTab === 'akun') {
+                switchAdminTab('atlet');
+            }
+        }
+    }
+
     const pendingCount = athletes.filter(a => a.status === 'pending').length;
     const badgeEl = document.getElementById('adminPendingBadge');
     if (badgeEl) badgeEl.textContent = pendingCount;
@@ -3174,6 +3235,7 @@ function renderAdminView() {
     renderAdminAthletes();
     renderAdminEvents();
     renderAdminNews();
+    if (isSuper) renderAdminAkunPanel();
 }
 
 function switchAdminTab(tabName) {
@@ -3198,7 +3260,65 @@ function switchAdminTab(tabName) {
             renderAdminNews();
         } else if (tabName === 'atlet') {
             renderAdminAthletes();
+        } else if (tabName === 'akun') {
+            renderAdminAkunPanel();
         }
+    }
+}
+
+// Controller Fitur Super Admin: Kelola Kata Sandi Pengurus
+function renderAdminAkunPanel() {
+    const statusText = document.getElementById('pengurusPasswordStatusText');
+    if (!statusText) return;
+
+    const currentPass = Api.getPengurusPassword();
+    const isCustom = currentPass !== 'admin123';
+
+    if (isCustom) {
+        statusText.innerHTML = `
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] font-black border border-amber-300">
+                <i class="fa-solid fa-key text-amber-600"></i> Kustom Aktif (Diatur Super Admin)
+            </span>
+        `;
+    } else {
+        statusText.innerHTML = `
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold border border-slate-200">
+                <i class="fa-solid fa-lock text-slate-400"></i> Standar Default (admin123)
+            </span>
+        `;
+    }
+}
+
+function handleSuperAdminChangePengurusPassword(e) {
+    e.preventDefault();
+    const p1 = document.getElementById('newPengurusPassInput')?.value.trim();
+    const p2 = document.getElementById('confirmPengurusPassInput')?.value.trim();
+
+    if (!p1 || p1.length < 5) {
+        alert('Kata sandi baru minimal 5 karakter.');
+        return;
+    }
+
+    if (p1 !== p2) {
+        alert('Konfirmasi kata sandi tidak cocok. Mohon ketik ulang.');
+        return;
+    }
+
+    try {
+        Api.updatePengurusPassword(p1);
+        e.target.reset();
+        renderAdminAkunPanel();
+        showToast('Kata Sandi Pengurus Diperbarui', 'Kata sandi untuk akun admin@esitrenggalek.id berhasil diubah.');
+    } catch (err) {
+        alert(err.message || 'Gagal mengubah kata sandi pengurus.');
+    }
+}
+
+function handleResetPengurusPasswordToDefault() {
+    if (confirm('Apakah Anda yakin ingin mereset kata sandi akun pengurus (admin@esitrenggalek.id) kembali ke bawaan default: "admin123"?')) {
+        Api.resetPengurusPassword();
+        renderAdminAkunPanel();
+        showToast('Kata Sandi Direset', 'Kata sandi pengurus berhasil dikembalikan ke default: admin123.');
     }
 }
 
