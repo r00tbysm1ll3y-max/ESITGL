@@ -120,82 +120,139 @@ const Mapper = {
 const Api = {
 
     // ================================================================
-    //  HELPER INTERNAL - Panggil /api/store (Vercel Blob via server)
+    //  KONFIGURASI CLOUD VERCEL BLOB STORAGE (SOURCE OF TRUTH UTAMA)
+    //  Semua penyimpanan data (atlet, event, berita, pendaftar turnamen,
+    //  dan akun admin) disimpan terpusat di Cloud Vercel Blob.
     // ================================================================
 
+    _BLOB_TOKEN: "vercel_blob_rw_LPwrIMxJmWXm9ltj_vCdKTxYyVZ7Dv2niukddQ1bF0v4J1s",
+    _BLOB_READ_URL: "https://lpwrimxjmwxm9ltj.private.blob.vercel-storage.com",
+    _BLOB_WRITE_URL: "https://blob.vercel-storage.com",
+
+    _memoryCache: {},
+
     async _storeGet(collection) {
+        // 1. Coba lewat serverless endpoint /api/store jika di Vercel
         try {
             const res = await fetch(`/api/store?collection=${collection}`, {
-                headers: { 'Accept': 'application/json' }
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-store'
             });
             if (res.ok) {
                 const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    // simpan ke localStorage sebagai cache offline
-                    try { localStorage.setItem(`esi_blob_cache_${collection}`, JSON.stringify(data)); } catch (_) {}
+                if (Array.isArray(data)) {
+                    this._memoryCache[collection] = data;
                     return data;
                 }
-                // Blob mengembalikan [] (kosong/belum di-seed) â†’ kembalikan null
-                // agar caller bisa fallback ke cache / seed data
-                return null;
             }
         } catch (_) {}
-        // offline fallback dari cache
+
+        // 2. Akses LANGSUNG ke Cloud Vercel Blob (Berfungsi 100% di GitHub Pages & Global)
         try {
-            const cached = localStorage.getItem(`esi_blob_cache_${collection}`);
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            const res = await fetch(`${this._BLOB_READ_URL}/data/${collection}.json`, {
+                headers: { 'Authorization': `Bearer ${this._BLOB_TOKEN}` },
+                cache: 'no-store'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    this._memoryCache[collection] = data;
+                    return data;
+                }
             }
-        } catch (_) {}
+        } catch (err) {
+            console.warn(`[Api] Fetch langsung Cloud Blob (${collection}):`, err);
+        }
+
+        // 3. Fallback memory cache
+        if (this._memoryCache[collection]) return this._memoryCache[collection];
         return null;
     },
 
     async _storePost(action, collection, payload) {
-        const res = await fetch('/api/store', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action, collection, payload })
-        });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({ error: res.statusText }));
-            throw new Error(err.error || `HTTP ${res.status}`);
+        // 1. Coba lewat serverless endpoint jika tersedia
+        try {
+            const res = await fetch('/api/store', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, collection, payload })
+            });
+            if (res.ok) {
+                const result = await res.json();
+                if (result.items) this._memoryCache[collection] = result.items;
+                return result;
+            }
+        } catch (_) {}
+
+        // 2. TULIS LANGSUNG ke Cloud Vercel Blob (Bypass Serverless, 100% Cloud Blob)
+        try {
+            let items = (await this._storeGet(collection)) || [];
+
+            if (action === 'get') {
+                return { success: true, items };
+            }
+
+            if (action === 'create') {
+                if (!payload.id) payload.id = Date.now();
+                items.unshift(payload);
+            } else if (action === 'update') {
+                const { id, data: updateData } = payload;
+                const idx = items.findIndex(i => String(i.id) === String(id));
+                if (idx >= 0) {
+                    items[idx] = { ...items[idx], ...updateData, id: items[idx].id };
+                }
+            } else if (action === 'delete') {
+                const { id } = payload;
+                items = items.filter(i => String(i.id) !== String(id));
+            } else if (action === 'upsert') {
+                const idx = items.findIndex(i => String(i.id) === String(payload.id));
+                if (idx >= 0) items[idx] = { ...items[idx], ...payload };
+                else items.unshift(payload);
+            } else if (action === 'reset') {
+                items = Array.isArray(payload.data) ? payload.data : [];
+            }
+
+            this._memoryCache[collection] = items;
+
+            // PUT Langsung ke Cloud Vercel Blob REST API
+            const putRes = await fetch(`${this._BLOB_WRITE_URL}/data/${collection}.json`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this._BLOB_TOKEN}`,
+                    'x-vercel-blob-access': 'private',
+                    'x-allow-overwrite': '1',
+                    'x-add-random-suffix': '0',
+                    'x-content-type': 'application/json'
+                },
+                body: JSON.stringify(items, null, 2)
+            });
+
+            if (!putRes.ok) {
+                const errText = await putRes.text();
+                throw new Error(`Cloud Blob write failed: ${putRes.status} ${errText}`);
+            }
+
+            return { success: true, items, item: payload };
+        } catch (err) {
+            console.error(`[Api] Error write Cloud Blob (${collection}/${action}):`, err);
+            throw err;
         }
-        const data = await res.json();
-        // Perbarui cache
-        if (data.items) {
-            try { localStorage.setItem(`esi_blob_cache_${collection}`, JSON.stringify(data.items)); } catch (_) {}
-        }
-        return data;
     },
 
     // ================================================================
-    //  1. ATLET
+    //  1. ATLET (100% Cloud Blob Storage)
     // ================================================================
 
     async getAthletes() {
         const blobData = await this._storeGet('athletes');
         if (blobData && blobData.length > 0) return blobData;
 
-        // Blob kosong/belum di-seed - cek data lama di localStorage (migrasi otomatis)
-        const legacyKeys = [
-            CONFIG.STORAGE_KEYS.ATHLETES,  // 'esi_trenggalek_athletes_v2'
-            'esi_trenggalek_athletes_v1'
-        ];
-        for (const key of legacyKeys) {
-            try {
-                const legacy = JSON.parse(localStorage.getItem(key) || 'null');
-                if (Array.isArray(legacy) && legacy.length > 0) {
-                    // Auto-migrate: seed data lama ke Blob di background
-                    console.log(`[Api] Auto-migrating ${legacy.length} athletes from localStorage to Blob...`);
-                    this._storePost('reset', 'athletes', { data: legacy }).catch(() => {});
-                    return legacy;
-                }
-            } catch (_) {}
+        // Fallback seed data awal ke Cloud Blob
+        const seed = typeof INITIAL_ATHLETES !== 'undefined' ? [...INITIAL_ATHLETES] : [];
+        if (seed.length > 0) {
+            this._storePost('reset', 'athletes', { data: seed }).catch(() => {});
         }
-
-        // Ultimate fallback ke seed data awal
-        return typeof INITIAL_ATHLETES !== 'undefined' ? [...INITIAL_ATHLETES] : [];
+        return seed;
     },
 
     async createAthlete(athleteData) {
@@ -584,99 +641,94 @@ const Api = {
     //  5. AUTENTIKASI ADMIN
     // ================================================================
 
-    // ── Multi-Admin Account Management ──────────────────────────────────
+    // ── Multi-Admin Account Management (100% Cloud Blob Storage) ──────────
 
-    /** Baca daftar akun pengurus dari localStorage. Selalu termasuk akun default. */
-    getAdminAccounts() {
+    /** Baca daftar akun pengurus langsung dari Cloud Vercel Blob */
+    async getAdminAccounts() {
         const DEFAULT = [{
+            id: 'admin_default',
             email: 'admin@esitrenggalek.id',
             name: 'Pengurus ESI Trenggalek',
+            password: 'admin123',
             role: 'pengurus',
             isDefault: true
         }];
         try {
-            const raw = localStorage.getItem('esi_admin_accounts');
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-            }
+            const blobList = await this._storeGet('admins');
+            if (Array.isArray(blobList) && blobList.length > 0) return blobList;
         } catch (_) {}
-        // Simpan default agar konsisten
-        const defaultWithPass = DEFAULT.map(a => ({ ...a, password: this._getDefaultPengurusPass() }));
-        localStorage.setItem('esi_admin_accounts', JSON.stringify(defaultWithPass));
-        return defaultWithPass;
+
+        // Inisialisasi data default ke Cloud Blob jika masih kosong
+        this._storePost('reset', 'admins', { data: DEFAULT }).catch(() => {});
+        return DEFAULT;
     },
 
-    /** Password default pengurus (legacy key compat) */
-    _getDefaultPengurusPass() {
-        try {
-            const custom = localStorage.getItem('esi_pengurus_custom_password');
-            if (custom && custom.trim()) return custom.trim();
-        } catch (_) {}
-        return 'admin123';
+    getAdminAccountsSync() {
+        if (this._memoryCache['admins'] && Array.isArray(this._memoryCache['admins'])) {
+            return this._memoryCache['admins'];
+        }
+        return [{
+            id: 'admin_default',
+            email: 'admin@esitrenggalek.id',
+            name: 'Pengurus ESI Trenggalek',
+            password: 'admin123',
+            role: 'pengurus',
+            isDefault: true
+        }];
     },
 
-    /** Simpan daftar akun */
-    _saveAdminAccounts(list) {
-        localStorage.setItem('esi_admin_accounts', JSON.stringify(list));
-    },
-
-    /** Tambah akun pengurus baru */
-    addAdminAccount(email, name, password) {
+    /** Tambah akun pengurus baru langsung ke Cloud Vercel Blob */
+    async addAdminAccount(email, name, password) {
         const cleanEmail = (email || '').trim().toLowerCase();
         if (!cleanEmail || !name || !password) throw new Error('Email, nama, dan kata sandi wajib diisi.');
         if (password.length < 5) throw new Error('Kata sandi minimal 5 karakter.');
         if (cleanEmail === 'robby@rawwy.ae') throw new Error('Email tersebut tidak dapat digunakan.');
-        const accounts = this.getAdminAccounts();
+        const accounts = await this.getAdminAccounts();
         if (accounts.find(a => a.email === cleanEmail)) throw new Error('Email sudah terdaftar sebagai akun admin.');
-        const newAcc = { email: cleanEmail, name: name.trim(), password, role: 'pengurus', isDefault: false };
-        accounts.push(newAcc);
-        this._saveAdminAccounts(accounts);
+        const newAcc = { id: 'adm_' + Date.now(), email: cleanEmail, name: name.trim(), password, role: 'pengurus', isDefault: false };
+        await this._storePost('create', 'admins', newAcc);
         return newAcc;
     },
 
-    /** Hapus akun pengurus (tidak bisa hapus isDefault) */
-    deleteAdminAccount(email) {
+    /** Hapus akun pengurus langsung dari Cloud Vercel Blob */
+    async deleteAdminAccount(email) {
         const cleanEmail = (email || '').trim().toLowerCase();
         if (cleanEmail === 'robby@rawwy.ae') throw new Error('Akun Super Admin tidak dapat dihapus.');
-        let accounts = this.getAdminAccounts();
+        const accounts = await this.getAdminAccounts();
         const acc = accounts.find(a => a.email === cleanEmail);
         if (!acc) throw new Error('Akun tidak ditemukan.');
         if (acc.isDefault) throw new Error('Akun pengurus utama tidak dapat dihapus, hanya bisa diubah kata sandinya.');
-        accounts = accounts.filter(a => a.email !== cleanEmail);
-        this._saveAdminAccounts(accounts);
+        await this._storePost('delete', 'admins', { id: acc.id || acc.email });
         return true;
     },
 
-    /** Set password akun pengurus tertentu */
-    setAdminAccountPassword(email, newPassword) {
+    /** Set password akun pengurus tertentu langsung di Cloud Vercel Blob */
+    async setAdminAccountPassword(email, newPassword) {
         const cleanEmail = (email || '').trim().toLowerCase();
         if (!newPassword || newPassword.length < 5) throw new Error('Kata sandi minimal 5 karakter.');
         if (cleanEmail === 'robby@rawwy.ae') throw new Error('Gunakan mekanisme lain untuk mengubah kata sandi Super Admin.');
-        const accounts = this.getAdminAccounts();
+        const accounts = await this.getAdminAccounts();
         const acc = accounts.find(a => a.email === cleanEmail);
         if (!acc) throw new Error('Akun tidak ditemukan.');
         acc.password = newPassword;
-        // Jika akun default, sync ke legacy key juga
-        if (acc.isDefault) localStorage.setItem('esi_pengurus_custom_password', newPassword);
-        this._saveAdminAccounts(accounts);
+        await this._storePost('update', 'admins', { id: acc.id || acc.email, data: { password: newPassword } });
         return true;
     },
 
     // Legacy compat wrappers
-    getPengurusPassword() { return this._getDefaultPengurusPass(); },
-    updatePengurusPassword(newPassword) { return this.setAdminAccountPassword('admin@esitrenggalek.id', newPassword); },
-    resetPengurusPassword() {
-        localStorage.removeItem('esi_pengurus_custom_password');
-        const accounts = this.getAdminAccounts();
+    async getPengurusPassword() {
+        const accounts = await this.getAdminAccounts();
         const acc = accounts.find(a => a.email === 'admin@esitrenggalek.id');
-        if (acc) { acc.password = 'admin123'; this._saveAdminAccounts(accounts); }
-        return true;
+        return acc ? acc.password : 'admin123';
+    },
+    async updatePengurusPassword(newPassword) { return this.setAdminAccountPassword('admin@esitrenggalek.id', newPassword); },
+    async resetPengurusPassword() {
+        return this.setAdminAccountPassword('admin@esitrenggalek.id', 'admin123');
     },
 
     getCurrentAdminUser() {
         try {
-            const raw = localStorage.getItem('esi_admin_current_user');
+            const raw = sessionStorage.getItem('esi_admin_current_user') || localStorage.getItem('esi_admin_current_user');
             if (raw) return JSON.parse(raw);
         } catch (_) {}
         return null;
@@ -715,13 +767,15 @@ const Api = {
                 name: 'Robby Rawwy',
                 role: 'superadmin'
             };
+            sessionStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
+            sessionStorage.setItem('esi_admin_current_user', JSON.stringify(adminUser));
             localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
             localStorage.setItem('esi_admin_current_user', JSON.stringify(adminUser));
             return { success: true, user: adminUser, role: 'superadmin' };
         }
 
-        // 2. CEK AKUN PENGURUS — cari di daftar akun terkelola
-        const accounts = this.getAdminAccounts();
+        // 2. CEK AKUN PENGURUS — cari langsung dari Cloud Blob
+        const accounts = await this.getAdminAccounts();
         const matchAcc = accounts.find(a => a.email === cleanEmail);
         if (matchAcc) {
             if (password !== matchAcc.password) {
@@ -732,6 +786,8 @@ const Api = {
                 name: matchAcc.name,
                 role: matchAcc.role || 'pengurus'
             };
+            sessionStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
+            sessionStorage.setItem('esi_admin_current_user', JSON.stringify(adminUser));
             localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
             localStorage.setItem('esi_admin_current_user', JSON.stringify(adminUser));
             return { success: true, user: adminUser, role: adminUser.role };
@@ -741,47 +797,46 @@ const Api = {
     },
 
     async logoutAdmin() {
+        sessionStorage.removeItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION);
         localStorage.removeItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION);
-        try { localStorage.removeItem('esi_admin_current_user'); } catch (_) {}
+        try {
+            sessionStorage.removeItem('esi_admin_current_user');
+            localStorage.removeItem('esi_admin_current_user');
+        } catch (_) {}
         return true;
     },
 
     isAdminLoggedIn() {
-        return localStorage.getItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION) === 'true';
+        return sessionStorage.getItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION) === 'true' ||
+               localStorage.getItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION) === 'true';
     },
 
     // ================================================================
-    //  6. REGISTRASI TURNAMEN
+    //  6. REGISTRASI TURNAMEN (100% Cloud Blob Storage)
     // ================================================================
 
     getLocalTournamentRegistrations(eventId = null) {
-        try {
-            const cached = localStorage.getItem('esi_blob_cache_registrations');
-            let list = null;
-            if (cached) {
-                try { list = JSON.parse(cached); } catch (_) {}
-            }
-            if (!Array.isArray(list)) {
-                list = typeof INITIAL_TOURNAMENT_REGISTRATIONS !== 'undefined' ? [...INITIAL_TOURNAMENT_REGISTRATIONS] : [];
-            }
-            if (eventId) {
-                return list.filter(r => String(r.eventId || r.tournamentId) === String(eventId));
-            }
-            return list;
-        } catch (_) {
-            return [];
+        let list = this._memoryCache['registrations'];
+        if (!Array.isArray(list)) {
+            list = typeof INITIAL_TOURNAMENT_REGISTRATIONS !== 'undefined' ? [...INITIAL_TOURNAMENT_REGISTRATIONS] : [];
         }
+        if (eventId) {
+            return list.filter(r => String(r.eventId || r.tournamentId) === String(eventId));
+        }
+        return list;
     },
 
     async getTournamentRegistrations(eventId = null) {
         let regs = await this._storeGet('registrations');
-        if (!regs) regs = typeof INITIAL_TOURNAMENT_REGISTRATIONS !== 'undefined' ? [...INITIAL_TOURNAMENT_REGISTRATIONS] : [];
+        if (!Array.isArray(regs) || regs.length === 0) {
+            regs = typeof INITIAL_TOURNAMENT_REGISTRATIONS !== 'undefined' ? [...INITIAL_TOURNAMENT_REGISTRATIONS] : [];
+        }
         if (eventId) return regs.filter(r => String(r.eventId || r.tournamentId) === String(eventId));
         return regs;
     },
 
     async createTournamentRegistration(regData) {
-        const currentList = this.getLocalTournamentRegistrations();
+        const currentList = (await this.getTournamentRegistrations()) || [];
         const orderNum = currentList.length + 1;
         const regNumber = regData.regNumber || `REG-TRN-${new Date().getFullYear()}-${String(orderNum).padStart(4, '0')}`;
         const newReg = {
@@ -794,41 +849,18 @@ const Api = {
             eventId: regData.eventId || regData.tournamentId
         };
 
-        // 1. Simpan ke local cache terlebih dahulu agar data tidak pernah hilang
-        try {
-            const list = this.getLocalTournamentRegistrations();
-            list.push(newReg);
-            localStorage.setItem('esi_blob_cache_registrations', JSON.stringify(list));
-        } catch (_) {}
-
-        // 2. Sync ke serverless Vercel Blob store jika online
-        try {
-            const result = await this._storePost('create', 'registrations', newReg);
-            if (result && result.item) return result.item;
-        } catch (err) {
-            console.warn('Gagal sync registrasi turnamen ke Blob (data tetap tersimpan di lokal):', err);
-        }
-
-        return newReg;
+        // Simpan langsung ke Cloud Vercel Blob
+        const result = await this._storePost('create', 'registrations', newReg);
+        return (result && result.item) ? result.item : newReg;
     },
 
     async updateTournamentRegistrationStatus(id, newStatus) {
         await this._storePost('update', 'registrations', { id, data: { status: newStatus } });
-        try {
-            const list = this.getLocalTournamentRegistrations();
-            const item = list.find(r => String(r.id) === String(id));
-            if (item) item.status = newStatus;
-            localStorage.setItem('esi_blob_cache_registrations', JSON.stringify(list));
-        } catch (_) {}
         return true;
     },
 
     async deleteTournamentRegistration(id) {
         await this._storePost('delete', 'registrations', { id });
-        try {
-            const list = this.getLocalTournamentRegistrations().filter(r => String(r.id) !== String(id));
-            localStorage.setItem('esi_blob_cache_registrations', JSON.stringify(list));
-        } catch (_) {}
         return true;
     },
 

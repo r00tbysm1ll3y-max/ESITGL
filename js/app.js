@@ -61,13 +61,21 @@ function getInitialView() {
 
 // ==================== INITIALIZATION ====================
 async function initApp() {
+    // Bersihkan legacy storage cache agar 100% data tersinkronisasi murni dari Cloud Vercel Blob
+    try {
+        ['athletes', 'events', 'news', 'registrations', 'admins'].forEach(k => {
+            localStorage.removeItem(`esi_blob_cache_${k}`);
+            localStorage.removeItem(`esi_trenggalek_${k}_v1`);
+        });
+    } catch (_) {}
+
     initSupabase();
     isAdminLoggedIn = Api.isAdminLoggedIn();
     loggedMember = Api.getLoggedMember();
     updateHeaderAdminBadge();
     updateHeaderMemberBadge();
 
-    // Load initial data dari backend/localStorage
+    // Load initial data dari Cloud Vercel Blob
     await refreshAllData();
 
     // Pastikan data member tersinkronisasi jika poin/status diupdate oleh admin
@@ -1352,7 +1360,7 @@ function renderPublicAthletes() {
                         <div>
                             <h3 class="font-extrabold text-base text-[#0F172A]">${a.nickname}</h3>
                             <p class="text-xs text-slate-500">${a.fullName}</p>
-                            <span class="inline-block mt-1 text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">${regNo}</span>
+                            <span class="inline-block whitespace-nowrap mt-1 text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">${regNo}</span>
                         </div>
                         ${badge}
                     </div>
@@ -3319,20 +3327,21 @@ function switchAdminTab(tabName) {
 }
 
 // Controller Fitur Super Admin: Kelola Kata Sandi Pengurus
-function renderAdminAkunPanel() {
+async function renderAdminAkunPanel() {
     const listEl = document.getElementById('adminAccountList');
     const countEl = document.getElementById('adminAccountCount');
     // Legacy compat: juga update status text jika masih ada
     const statusText = document.getElementById('pengurusPasswordStatusText');
     if (statusText) {
-        const defPass = Api.getPengurusPassword();
+        const defPass = await Api.getPengurusPassword();
         statusText.innerHTML = defPass !== 'admin123'
             ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] font-black border border-amber-300"><i class="fa-solid fa-key text-amber-600"></i> Kustom Aktif</span>`
             : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold border border-slate-200"><i class="fa-solid fa-lock text-slate-400"></i> Default (admin123)</span>`;
     }
     if (!listEl) return;
 
-    const accounts = Api.getAdminAccounts();
+    let accounts = await Api.getAdminAccounts();
+    if (!Array.isArray(accounts)) accounts = Api.getAdminAccountsSync();
     if (countEl) countEl.textContent = `${accounts.length} akun terdaftar`;
 
     listEl.innerHTML = accounts.map(acc => {
@@ -3387,15 +3396,15 @@ function closeAddAdminAccountModal() {
     modal.classList.remove('flex');
 }
 
-function handleAddAdminAccount(e) {
+async function handleAddAdminAccount(e) {
     e.preventDefault();
     const name = document.getElementById('addAdminName').value.trim();
     const email = document.getElementById('addAdminEmail').value.trim();
     const password = document.getElementById('addAdminPassword').value;
     try {
-        Api.addAdminAccount(email, name, password);
+        await Api.addAdminAccount(email, name, password);
         closeAddAdminAccountModal();
-        renderAdminAkunPanel();
+        await renderAdminAkunPanel();
         showToast('Akun Admin Ditambahkan', `Akun "${name}" (${email}) berhasil dibuat.`);
     } catch (err) {
         alert(err.message || 'Gagal menambah akun.');
@@ -3421,16 +3430,16 @@ function closeSetAdminPasswordModal() {
     modal.classList.remove('flex');
 }
 
-function handleSetAdminPassword(e) {
+async function handleSetAdminPassword(e) {
     e.preventDefault();
     const email = document.getElementById('modalSetPassTarget').value;
     const p1 = document.getElementById('modalSetPassNew').value;
     const p2 = document.getElementById('modalSetPassConfirm').value;
     if (p1 !== p2) { alert('Konfirmasi kata sandi tidak cocok.'); return; }
     try {
-        Api.setAdminAccountPassword(email, p1);
+        await Api.setAdminAccountPassword(email, p1);
         closeSetAdminPasswordModal();
-        renderAdminAkunPanel();
+        await renderAdminAkunPanel();
         showToast('Kata Sandi Diperbarui', `Kata sandi untuk ${email} berhasil diubah.`);
     } catch (err) {
         alert(err.message || 'Gagal mengubah kata sandi.');
@@ -3438,11 +3447,11 @@ function handleSetAdminPassword(e) {
 }
 
 // ── Delete Account ────────────────────────────────────────────────────────────
-function handleDeleteAdminAccount(email) {
+async function handleDeleteAdminAccount(email) {
     if (!confirm(`Hapus akun admin "${email}"? Aksi ini tidak dapat dibatalkan.`)) return;
     try {
-        Api.deleteAdminAccount(email);
-        renderAdminAkunPanel();
+        await Api.deleteAdminAccount(email);
+        await renderAdminAkunPanel();
         showToast('Akun Dihapus', `Akun ${email} telah dihapus dari sistem.`);
     } catch (err) {
         alert(err.message || 'Gagal menghapus akun.');
@@ -3450,26 +3459,26 @@ function handleDeleteAdminAccount(email) {
 }
 
 // Legacy compat
-function handleSuperAdminChangePengurusPassword(e) {
+async function handleSuperAdminChangePengurusPassword(e) {
     e.preventDefault();
     const p1 = document.getElementById('newPengurusPassInput')?.value.trim();
     const p2 = document.getElementById('confirmPengurusPassInput')?.value.trim();
     if (!p1 || p1.length < 5) { alert('Kata sandi baru minimal 5 karakter.'); return; }
     if (p1 !== p2) { alert('Konfirmasi kata sandi tidak cocok. Mohon ketik ulang.'); return; }
     try {
-        Api.setAdminAccountPassword('admin@esitrenggalek.id', p1);
+        await Api.setAdminAccountPassword('admin@esitrenggalek.id', p1);
         e.target.reset();
-        renderAdminAkunPanel();
+        await renderAdminAkunPanel();
         showToast('Kata Sandi Pengurus Diperbarui', 'Kata sandi untuk akun admin@esitrenggalek.id berhasil diubah.');
     } catch (err) {
         alert(err.message || 'Gagal mengubah kata sandi pengurus.');
     }
 }
 
-function handleResetPengurusPasswordToDefault() {
+async function handleResetPengurusPasswordToDefault() {
     if (confirm('Reset kata sandi akun pengurus (admin@esitrenggalek.id) kembali ke default "admin123"?')) {
-        Api.resetPengurusPassword();
-        renderAdminAkunPanel();
+        await Api.resetPengurusPassword();
+        await renderAdminAkunPanel();
         showToast('Kata Sandi Direset', 'Kata sandi pengurus berhasil dikembalikan ke default: admin123.');
     }
 }
