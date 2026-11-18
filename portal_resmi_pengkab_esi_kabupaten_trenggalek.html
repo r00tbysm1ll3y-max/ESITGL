@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id" class="scroll-smooth">
 
 <head>
@@ -2396,7 +2396,12 @@
                                     <div id="adminAthleteSummary" class="flex flex-wrap gap-2 text-xs"></div>
                                 </div>
 
-                                <div class="overflow-x-auto">
+                                <!-- Mobile Card List (hidden on sm+) -->
+                                <div id="adminAthleteCardList" class="sm:hidden space-y-3 px-1 py-2">
+                                    <!-- Diisi otomatis via JS -->
+                                </div>
+                                <!-- Desktop Table (hidden on mobile) -->
+                                <div class="hidden sm:block overflow-x-auto">
                                     <table class="w-full text-left border-collapse text-xs sm:text-sm">
                                         <thead class="bg-[#F4F6F9] text-[#0F172A] uppercase text-[10px] tracking-wide border-y border-[#E2E8F0]">
                                             <tr>
@@ -4327,11 +4332,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261118af" defer></script>
-    <script src="js/config.js?v=20261118af" defer></script>
-    <script src="js/supabaseClient.js?v=20261118af" defer></script>
-    <script src="js/api.js?v=20261118af" defer></script>
-    <script src="js/app.js?v=20261118af" defer></script>
+    <script src="js/seedData.js?v=20261118ag" defer></script>
+    <script src="js/config.js?v=20261118ag" defer></script>
+    <script src="js/supabaseClient.js?v=20261118ag" defer></script>
+    <script src="js/api.js?v=20261118ag" defer></script>
+    <script src="js/app.js?v=20261118ag" defer></script>
 </body>
 
 </html>

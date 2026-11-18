@@ -3361,26 +3361,110 @@ function renderAdminAthletes() {
     const paginEl = document.getElementById('adminAthletePagination');
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400 italic text-xs">Tidak ada data atlet yang sesuai filter / pencarian.</td></tr>`;
+        const emptyHtml = `<tr><td colspan="8" class="px-4 py-8 text-center text-slate-400 italic text-xs">Tidak ada data atlet yang sesuai filter / pencarian.</td></tr>`;
+        tbody.innerHTML = emptyHtml;
+        const cardList = document.getElementById('adminAthleteCardList');
+        if (cardList) cardList.innerHTML = `<div class="text-center py-8 text-slate-400 italic text-sm">Tidak ada data atlet yang sesuai filter / pencarian.</div>`;
         if (paginEl) paginEl.textContent = '';
         return;
     }
 
     if (paginEl) paginEl.textContent = `Menampilkan ${filtered.length} dari ${athletes.length} data atlet terdaftar`;
 
-    tbody.innerHTML = filtered.map((a, idx) => {
+    // Render mobile cards
+    const cardList = document.getElementById('adminAthleteCardList');
+
+    const rows = filtered.map((a, idx) => {
         const statusBadge = a.status === 'verified'
             ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#DCFCE7] text-[#166534]"><i class="fa-solid fa-circle-check text-[9px]"></i>Verified</span>`
             : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FEF3C7] text-[#92400E]"><i class="fa-solid fa-clock text-[9px]"></i>Pending</span>`;
 
         const verifyBtn = a.status === 'pending'
+            ? `<button onclick="verifyAthlete(${a.id})" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition" title="Verifikasi"><i class="fa-solid fa-check"></i> Verifikasi</button>`
+            : ``;
+
+        const verifyBtnDesk = a.status === 'pending'
             ? `<button onclick="verifyAthlete(${a.id})" class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold transition" title="Verifikasi"><i class="fa-solid fa-check"></i></button>`
             : ``;
 
         const regNo = getAthleteRegNo(a);
-        const domisili = [a.kecamatan ? `Kec. ${a.kecamatan}` : '', a.institution].filter(Boolean).join(' • ');
 
-        return `
+        // ── MOBILE CARD ──
+        const mobileCard = `
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+                <div class="flex items-start justify-between gap-3 mb-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-11 h-11 rounded-xl bg-[#0F172A] text-white font-black text-sm flex items-center justify-center shrink-0">
+                            ${(a.nickname || 'AT').substring(0, 2).toUpperCase()}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-black text-[#0F172A] text-sm truncate">${a.nickname}</div>
+                            <div class="text-[11px] text-slate-500 truncate">${a.fullName}</div>
+                            <span class="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-200">${regNo}</span>
+                        </div>
+                    </div>
+                    ${statusBadge}
+                </div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] mb-3">
+                    <div>
+                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Divisi</span>
+                        <div class="font-bold text-[#DC2626]">${a.division}</div>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Game ID</span>
+                        <div class="font-mono text-slate-700">${a.gameId || '-'}</div>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Tim</span>
+                        <div class="text-slate-700">${a.teamName || 'Non-Tim'}</div>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Poin</span>
+                        <div class="font-black text-[#0F172A]">${a.points || 0}</div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">Instansi / Domisili</span>
+                        <div class="text-slate-700 truncate">${a.institution || '-'}${a.kecamatan ? ' • Kec. ' + a.kecamatan : ''}</div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="text-slate-400 uppercase tracking-wide font-bold text-[9px]">WhatsApp</span>
+                        <a href="https://wa.me/${(a.whatsapp||'').replace(/\D/g,'')}?text=Halo+${encodeURIComponent(a.nickname)}%2C+ini+dari+ESI+Trenggalek." target="_blank"
+                            class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                            <i class="fa-brands fa-whatsapp text-xs"></i> ${a.whatsapp || '-'}
+                        </a>
+                    </div>
+                </div>
+                <!-- Poin input row -->
+                <div class="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+                    <span class="text-[11px] text-slate-500 font-bold">Edit Poin:</span>
+                    <input type="number" id="ptsInput-${a.id}" value="${a.points || 0}" min="0"
+                        class="w-20 px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-sm font-bold text-[#0F172A] text-center">
+                    <button onclick="updateAthletePoints(${a.id})" title="Simpan Poin"
+                        class="px-3 py-1.5 rounded-lg bg-[#0F172A] hover:bg-slate-700 text-white text-xs font-bold transition">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan
+                    </button>
+                </div>
+                <!-- Action buttons row -->
+                <div class="flex gap-2">
+                    <button onclick="showAthleteDetail(${a.id})"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold transition">
+                        <i class="fa-solid fa-eye"></i> Detail
+                    </button>
+                    <button onclick="openAdminSetPasswordPrompt(${a.id})"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-white text-xs font-bold transition">
+                        <i class="fa-solid fa-key"></i> Sandi
+                    </button>
+                    ${verifyBtn}
+                    <button onclick="deleteAthlete(${a.id})"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white text-xs font-bold transition">
+                        <i class="fa-solid fa-trash"></i> Hapus
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // ── DESKTOP TABLE ROW ──
+        const tableRow = `
             <tr class="border-b border-[#E2E8F0] hover:bg-slate-50/60 transition">
                 <td class="px-3 py-2.5 text-slate-400 font-mono text-[11px]">${idx + 1}</td>
                 <td class="px-3 py-2.5">
@@ -3398,7 +3482,7 @@ function renderAdminAthletes() {
                     <div class="text-slate-400">${a.kecamatan ? 'Kec. ' + a.kecamatan : ''}</div>
                 </td>
                 <td class="px-3 py-2.5">
-                    <a href="https://wa.me/${(a.whatsapp||'').replace(/\D/g,'')}?text=Halo+${encodeURIComponent(a.nickname)}%2C+ini+dari+ESI Trenggalek+ESI+Trenggalek." target="_blank"
+                    <a href="https://wa.me/${(a.whatsapp||'').replace(/\D/g,'')}?text=Halo+${encodeURIComponent(a.nickname)}%2C+ini+dari+ESI+Trenggalek." target="_blank"
                         class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-800 transition">
                         <i class="fa-brands fa-whatsapp"></i> ${a.whatsapp || '-'}
                     </a>
@@ -3425,7 +3509,7 @@ function renderAdminAthletes() {
                             class="px-2 py-1 rounded bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white text-[10px] font-bold transition">
                             <i class="fa-solid fa-key"></i>
                         </button>
-                        ${verifyBtn}
+                        ${verifyBtnDesk}
                         <button onclick="deleteAthlete(${a.id})" title="Hapus Data"
                             class="px-2 py-1 rounded bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white text-[10px] font-bold transition">
                             <i class="fa-solid fa-trash"></i>
@@ -3434,7 +3518,12 @@ function renderAdminAthletes() {
                 </td>
             </tr>
         `;
-    }).join('');
+
+        return { mobileCard, tableRow };
+    });
+
+    if (cardList) cardList.innerHTML = rows.map(r => r.mobileCard).join('');
+    tbody.innerHTML = rows.map(r => r.tableRow).join('');
 }
 
 function showAthleteDetail(id) {
