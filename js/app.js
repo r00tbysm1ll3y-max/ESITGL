@@ -139,6 +139,31 @@ async function refreshAllData() {
         athletes = a || [];
         events = e || [];
         news = n || [];
+
+        // Sinkronisasi otomatis agar ilomilo nomor 1 & danbii nomor 2
+        if (Array.isArray(athletes)) {
+            const hasDanbii = athletes.some(x => {
+                const xu = (x.username || '').toLowerCase();
+                const xn = (x.nickname || '').toLowerCase();
+                const xf = (x.fullName || '').toLowerCase();
+                return xu === 'danbii' || xn === 'danbiii' || xf.includes('wildan');
+            });
+            if (!hasDanbii && typeof INITIAL_ATHLETES !== 'undefined') {
+                const danbiiSeed = INITIAL_ATHLETES.find(x => x.username === 'danbii');
+                if (danbiiSeed) athletes.push(danbiiSeed);
+            }
+
+            athletes.forEach(x => {
+                const xu = (x.username || '').toLowerCase();
+                const xn = (x.nickname || '').toLowerCase();
+                const xf = (x.fullName || '').toLowerCase();
+                if (xu === 'robbyihzaa' || xn.includes('ilomilo') || xf.includes('robby ihza')) {
+                    x.regNo = 'ESI-TRG-2026-0001';
+                } else if (xu === 'danbii' || xn === 'danbiii' || xf.includes('wildan')) {
+                    x.regNo = 'ESI-TRG-2026-0002';
+                }
+            });
+        }
     } catch (err) {
         console.error('Error saat refresh data:', err);
     }
@@ -146,31 +171,51 @@ async function refreshAllData() {
 
 /**
  * GENERATOR NOMOR REGISTRASI URUT RESMI (ESI-TRG-2026-XXXX)
- * Menghasilkan nomor urut registrasi anggota secara berurutan (0001, 0002, dst.)
+ * Menghasilkan nomor urut registrasi anggota secara berurutan:
+ * - Nomor 1: ilomilo / robbyihzaa (Robby Ihza Amanata) -> ESI-TRG-2026-0001
+ * - Nomor 2: DANBIII / danbii (Wildan B.) -> ESI-TRG-2026-0002
+ * - Nomor 3 dst: Anggota lainnya secara kronologis pendaftaran
  */
 function getAthleteRegNo(athlete) {
     if (!athlete) return 'ESI-TRG-2026-0001';
 
-    // 1. Jika atlet sudah memiliki regNo berformat resmi
+    const u = (athlete.username || '').toLowerCase().trim();
+    const n = (athlete.nickname || '').toLowerCase().trim();
+    const f = (athlete.fullName || '').toLowerCase().trim();
+
+    // 1. Khusus ilomilo / robbyihzaa -> Nomor 1 Resmi
+    if (u === 'robbyihzaa' || n.includes('ilomilo') || f.includes('robby ihza')) {
+        return 'ESI-TRG-2026-0001';
+    }
+
+    // 2. Khusus DANBIII / danbii (Wildan B.) -> Nomor 2 Resmi
+    if (u === 'danbii' || n === 'danbiii' || f.includes('wildan')) {
+        return 'ESI-TRG-2026-0002';
+    }
+
+    // 3. Jika atlet sudah memiliki regNo eksplisit (selain 0001 & 0002)
     if (athlete.regNo && typeof athlete.regNo === 'string' && athlete.regNo.startsWith('ESI-TRG-2026-')) {
-        return athlete.regNo;
+        if (athlete.regNo !== 'ESI-TRG-2026-0001' && athlete.regNo !== 'ESI-TRG-2026-0002') {
+            return athlete.regNo;
+        }
     }
 
-    // 2. Jika id adalah integer kecil (dari Supabase sequence / auto-increment)
-    if (typeof athlete.id === 'number' && athlete.id > 0 && athlete.id < 100000) {
-        return `ESI-TRG-2026-${String(athlete.id).padStart(4, '0')}`;
-    }
-
-    // 3. Urutkan seluruh atlet secara kronologis pendaftaran (id tertua = urutan 1)
+    // 4. Hitung urutan kronologis untuk anggota lainnya (mulai dari 0003)
     const list = Array.isArray(athletes) && athletes.length > 0 ? athletes : [];
-    const sorted = [...list].sort((a, b) => {
+    const others = list.filter(a => {
+        const au = (a.username || '').toLowerCase().trim();
+        const an = (a.nickname || '').toLowerCase().trim();
+        const af = (a.fullName || '').toLowerCase().trim();
+        return !(au === 'robbyihzaa' || an.includes('ilomilo') || af.includes('robby ihza') ||
+                 au === 'danbii' || an === 'danbiii' || af.includes('wildan'));
+    }).sort((a, b) => {
         const timeA = typeof a.id === 'number' ? a.id : new Date(a.createdAt || 0).getTime();
         const timeB = typeof b.id === 'number' ? b.id : new Date(b.createdAt || 0).getTime();
         return timeA - timeB;
     });
 
-    const idx = sorted.findIndex(a => a.id == athlete.id);
-    const orderNum = idx >= 0 ? idx + 1 : 1;
+    const idx = others.findIndex(a => a.id == athlete.id);
+    const orderNum = idx >= 0 ? idx + 3 : 3;
     return `ESI-TRG-2026-${String(orderNum).padStart(4, '0')}`;
 }
 
@@ -1237,6 +1282,13 @@ function renderPublicAthletes() {
             (a.institution && a.institution.toLowerCase().includes(query)) ||
             regNo.includes(query);
         return matchStatus && matchDiv && matchQuery;
+    });
+
+    // Urutkan selalu dari nomor registrasi terawal (ESI-TRG-2026-0001, 0002, 0003, dst.)
+    filtered.sort((a, b) => {
+        const regA = getAthleteRegNo(a);
+        const regB = getAthleteRegNo(b);
+        return regA.localeCompare(regB, undefined, { numeric: true, sensitivity: 'base' });
     });
 
     const countEl = document.getElementById('publicAthleteCount');
@@ -3442,6 +3494,13 @@ function renderAdminAthletes() {
             if (!haystack.includes(searchQ)) return false;
         }
         return true;
+    });
+
+    // Urutkan selalu dari nomor registrasi terawal
+    filtered.sort((a, b) => {
+        const regA = getAthleteRegNo(a);
+        const regB = getAthleteRegNo(b);
+        return regA.localeCompare(regB, undefined, { numeric: true, sensitivity: 'base' });
     });
 
     // Summary stats
