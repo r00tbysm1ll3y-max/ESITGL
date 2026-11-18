@@ -127,57 +127,57 @@
 
     <!-- ==================== 1. TOP HEADER BAR (DESKTOP & MOBILE COMPACT) ==================== -->
     <header class="sticky top-0 z-40 bg-[#0F172A] text-white border-b-4 border-[#DC2626]">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16 md:h-20">
-                <!-- Brand Identity -->
-                <button onclick="navigateTo('beranda')" class="flex items-center gap-2.5 sm:gap-3 text-left focus:outline-none min-w-0">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+            <div class="flex items-center justify-between h-16 md:h-20 gap-2 sm:gap-4">
+                <!-- Brand Identity (Never truncated, never wrapped) -->
+                <button onclick="navigateTo('beranda')" class="flex items-center gap-2 sm:gap-2.5 text-left focus:outline-none shrink-0">
                     <img src="assets/images/logo-esi.png" alt="Logo Resmi ESI Trenggalek" width="48" height="48" fetchpriority="high" decoding="async"
-                        class="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 object-contain shrink-0 drop-shadow">
-                    <div class="min-w-0">
-                        <span class="block font-extrabold text-sm sm:text-base md:text-lg tracking-tight text-white leading-none truncate">
+                        class="w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 object-contain shrink-0 drop-shadow">
+                    <div class="shrink-0 whitespace-nowrap">
+                        <span class="block font-black text-sm sm:text-base md:text-lg tracking-tight text-white leading-none whitespace-nowrap">
                             ESI <span class="text-[#DC2626]">KAB. TRENGGALEK</span>
                         </span>
                     </div>
                 </button>
 
-                <!-- Desktop Navigation (>= 768px) -->
-                <nav class="hidden md:flex items-center gap-1 lg:gap-2" id="desktopNav">
+                <!-- Desktop Navigation (>= 1024px: pristine single-line layout) -->
+                <nav class="hidden lg:flex items-center gap-0.5 xl:gap-1.5 shrink-0" id="desktopNav">
                     <button onclick="navigateTo('beranda')" data-nav="beranda"
-                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Beranda</button>
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Beranda</button>
                     <button onclick="navigateTo('daftar')" data-nav="daftar" id="navBtnDaftar"
-                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Daftar Atlet</button>
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Daftar Atlet</button>
                     <button onclick="navigateTo('cek-data')" data-nav="cek-data"
-                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Cek Data</button>
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Cek Data</button>
                     <button onclick="navigateTo('event')" data-nav="event"
-                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Jadwal Event</button>
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Jadwal Event</button>
                     <button onclick="navigateTo('klasemen')" data-nav="klasemen"
-                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Klasemen</button>
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Klasemen</button>
                     <button onclick="navigateTo('berita')" data-nav="berita"
-                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Berita</button>
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Berita</button>
                     <button onclick="navigateTo('dokumen')" data-nav="dokumen"
-                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Dokumen</button>
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Dokumen</button>
                     <button onclick="navigateTo('profil')" data-nav="profil"
-                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Profil</button>
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Profil</button>
                 </nav>
 
                 <!-- Right Action Buttons (Zero Overflow on Any Device) -->
                 <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <!-- Member / Atlet Button (Always Visible) -->
                     <button onclick="navigateTo('member')" id="headerMemberBtn" aria-label="Login Member"
-                        class="h-9 px-2.5 sm:px-3.5 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap">
+                        class="h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap">
                         <i class="fa-solid fa-id-card text-xs"></i>
                         <span id="headerMemberText">Login Member</span>
                     </button>
 
-                    <!-- Mobile Quick Menu Button (Icon Only - Perfectly fits on mobile without overflow) -->
+                    <!-- Mobile / Tablet Quick Menu Button (Shown on screens < 1024px) -->
                     <button onclick="toggleMobileDrawer()" aria-label="Menu Navigasi"
-                        class="md:hidden w-9 h-9 rounded-lg bg-[#1E293B] hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center justify-center shrink-0 transition">
+                        class="lg:hidden w-9 h-9 rounded-lg bg-[#1E293B] hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center justify-center shrink-0 transition">
                         <i class="fa-solid fa-bars text-sm"></i>
                     </button>
 
                     <!-- Admin Button (Disembunyikan dari UI publik, tampil otomatis saat admin login atau akses #admin) -->
                     <button onclick="navigateTo('admin')" id="headerAdminBtn" aria-label="Dashboard Admin"
-                        class="hidden h-9 px-3 rounded-lg text-xs font-bold bg-[#1E293B] hover:bg-slate-700 text-white border border-slate-700 transition items-center gap-1.5 shrink-0">
+                        class="hidden h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#1E293B] hover:bg-slate-700 text-white border border-slate-700 transition items-center gap-1.5 shrink-0 whitespace-nowrap">
                         <i class="fa-solid fa-lock text-[#D97706]"></i>
                         <span id="headerAdminText">Admin</span>
                     </button>
@@ -185,9 +185,29 @@
             </div>
         </div>
 
-        <!-- Mobile Secondary Drawer (Klasemen, Berita, Profil, Admin, Hotline) -->
-        <div id="mobileDrawer" class="hidden md:hidden bg-[#1E293B] border-t border-slate-700 px-4 py-3 space-y-1.5">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 pb-1">Halaman Informasi</p>
+        <!-- Mobile / Tablet Secondary Drawer (< 1024px) -->
+        <div id="mobileDrawer" class="hidden lg:hidden bg-[#1E293B] border-t border-slate-700 px-4 py-3 space-y-1.5 max-h-[85vh] overflow-y-auto">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 pb-1">Navigasi Utama</p>
+            <button onclick="navigateTo('beranda'); toggleMobileDrawer();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
+                <span><i class="fa-solid fa-house w-6 text-slate-300"></i> Beranda</span>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+            </button>
+            <button onclick="navigateTo('daftar'); toggleMobileDrawer();" id="drawerBtnDaftar"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
+                <span><i class="fa-solid fa-user-plus w-6 text-[#DC2626]"></i> Pendaftaran Atlet</span>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+            </button>
+            <button onclick="navigateTo('cek-data'); toggleMobileDrawer();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
+                <span><i class="fa-solid fa-magnifying-glass w-6 text-slate-300"></i> Cek Data Atlet</span>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+            </button>
+            <button onclick="navigateTo('event'); toggleMobileDrawer();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
+                <span><i class="fa-solid fa-trophy w-6 text-slate-300"></i> Jadwal Event</span>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+            </button>
             <button onclick="navigateTo('klasemen'); toggleMobileDrawer();"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
                 <span><i class="fa-solid fa-ranking-star w-6 text-[#D97706]"></i> Klasemen Peringkat</span>
@@ -195,21 +215,21 @@
             </button>
             <button onclick="navigateTo('berita'); toggleMobileDrawer();"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
-                <span><i class="fa-solid fa-newspaper w-6 text-[#DC2626]"></i> Berita & Pengumuman</span>
+                <span><i class="fa-solid fa-newspaper w-6 text-[#DC2626]"></i> Berita &amp; Pengumuman</span>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
             </button>
-                        <button onclick="navigateTo('dokumen'); toggleMobileDrawer();"
+            <button onclick="navigateTo('dokumen'); toggleMobileDrawer();"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
                 <span><i class="fa-solid fa-folder-open w-6 text-[#D97706]"></i> Pusat Dokumen Resmi</span>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
             </button>
-<button onclick="navigateTo('profil'); toggleMobileDrawer();"
+            <button onclick="navigateTo('profil'); toggleMobileDrawer();"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
-                <span><i class="fa-solid fa-sitemap w-6 text-slate-300"></i> Profil & Sekretariat</span>
+                <span><i class="fa-solid fa-sitemap w-6 text-slate-300"></i> Profil &amp; Sekretariat</span>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
             </button>
             
-            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 pt-2 pb-1 border-t border-slate-700/60 mt-1">Area Akun & Manajemen</p>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 pt-2 pb-1 border-t border-slate-700/60 mt-1">Area Akun &amp; Manajemen</p>
             <button onclick="navigateTo('member'); toggleMobileDrawer();"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600/20 hover:bg-red-600/30 flex items-center justify-between border border-red-500/30">
                 <span class="flex items-center gap-2"><i class="fa-solid fa-id-card text-[#DC2626]"></i> <span id="mobileDrawerMemberText">Login Member</span></span>
@@ -221,7 +241,7 @@
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
             </button>
 
-            <!-- Hotline WA Khusus Mobile (Tidak menumpuk di atas formulir) -->
+            <!-- Hotline WA Khusus Mobile -->
             <div class="pt-2">
                 <a href="https://wa.me/6287840800351?text=Halo%20Admin%20ESI%20Kabupaten%20Trenggalek,%20saya%20butuh%20bantuan%20informasi." target="_blank" rel="noopener"
                     class="w-full px-3 py-2.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition shadow-sm">
@@ -4505,11 +4525,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261118ao" defer></script>
-    <script src="js/config.js?v=20261118ao" defer></script>
-    <script src="js/supabaseClient.js?v=20261118ao" defer></script>
-    <script src="js/api.js?v=20261118ao" defer></script>
-    <script src="js/app.js?v=20261118ao" defer></script>
+    <script src="js/seedData.js?v=20261118ap" defer></script>
+    <script src="js/config.js?v=20261118ap" defer></script>
+    <script src="js/supabaseClient.js?v=20261118ap" defer></script>
+    <script src="js/api.js?v=20261118ap" defer></script>
+    <script src="js/app.js?v=20261118ap" defer></script>
 </body>
 
 </html>

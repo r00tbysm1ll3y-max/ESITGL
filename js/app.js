@@ -268,9 +268,9 @@ function navigateTo(viewName, updateHash = true) {
                             (viewName === 'event-detail' && btn.dataset.nav === 'event') ||
                             (viewName === 'daftar-event' && btn.dataset.nav === 'event');
         if (isNavActive) {
-            btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-bold bg-[#DC2626] text-white transition${hideClass}`;
+            btn.className = `nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-bold bg-[#DC2626] text-white whitespace-nowrap transition${hideClass}`;
         } else {
-            btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-[#1E293B] transition${hideClass}`;
+            btn.className = `nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold text-slate-300 hover:text-white hover:bg-[#1E293B] whitespace-nowrap transition${hideClass}`;
         }
     });
 
@@ -1987,9 +1987,9 @@ function openNewsArticle(id, updateHash = true) {
         const isHidden = btn.dataset.nav === 'daftar' && Boolean(loggedMember);
         const hideClass = isHidden ? ' hidden' : '';
         if (btn.dataset.nav === 'berita') {
-            btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-bold bg-[#DC2626] text-white transition${hideClass}`;
+            btn.className = `nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-bold bg-[#DC2626] text-white whitespace-nowrap transition${hideClass}`;
         } else {
-            btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-[#1E293B] transition${hideClass}`;
+            btn.className = `nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold text-slate-300 hover:text-white hover:bg-[#1E293B] whitespace-nowrap transition${hideClass}`;
         }
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3124,9 +3124,9 @@ function openEventDetail(id, updateHash = true) {
         const hideClass = isHidden ? ' hidden' : '';
         const isNavActive = btn.dataset.nav === 'event';
         if (isNavActive) {
-            btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-bold bg-[#DC2626] text-white transition${hideClass}`;
+            btn.className = `nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-bold bg-[#DC2626] text-white whitespace-nowrap transition${hideClass}`;
         } else {
-            btn.className = `nav-link px-3 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-[#1E293B] transition${hideClass}`;
+            btn.className = `nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold text-slate-300 hover:text-white hover:bg-[#1E293B] whitespace-nowrap transition${hideClass}`;
         }
     });
 
