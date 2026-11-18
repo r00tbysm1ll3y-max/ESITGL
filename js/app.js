@@ -3188,7 +3188,18 @@ function switchAdminTab(tabName) {
 
     document.querySelectorAll('.admin-panel').forEach(p => p.classList.add('hidden'));
     const targetPanel = document.getElementById(`admin-panel-${tabName}`);
-    if (targetPanel) targetPanel.classList.remove('hidden');
+    if (targetPanel) {
+        targetPanel.classList.remove('hidden');
+        if (tabName === 'event') {
+            closeAdminEventForm();
+            renderAdminEvents();
+        } else if (tabName === 'berita') {
+            closeAdminNewsForm();
+            renderAdminNews();
+        } else if (tabName === 'atlet') {
+            renderAdminAthletes();
+        }
+    }
 }
 
 // Admin Tab 1: Kelola Atlet & Poin
@@ -3800,9 +3811,93 @@ function clearEventPoster() {
     if (fileName) fileName.innerHTML = '';
 }
 
+// ==================== SUB-VIEW CONTROLLER: KELOLA EVENT ====================
+function openAdminEventForm(editId = null) {
+    const listView = document.getElementById('adminEventListView');
+    const formView = document.getElementById('adminEventFormView');
+    if (listView) listView.classList.add('hidden');
+    if (formView) formView.classList.remove('hidden');
+
+    const editIdInput = document.getElementById('editEventId');
+    const form = document.querySelector('#adminEventFormView form');
+    const titleEl = document.getElementById('adminEventFormTitle');
+    const subEl = document.getElementById('adminEventFormSub');
+    const badgeEl = document.getElementById('adminEventEditBadge');
+    const submitBtnText = document.getElementById('btnSubmitEventText');
+
+    if (editId) {
+        const ev = events.find(e => String(e.id) === String(editId));
+        if (ev) {
+            if (editIdInput) editIdInput.value = editId;
+            if (titleEl) titleEl.textContent = 'Edit Jadwal Turnamen';
+            if (subEl) subEl.textContent = 'Perbarui informasi turnamen, lokasi, hadiah, status, atau poster.';
+            if (badgeEl) badgeEl.classList.remove('hidden');
+            if (submitBtnText) submitBtnText.textContent = 'Simpan Perubahan';
+
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val !== undefined && val !== null ? val : ''; };
+            setVal('evTitleInput', ev.title);
+            setVal('evDivInput', ev.division || 'Semua Divisi');
+            setVal('evDateInput', ev.date);
+            setVal('evLocInput', ev.location);
+            setVal('evStatusInput', ev.status || 'Upcoming');
+            setVal('evPrizeInput', ev.prizePool || ev.prize || '');
+            setVal('evFeeInput', ev.fee || 'Gratis');
+            setVal('evSlotsInput', ev.slots || 32);
+            setVal('evFormatInput', ev.format || '');
+            setVal('evDescInput', ev.description || '');
+            setVal('evRulesInput', ev.rules || '');
+            setVal('evContactInput', ev.contact || '');
+
+            if (ev.imageUrl) {
+                adminEventPosterBase64 = ev.imageUrl;
+                const wrap = document.getElementById('evPosterPreviewWrap');
+                const img = document.getElementById('evPosterPreviewImg');
+                const prompt = document.getElementById('evPosterUploadPrompt');
+                const clearRow = document.getElementById('evPosterClearRow');
+                const nameSpan = document.getElementById('evPosterFileName');
+                if (wrap && img) { img.src = ev.imageUrl; wrap.classList.remove('hidden'); }
+                if (prompt) prompt.classList.add('hidden');
+                if (clearRow) clearRow.classList.remove('hidden');
+                if (nameSpan) nameSpan.textContent = 'Poster turnamen tersimpan';
+            } else {
+                clearEventPoster();
+            }
+        }
+    } else {
+        if (editIdInput) editIdInput.value = '';
+        if (form) form.reset();
+        clearEventPoster();
+        if (titleEl) titleEl.textContent = 'Buat Turnamen / Jadwal Event Baru';
+        if (subEl) subEl.textContent = 'Lengkapi informasi jadwal, divisi, rules, dan poster turnamen.';
+        if (badgeEl) badgeEl.classList.add('hidden');
+        if (submitBtnText) submitBtnText.textContent = 'Publikasikan Event';
+    }
+
+    if (formView) formView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeAdminEventForm() {
+    const listView = document.getElementById('adminEventListView');
+    const formView = document.getElementById('adminEventFormView');
+    if (formView) formView.classList.add('hidden');
+    if (listView) listView.classList.remove('hidden');
+
+    const editIdInput = document.getElementById('editEventId');
+    if (editIdInput) editIdInput.value = '';
+    const form = document.querySelector('#adminEventFormView form');
+    if (form) form.reset();
+    clearEventPoster();
+}
+
+function editEvent(id) {
+    openAdminEventForm(id);
+}
+
 async function handleAdminAddEvent(e) {
     e.preventDefault();
-    const newEv = {
+    const editId = (document.getElementById('editEventId')?.value || '').trim();
+
+    const evData = {
         title: document.getElementById('evTitleInput').value.trim(),
         division: document.getElementById('evDivInput').value,
         date: document.getElementById('evDateInput').value.trim(),
@@ -3817,31 +3912,56 @@ async function handleAdminAddEvent(e) {
         category: 'Umum & Pelajar Trenggalek',
         organizer: 'ESI Trenggalek',
         rules: document.getElementById('evRulesInput')?.value.trim() || '',
-        contact: document.getElementById('evContactInput')?.value.trim() || '',
-        imageUrl: adminEventPosterBase64 || ''
+        contact: document.getElementById('evContactInput')?.value.trim() || ''
     };
-    adminEventPosterBase64 = '';
 
-    await Api.createEvent(newEv);
+    if (adminEventPosterBase64) {
+        evData.imageUrl = adminEventPosterBase64;
+    }
+
+    if (editId) {
+        await Api.updateEvent(editId, evData);
+        showToast('Turnamen Diperbarui', 'Perubahan jadwal dan data turnamen berhasil disimpan.');
+    } else {
+        await Api.createEvent({ ...evData, imageUrl: adminEventPosterBase64 || '' });
+        showToast('Event Ditambahkan', 'Jadwal turnamen baru telah dipublikasikan.');
+    }
+
+    adminEventPosterBase64 = '';
     events = await Api.getEvents();
-    e.target.reset();
+    closeAdminEventForm();
     renderAdminEvents();
-    showToast('Event Ditambahkan', 'Jadwal turnamen baru telah dipublikasikan.');
+    if (typeof renderEventsView === 'function') renderEventsView();
+    if (typeof renderHomeView === 'function') renderHomeView();
 }
 
 function renderAdminEvents() {
     const list = document.getElementById('adminEventList');
     if (!list) return;
 
-    if (events.length === 0) {
+    const searchQ = (document.getElementById('adminEventSearchInput')?.value || '').trim().toLowerCase();
+    const divFilter = document.getElementById('adminEventDivFilter')?.value || 'all';
+    const statusFilter = document.getElementById('adminEventStatusFilter')?.value || 'all';
+
+    let filtered = events.filter(ev => {
+        if (divFilter !== 'all' && ev.division !== divFilter) return false;
+        if (statusFilter !== 'all' && ev.status !== statusFilter) return false;
+        if (searchQ) {
+            const haystack = [ev.title, ev.location, ev.division, ev.organizer].join(' ').toLowerCase();
+            if (!haystack.includes(searchQ)) return false;
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
         list.innerHTML = `<div class="p-8 text-center text-sm text-slate-500 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
             <i class="fa-solid fa-trophy text-3xl text-slate-300 mb-2 block"></i>
-            Belum ada jadwal turnamen yang dipublikasikan. Silakan gunakan formulir di atas untuk membuat turnamen baru.
+            Tidak ada turnamen yang ditemukan. Silakan sesuaikan filter atau buat turnamen baru.
         </div>`;
         return;
     }
 
-    list.innerHTML = events.map(ev => {
+    list.innerHTML = filtered.map(ev => {
         const regs = Api.getLocalTournamentRegistrations(ev.id);
         const totalRegs = regs.length;
         const verifiedCount = regs.filter(r => r.status === 'verified').length;
@@ -3854,7 +3974,7 @@ function renderAdminEvents() {
 
         return `
             <div class="border border-slate-200 hover:border-slate-300 rounded-2xl p-4 sm:p-5 bg-white shadow-sm transition hover:shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                     <div class="flex flex-wrap items-center gap-2 mb-2">
                         <span class="px-2.5 py-0.5 rounded-lg bg-[#0F172A] text-white text-[11px] font-black uppercase tracking-wider">${ev.division}</span>
                         <span class="px-2.5 py-0.5 rounded-lg border text-[11px] font-bold ${statusClass}">${ev.status}</span>
@@ -3867,35 +3987,42 @@ function renderAdminEvents() {
                         </span>` : ''}
                     </div>
 
-                    <h4 class="font-black text-base sm:text-lg text-[#0F172A] mb-1">${ev.title}</h4>
+                    <h4 class="font-black text-base sm:text-lg text-[#0F172A] mb-1 truncate">${ev.title}</h4>
                     
                     <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500 font-medium">
                         <span><i class="fa-regular fa-calendar text-slate-400 mr-1.5"></i>${ev.date}</span>
                         <span><i class="fa-solid fa-location-dot text-slate-400 mr-1.5"></i>${ev.location}</span>
-                        ${ev.prize ? `<span><i class="fa-solid fa-award text-amber-500 mr-1.5"></i>${ev.prize}</span>` : ''}
+                        ${ev.prizePool || ev.prize ? `<span><i class="fa-solid fa-award text-amber-500 mr-1.5"></i>${ev.prizePool || ev.prize}</span>` : ''}
                         ${ev.fee ? `<span><i class="fa-solid fa-ticket text-slate-400 mr-1.5"></i>${ev.fee}</span>` : ''}
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2.5 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                    <!-- Tombol Utama: Kelola Pendaftar (Buka Modal Popup) -->
+                <div class="flex flex-wrap items-center gap-2 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                    <!-- Tombol Utama: Kelola Pendaftar -->
                     <button onclick="openAdminTournamentRegsModal(${ev.id})"
-                        class="px-4 py-2.5 rounded-xl bg-[#0F172A] hover:bg-[#DC2626] text-white text-xs font-black transition flex items-center gap-2 shadow-sm group">
-                        <i class="fa-solid fa-users text-sm group-hover:scale-110 transition-transform"></i>
+                        class="px-4 py-2 rounded-xl bg-[#0F172A] hover:bg-[#DC2626] text-white text-xs font-black transition flex items-center gap-2 shadow-sm group">
+                        <i class="fa-solid fa-users text-xs group-hover:scale-110 transition-transform"></i>
                         <span>Kelola Pendaftar</span>
-                        <span class="px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-black">${totalRegs}</span>
+                        <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black">${totalRegs}</span>
+                    </button>
+
+                    <!-- Tombol Edit Turnamen -->
+                    <button onclick="editEvent(${ev.id})" title="Edit Turnamen"
+                        class="px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>Edit</span>
                     </button>
 
                     <!-- Tombol Ekspor Excel Cepat -->
                     <button onclick="exportTournamentTeamsExcel(${ev.id})"
                         title="Unduh Data Pendaftar Excel (.xls)"
-                        class="w-10 h-10 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition">
-                        <i class="fa-solid fa-file-excel text-base"></i>
+                        class="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 flex items-center justify-center transition">
+                        <i class="fa-solid fa-file-excel text-sm"></i>
                     </button>
 
                     <!-- Dropdown Ubah Status -->
                     <select onchange="changeEventStatus(${ev.id}, this.value)"
-                        class="h-10 px-3 rounded-xl bg-[#F8FAFC] border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0F172A]">
+                        class="h-9 px-2.5 rounded-xl bg-[#F8FAFC] border border-slate-300 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0F172A]">
                         <option value="Upcoming" ${ev.status === 'Upcoming' ? 'selected' : ''}>Upcoming</option>
                         <option value="Ongoing" ${ev.status === 'Ongoing' ? 'selected' : ''}>Ongoing</option>
                         <option value="Selesai" ${ev.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
@@ -3904,8 +4031,8 @@ function renderAdminEvents() {
                     <!-- Tombol Hapus Event -->
                     <button onclick="deleteEvent(${ev.id})"
                         title="Hapus Turnamen"
-                        class="w-10 h-10 rounded-xl bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white border border-red-200 flex items-center justify-center transition">
-                        <i class="fa-solid fa-trash-can text-sm"></i>
+                        class="w-9 h-9 rounded-xl bg-red-50 hover:bg-[#DC2626] text-[#DC2626] hover:text-white border border-red-200 flex items-center justify-center transition">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
                     </button>
                 </div>
             </div>
@@ -3928,7 +4055,7 @@ async function deleteEvent(id) {
         renderAdminEvents();
         if (typeof renderEventsView === 'function') renderEventsView();
         if (typeof renderHomeView === 'function') renderHomeView();
-        showToast('Turnamen & Poster Dihapus', 'Jadwal turnamen dan file gambar terkait telah dihapus bersih dari storage.');
+        showToast('Turnamen Dihapus', 'Jadwal turnamen telah dihapus.');
     }
 }
 
@@ -4477,10 +4604,35 @@ function insertTextAtCursor(textarea, text) {
     textarea.selectionStart = textarea.selectionEnd = start + text.length;
 }
 
+// ==================== SUB-VIEW CONTROLLER: KELOLA BERITA ====================
+function openAdminNewsForm() {
+    const listView = document.getElementById('adminNewsListView');
+    const formView = document.getElementById('adminNewsFormView');
+    if (listView) listView.classList.add('hidden');
+    if (formView) formView.classList.remove('hidden');
+
+    cancelEditNews();
+    if (formView) formView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeAdminNewsForm() {
+    const listView = document.getElementById('adminNewsListView');
+    const formView = document.getElementById('adminNewsFormView');
+    if (formView) formView.classList.add('hidden');
+    if (listView) listView.classList.remove('hidden');
+
+    cancelEditNews();
+}
+
 // Mode Edit Artikel yang Sudah Diterbitkan
 function editNews(id) {
     const article = news.find(n => n.id == id);
     if (!article) return;
+
+    const listView = document.getElementById('adminNewsListView');
+    const formView = document.getElementById('adminNewsFormView');
+    if (listView) listView.classList.add('hidden');
+    if (formView) formView.classList.remove('hidden');
 
     const editIdInput = document.getElementById('editNewsId');
     if (editIdInput) editIdInput.value = id;
@@ -4540,7 +4692,7 @@ function editNews(id) {
     if (btnCancel) btnCancel.classList.remove('hidden');
 
     // Scroll ke form
-    if (formTitle) formTitle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (formView) formView.scrollIntoView({ behavior: 'smooth', block: 'start' });
     showToast('Mode Edit', 'Data artikel telah dimuat ke formulir. Silakan lakukan perubahan.');
 }
 
@@ -4548,7 +4700,7 @@ function cancelEditNews() {
     const editIdInput = document.getElementById('editNewsId');
     if (editIdInput) editIdInput.value = '';
 
-    const form = document.querySelector('#admin-panel-berita form');
+    const form = document.querySelector('#adminNewsFormView form');
     if (form) form.reset();
 
     clearNewsImagePreview();
@@ -4639,28 +4791,47 @@ async function handleAdminAddNews(e) {
 
     news = await Api.getNews();
     currentDraftInlineImages = {};
-    cancelEditNews();
+    closeAdminNewsForm();
     renderAdminNews();
     renderNewsView();
+}
+
+function viewNewsFromAdmin(id) {
+    navigateTo('berita');
+    if (typeof openNewsDetail === 'function') openNewsDetail(id);
 }
 
 function renderAdminNews() {
     const list = document.getElementById('adminNewsList');
     if (!list) return;
 
-    if (news.length === 0) {
-        list.innerHTML = `<div class="p-6 text-center text-sm text-slate-500 border border-dashed border-[#E2E8F0] rounded-lg">Belum ada artikel berita yang diterbitkan. Silakan gunakan formulir di atas untuk menerbitkan berita.</div>`;
+    const searchQ = (document.getElementById('adminNewsSearchInput')?.value || '').trim().toLowerCase();
+    const catFilter = document.getElementById('adminNewsCatFilter')?.value || 'all';
+
+    let filtered = news.filter(n => {
+        if (catFilter !== 'all' && n.category !== catFilter) return false;
+        if (searchQ) {
+            const haystack = [n.title, n.author, n.category, n.source].join(' ').toLowerCase();
+            if (!haystack.includes(searchQ)) return false;
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<div class="p-6 text-center text-sm text-slate-500 border border-dashed border-[#E2E8F0] rounded-xl bg-slate-50">
+            Tidak ada artikel yang sesuai filter pencarian.
+        </div>`;
         return;
     }
 
-    const sortedNews = [...news].sort((a, b) => getNewsTimestamp(b) - getNewsTimestamp(a));
+    const sortedNews = [...filtered].sort((a, b) => getNewsTimestamp(b) - getNewsTimestamp(a));
     list.innerHTML = sortedNews.map(n => {
         const thumb = n.imageUrl
             ? `<img src="${n.imageUrl}" alt="${n.title}" onerror="this.onerror=null;this.src='assets/images/logo-esi.png'" class="w-14 h-12 object-cover rounded-lg shrink-0 border border-slate-200">`
             : `<div class="w-14 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0"><i class="fa-solid fa-image text-xs"></i></div>`;
 
         return `
-        <div class="border border-[#E2E8F0] rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition">
+        <div class="border border-[#E2E8F0] rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/50 transition">
             <div class="flex items-center gap-3 min-w-0">
                 ${thumb}
                 <div class="min-w-0">
@@ -4671,7 +4842,12 @@ function renderAdminNews() {
                     <h4 class="font-bold text-sm text-[#0F172A] mt-0.5 truncate">${n.title}</h4>
                 </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                <button onclick="viewNewsFromAdmin(${n.id})" title="Pratinjau Artikel di Website"
+                    class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1">
+                    <i class="fa-solid fa-eye text-[11px]"></i>
+                    <span>Lihat</span>
+                </button>
                 <button onclick="editNews(${n.id})" title="Edit Berita Ini"
                     class="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white text-xs font-bold transition flex items-center gap-1.5">
                     <i class="fa-solid fa-pen-to-square text-[11px]"></i>

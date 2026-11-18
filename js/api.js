@@ -361,6 +361,17 @@ const Api = {
         return true;
     },
 
+    async updateEvent(id, eventData) {
+        if (eventData.imageUrl && typeof eventData.imageUrl === 'string' && eventData.imageUrl.startsWith('data:')) {
+            try {
+                const uploadedUrl = await this.uploadStorageImage(eventData.imageUrl, 'events');
+                if (uploadedUrl) eventData.imageUrl = uploadedUrl;
+            } catch (err) { console.warn('Auto upload poster failed:', err); }
+        }
+        const result = await this._storePost('update', 'events', { id, data: eventData });
+        return result;
+    },
+
     async deleteEvent(id) {
         // Hapus gambar poster jika ada
         try {
