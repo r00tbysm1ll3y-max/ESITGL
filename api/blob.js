@@ -59,9 +59,19 @@ module.exports = async (req, res) => {
             return res.status(upstream.status).send(`Gagal mengambil blob: ${upstream.statusText}`);
         }
 
-        const contentType = upstream.headers.get('content-type') || 'image/webp';
+        const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
         res.setHeader('Content-Type', contentType);
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+        // Jika PDF: set Content-Disposition agar browser download (bukan tampilkan inline)
+        // Juga support parameter filename opsional dari query: /api/blob?url=...&filename=namafile.pdf
+        if (contentType.includes('pdf')) {
+            const rawFilename = req.query?.filename || url.split('/').pop().split('?')[0] || 'dokumen.pdf';
+            const safeFilename = decodeURIComponent(rawFilename).replace(/[^\w.\- ]/g, '_');
+            res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+            res.setHeader('Cache-Control', 'private, no-cache');
+        } else {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
 
         const arrayBuffer = await upstream.arrayBuffer();
         return res.send(Buffer.from(arrayBuffer));

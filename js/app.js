@@ -317,17 +317,27 @@ function toggleMobileDrawer() {
 }
 
 // Toast Helper
-function showToast(title, desc) {
+function showToast(title, desc, type = 'success') {
     const toast = document.getElementById('toastNotification');
     const tTitle = document.getElementById('toastTitle');
     const tDesc = document.getElementById('toastDesc');
+    const tIcon = toast ? toast.querySelector('i') : null;
     if (toast && tTitle && tDesc) {
         tTitle.textContent = title;
         tDesc.textContent = desc;
+        // Color coding by type
+        const styles = {
+            success: { border: 'border-emerald-500', iconColor: 'text-emerald-400', titleColor: 'text-emerald-400', icon: 'fa-circle-check' },
+            error:   { border: 'border-red-500',     iconColor: 'text-red-400',     titleColor: 'text-red-400',     icon: 'fa-circle-xmark' },
+            info:    { border: 'border-blue-400',    iconColor: 'text-blue-400',    titleColor: 'text-blue-400',    icon: 'fa-circle-info'  },
+            warning: { border: 'border-amber-400',   iconColor: 'text-amber-400',   titleColor: 'text-amber-400',   icon: 'fa-triangle-exclamation' },
+        };
+        const s = styles[type] || styles.success;
+        toast.className = `fixed top-20 right-4 z-50 max-w-xs sm:max-w-sm bg-[#0F172A] text-white border-l-4 ${s.border} px-4 py-3 rounded-lg`;
+        if (tIcon) tIcon.className = `fa-solid ${s.icon} ${s.iconColor} mt-0.5`;
+        tTitle.className = `font-bold text-xs uppercase tracking-wider ${s.titleColor}`;
         toast.classList.remove('hidden');
-        setTimeout(() => {
-            toast.classList.add('hidden');
-        }, 3500);
+        setTimeout(() => { toast.classList.add('hidden'); }, 3500);
     }
 }
 
@@ -3389,9 +3399,17 @@ async function renderDocumentsView() {
     }
 
     container.innerHTML = filtered.map(doc => {
-        const proxyUrl = `/api/blob?url=${encodeURIComponent(doc.fileUrl)}`;
-        const sizeKB = doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : '';
-        const dateStr = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+        const proxyUrl = `/api/blob?url=${encodeURIComponent(doc.fileUrl)}&filename=${encodeURIComponent(doc.fileName || doc.title + '.pdf')}`;
+        // fileSize bisa number (bytes) atau string "197.8 KB"
+        let sizeStr = '';
+        if (typeof doc.fileSize === 'number' && doc.fileSize > 0) {
+            sizeStr = `${Math.round(doc.fileSize / 1024)} KB`;
+        } else if (typeof doc.fileSize === 'string' && doc.fileSize) {
+            sizeStr = doc.fileSize;
+        }
+        // uploadedAt atau date
+        const rawDate = doc.uploadedAt || doc.date;
+        const dateStr = rawDate ? new Date(rawDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
         return `
         <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-start gap-4 shadow-sm hover:shadow-md hover:border-[#DC2626]/30 transition group">
             <div class="flex-shrink-0 w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center border border-red-100">
@@ -3400,7 +3418,7 @@ async function renderDocumentsView() {
             <div class="flex-1 min-w-0">
                 <div class="flex flex-wrap items-start gap-2 mb-1">
                     <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-500">${doc.category || 'Dokumen Resmi'}</span>
-                    ${sizeKB ? `<span class="text-[11px] text-slate-400">${sizeKB}</span>` : ''}
+                    ${sizeStr ? `<span class="text-[11px] text-slate-400">${sizeStr}</span>` : ''}
                 </div>
                 <h3 class="font-bold text-[#0F172A] text-base leading-snug mb-1 group-hover:text-[#DC2626] transition">${doc.title}</h3>
                 ${doc.description ? `<p class="text-sm text-slate-500 mb-1 line-clamp-2">${doc.description}</p>` : ''}
@@ -3463,15 +3481,18 @@ async function renderAdminDocuments() {
     }
 
     listEl.innerHTML = documents.map(doc => {
-        const sizeKB = doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : '—';
-        const dateStr = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('id-ID') : '—';
+        let sizeStr = '—';
+        if (typeof doc.fileSize === 'number' && doc.fileSize > 0) sizeStr = `${Math.round(doc.fileSize / 1024)} KB`;
+        else if (typeof doc.fileSize === 'string' && doc.fileSize) sizeStr = doc.fileSize;
+        const rawDate = doc.uploadedAt || doc.date;
+        const dateStr = rawDate ? new Date(rawDate).toLocaleDateString('id-ID') : '—';
         return `<div id="admin-doc-row-${doc.id}" class="flex items-center gap-3 p-3 rounded-xl border border-[#E2E8F0] hover:bg-slate-50 transition">
             <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-file-pdf text-[#DC2626] text-lg"></i>
             </div>
             <div class="flex-1 min-w-0">
                 <p class="font-bold text-sm text-[#0F172A] truncate">${doc.title}</p>
-                <p class="text-xs text-slate-400">${doc.category || '—'} &bull; ${sizeKB} &bull; ${dateStr}</p>
+                <p class="text-xs text-slate-400">${doc.category || '—'} &bull; ${sizeStr} &bull; ${dateStr}</p>
             </div>
             <button onclick="deleteDocumentAdmin('${doc.id}')"
                 class="shrink-0 w-9 h-9 rounded-lg bg-red-50 hover:bg-red-100 text-[#DC2626] flex items-center justify-center transition">
@@ -3509,11 +3530,12 @@ async function handleAdminUploadDocument(e) {
 
     try {
         showToast('Mengupload Dokumen...', 'Mohon tunggu, file sedang diupload ke cloud storage.', 'info');
-        const blobResult = await Api.uploadStorageDocument(file, file.name);
+        const blobUrl = await Api.uploadStorageDocument(file, file.name);
+        if (!blobUrl) throw new Error('Upload ke cloud storage gagal, URL tidak diterima.');
         const docData = {
             title,
             fileName: file.name,
-            fileUrl: blobResult.url,
+            fileUrl: blobUrl,
             fileSize: file.size,
             category: categoryInput?.value || 'Dokumen Resmi',
             description: descInput?.value?.trim() || '',

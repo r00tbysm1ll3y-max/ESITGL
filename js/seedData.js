@@ -834,9 +834,10 @@ const INITIAL_DOCUMENTS = [
         fileName: "surat_pemberitahuan_cabor_esports_esi_trenggalek.pdf",
         description: "Pemberitahuan resmi mengenai keberadaan dan program pembinaan Cabang Olahraga Prestasi Esports Indonesia (ESI) Kabupaten Trenggalek di bawah naungan KONI Trenggalek.",
         date: "2026-11-18",
+        uploadedAt: "2026-11-18T00:00:00.000Z",
         fileUrl: "https://lpwrimxjmwxm9ltj.private.blob.vercel-storage.com/documents/surat_pemberitahuan_cabor_esports_esi_trenggalek.pdf",
         localPath: "assets/documents/surat_pemberitahuan_cabor_esports_esi_trenggalek.pdf",
-        fileSize: "197.8 KB",
+        fileSize: 202547,
         fileType: "PDF"
     },
     {
@@ -847,9 +848,10 @@ const INITIAL_DOCUMENTS = [
         fileName: "surat_rekomendasi_piala_pelajar.pdf",
         description: "Surat rekomendasi kejuaraan resmi Piala Pelajar Esports Kabupaten Trenggalek sebagai ajang pencarian bibit atlet berprestasi daerah.",
         date: "2026-11-18",
+        uploadedAt: "2026-11-18T00:00:00.000Z",
         fileUrl: "https://lpwrimxjmwxm9ltj.private.blob.vercel-storage.com/documents/surat_rekomendasi_piala_pelajar.pdf",
         localPath: "assets/documents/surat_rekomendasi_piala_pelajar.pdf",
-        fileSize: "687.4 KB",
+        fileSize: 704102,
         fileType: "PDF"
     },
     {
@@ -860,9 +862,10 @@ const INITIAL_DOCUMENTS = [
         fileName: "surat_pemberitahuan_smk_sma_ma_mts.pdf",
         description: "Pemberitahuan dan sosialisasi pembinaan kegiatan esports pelajar kepada Cabang Dinas Pendidikan Jawa Timur Wilayah Trenggalek dan Kantor Kementerian Agama.",
         date: "2026-11-18",
+        uploadedAt: "2026-11-18T00:00:00.000Z",
         fileUrl: "https://lpwrimxjmwxm9ltj.private.blob.vercel-storage.com/documents/surat_pemberitahuan_smk_sma_ma_mts.pdf",
         localPath: "assets/documents/surat_pemberitahuan_smk_sma_ma_mts.pdf",
-        fileSize: "506.5 KB",
+        fileSize: 518656,
         fileType: "PDF"
     },
     {
@@ -873,9 +876,10 @@ const INITIAL_DOCUMENTS = [
         fileName: "surat_pemberitahuan_smp.pdf",
         description: "Pemberitahuan resmi kepada Dinas Pendidikan Pemuda dan Olahraga (Disdikpora) untuk pembinaan cabang olahraga esports jenjang SMP se-Kabupaten Trenggalek.",
         date: "2026-11-18",
+        uploadedAt: "2026-11-18T00:00:00.000Z",
         fileUrl: "https://lpwrimxjmwxm9ltj.private.blob.vercel-storage.com/documents/surat_pemberitahuan_smp.pdf",
         localPath: "assets/documents/surat_pemberitahuan_smp.pdf",
-        fileSize: "508.4 KB",
+        fileSize: 520806,
         fileType: "PDF"
     }
 ];
