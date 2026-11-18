@@ -585,16 +585,36 @@ const Api = {
     // ================================================================
 
     async loginAdmin(email, password) {
-        // Hanya demo admin (tidak ada Supabase auth)
-        if (email === CONFIG.DEMO_ADMIN.email && password === CONFIG.DEMO_ADMIN.password) {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        const accounts = CONFIG.ADMIN_ACCOUNTS || [CONFIG.DEMO_ADMIN];
+        const matched = accounts.find(acc => 
+            (acc.email || '').trim().toLowerCase() === cleanEmail && acc.password === password
+        );
+
+        if (matched) {
+            localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
+            try {
+                localStorage.setItem('esi_admin_current_user', JSON.stringify({
+                    email: matched.email,
+                    name: matched.name || 'Admin ESI',
+                    role: matched.role || 'Pengurus'
+                }));
+            } catch (_) {}
+            return { success: true, user: matched };
+        }
+
+        // Fallback backward compatibility
+        if (cleanEmail === (CONFIG.DEMO_ADMIN.email || '').toLowerCase() && password === CONFIG.DEMO_ADMIN.password) {
             localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
             return { success: true, isDemo: true };
         }
+
         return { success: false, message: 'Email atau kata sandi tidak sesuai.' };
     },
 
     async logoutAdmin() {
         localStorage.removeItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION);
+        try { localStorage.removeItem('esi_admin_current_user'); } catch (_) {}
         return true;
     },
 

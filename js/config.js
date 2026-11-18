@@ -29,10 +29,26 @@ const CONFIG = {
         TOURNAMENT_REGISTRATIONS: 'esi_trenggalek_trn_regs_v2'
     },
 
-    // Kredensial Login Admin Demo (digunakan saat offline/mode demo tanpa Supabase Auth)
+    // Daftar Kredensial Login Admin Resmi
+    ADMIN_ACCOUNTS: [
+        {
+            email: "robby@rawwy.ae",
+            password: "!Rr19102213",
+            name: "Robby Ihza Amanata",
+            role: "Super Admin"
+        },
+        {
+            email: "admin@esitrenggalek.id",
+            password: "admin123",
+            name: "Admin ESI Trenggalek",
+            role: "Pengurus"
+        }
+    ],
+
+    // Kredensial Login Admin Demo (fallback backward compatibility)
     DEMO_ADMIN: {
-        email: "admin@esitrenggalek.id",
-        password: "admin123"
+        email: "robby@rawwy.ae",
+        password: "!Rr19102213"
     },
 
     // Vercel Blob Storage Integration
