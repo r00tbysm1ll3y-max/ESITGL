@@ -131,10 +131,17 @@ const Api = {
 
     _memoryCache: {},
 
-    async _storeGet(collection) {
+    async _storeGet(collection, forceNetwork = false) {
+        // Jika sudah ada di memori dan tidak dipaksa ambil baru dari network, kembalikan instan (0ms)
+        if (!forceNetwork && this._memoryCache[collection] && Array.isArray(this._memoryCache[collection])) {
+            return this._memoryCache[collection];
+        }
+
+        const bust = `_t=${Date.now()}`;
+
         // 1. Coba lewat serverless endpoint /api/store jika di Vercel
         try {
-            const res = await fetch(`/api/store?collection=${collection}`, {
+            const res = await fetch(`/api/store?collection=${collection}&${bust}`, {
                 headers: { 'Accept': 'application/json' },
                 cache: 'no-store'
             });
@@ -149,7 +156,7 @@ const Api = {
 
         // 2. Akses LANGSUNG ke Cloud Vercel Blob (Berfungsi 100% di GitHub Pages & Global)
         try {
-            const res = await fetch(`${this._BLOB_READ_URL}/data/${collection}.json`, {
+            const res = await fetch(`${this._BLOB_READ_URL}/data/${collection}.json?${bust}`, {
                 headers: { 'Authorization': `Bearer ${this._BLOB_TOKEN}` },
                 cache: 'no-store'
             });
@@ -856,12 +863,12 @@ const Api = {
 
     async updateTournamentRegistrationStatus(id, newStatus) {
         await this._storePost('update', 'registrations', { id, data: { status: newStatus } });
-        return true;
+        return { success: true };
     },
 
     async deleteTournamentRegistration(id) {
         await this._storePost('delete', 'registrations', { id });
-        return true;
+        return { success: true };
     },
 
     // ================================================================

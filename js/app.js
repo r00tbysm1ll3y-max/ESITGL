@@ -1209,8 +1209,12 @@ async function handleAthleteRegistration(e) {
 
         const created = await Api.createAthlete(payload);
 
-        // Refresh state
+        // Refresh state & re-render seluruh tampilan terkait secara instan
         athletes = await Api.getAthletes();
+        renderPublicAthletes();
+        if (typeof renderAdminAthletes === 'function') renderAdminAthletes();
+        if (typeof renderKlasemen === 'function') renderKlasemen();
+        if (typeof renderHomeView === 'function') renderHomeView();
 
         // Otomatis aktifkan sesi login member yang baru mendaftar
         loggedMember = created;
@@ -3450,9 +3454,16 @@ async function handleSetAdminPassword(e) {
 async function handleDeleteAdminAccount(email) {
     if (!confirm(`Hapus akun admin "${email}"? Aksi ini tidak dapat dibatalkan.`)) return;
     try {
-        await Api.deleteAdminAccount(email);
+        // Optimistic UI update: hapus dari memori dan re-render seketika (0ms)
+        if (Api._memoryCache['admins']) {
+            Api._memoryCache['admins'] = Api._memoryCache['admins'].filter(a => a.email !== email);
+        }
         await renderAdminAkunPanel();
         showToast('Akun Dihapus', `Akun ${email} telah dihapus dari sistem.`);
+
+        // Sync ke Cloud Vercel Blob
+        await Api.deleteAdminAccount(email);
+        await renderAdminAkunPanel();
     } catch (err) {
         alert(err.message || 'Gagal menghapus akun.');
     }
@@ -3992,11 +4003,24 @@ function exportAthletesCSV() {
 
 async function verifyAthlete(id) {
     const target = athletes.find(a => a.id == id);
-    if (target) {
+    if (!target) return;
+
+    // 1. Optimistic Update: Langsung ubah di memori dan re-render seketika (0ms)
+    target.status = 'verified';
+    if (Api._memoryCache['athletes']) {
+        const mem = Api._memoryCache['athletes'].find(x => String(x.id) === String(id));
+        if (mem) mem.status = 'verified';
+    }
+    renderAdminAthletes();
+    renderPublicAthletes();
+    if (typeof renderKlasemen === 'function') renderKlasemen();
+    showToast('Atlet Diverifikasi', `${target.nickname} kini berstatus Verified dan tampil di database publik.`);
+
+    // 2. Sync ke Cloud Vercel Blob di latar belakang
+    try {
         await Api.updateAthleteStatus(id, 'verified');
-        athletes = await Api.getAthletes();
-        renderAdminView();
-        showToast('Atlet Diverifikasi', `${target.nickname} kini berstatus Verified dan tampil di database publik.`);
+    } catch (err) {
+        console.error('Gagal sync status verifikasi ke cloud:', err);
     }
 }
 
@@ -4005,9 +4029,23 @@ async function updateAthletePoints(id) {
     const input = document.getElementById(`ptsInput-${id}`);
     if (target && input) {
         const val = parseInt(input.value, 10) || 0;
-        await Api.updateAthletePoints(id, val);
-        athletes = await Api.getAthletes();
+        // 1. Optimistic Update: Langsung ubah di memori dan re-render seketika (0ms)
+        target.points = val;
+        if (Api._memoryCache['athletes']) {
+            const mem = Api._memoryCache['athletes'].find(x => String(x.id) === String(id));
+            if (mem) mem.points = val;
+        }
+        renderAdminAthletes();
+        if (typeof renderKlasemen === 'function') renderKlasemen();
+        if (typeof renderHomeView === 'function') renderHomeView();
         showToast('Poin Diperbarui', `Poin ${target.nickname} diubah menjadi ${val.toLocaleString('id-ID')}.`);
+
+        // 2. Sync ke Cloud Vercel Blob di latar belakang
+        try {
+            await Api.updateAthletePoints(id, val);
+        } catch (err) {
+            console.error('Gagal sync poin ke cloud:', err);
+        }
     }
 }
 
@@ -4021,10 +4059,23 @@ async function deleteAthlete(id) {
         return;
     }
 
-    await Api.deleteAthlete(id);
-    athletes = await Api.getAthletes();
-    renderAdminView();
+    // 1. Optimistic Update: Hapus langsung dari memori lokal dan re-render seketika (0ms)
+    athletes = athletes.filter(x => String(x.id) !== String(id));
+    if (Api._memoryCache['athletes']) {
+        Api._memoryCache['athletes'] = Api._memoryCache['athletes'].filter(x => String(x.id) !== String(id));
+    }
+    renderAdminAthletes();
+    renderPublicAthletes();
+    if (typeof renderKlasemen === 'function') renderKlasemen();
+    if (typeof renderHomeView === 'function') renderHomeView();
     showToast('Akun Dihapus 🗑️', `Data akun ${athleteLabel} telah berhasil dihapus dari sistem.`);
+
+    // 2. Sync ke Cloud Vercel Blob di latar belakang
+    try {
+        await Api.deleteAthlete(id);
+    } catch (err) {
+        console.error('Gagal sync hapus atlet ke cloud:', err);
+    }
 }
 
 // Admin Tab 2: Kelola Event
@@ -4450,21 +4501,44 @@ function renderAdminEvents() {
 }
 
 async function changeEventStatus(id, newStatus) {
-    await Api.updateEventStatus(id, newStatus);
-    events = await Api.getEvents();
+    const ev = events.find(e => e.id == id);
+    if (ev) ev.status = newStatus;
+    if (Api._memoryCache['events']) {
+        const mem = Api._memoryCache['events'].find(e => String(e.id) === String(id));
+        if (mem) mem.status = newStatus;
+    }
+    renderAdminEvents();
+    if (typeof renderEventsView === 'function') renderEventsView();
+    if (typeof renderHomeView === 'function') renderHomeView();
     showToast('Status Event Diubah', `Status turnamen diubah menjadi ${newStatus}.`);
+
+    try {
+        await Api.updateEventStatus(id, newStatus);
+    } catch (err) {
+        console.error('Gagal sync status event ke cloud:', err);
+    }
 }
 
 async function deleteEvent(id) {
     const ev = events.find(e => e.id == id);
     const evTitle = ev ? ` "${ev.title}"` : '';
     if (confirm(`Apakah Anda yakin ingin menghapus turnamen${evTitle}? Poster dan seluruh file gambar terkait akan dihapus bersih dari storage.`)) {
-        await Api.deleteEvent(id);
-        events = await Api.getEvents();
+        // 1. Optimistic Update: Langsung hapus dari memori dan re-render seketika (0ms)
+        events = events.filter(e => String(e.id) !== String(id));
+        if (Api._memoryCache['events']) {
+            Api._memoryCache['events'] = Api._memoryCache['events'].filter(e => String(e.id) !== String(id));
+        }
         renderAdminEvents();
         if (typeof renderEventsView === 'function') renderEventsView();
         if (typeof renderHomeView === 'function') renderHomeView();
         showToast('Turnamen Dihapus', 'Jadwal turnamen telah dihapus.');
+
+        // 2. Sync ke Cloud Vercel Blob di latar belakang
+        try {
+            await Api.deleteEvent(id);
+        } catch (err) {
+            console.error('Gagal sync hapus event ke cloud:', err);
+        }
     }
 }
 
@@ -5203,6 +5277,7 @@ async function handleAdminAddNews(e) {
     closeAdminNewsForm();
     renderAdminNews();
     renderNewsView();
+    if (typeof renderHomeView === 'function') renderHomeView();
 }
 
 function viewNewsFromAdmin(id) {
@@ -5277,12 +5352,22 @@ async function deleteNews(id) {
     const art = news.find(n => n.id == id);
     const artTitle = art ? ` "${art.title}"` : '';
     if (confirm(`Apakah Anda yakin ingin menghapus artikel berita${artTitle}? Foto sampul dan file gambar terkait akan dihapus bersih dari storage.`)) {
-        await Api.deleteNews(id);
-        news = await Api.getNews();
+        // 1. Optimistic Update: Langsung hapus dari memori dan re-render seketika (0ms)
+        news = news.filter(n => String(n.id) !== String(id));
+        if (Api._memoryCache['news']) {
+            Api._memoryCache['news'] = Api._memoryCache['news'].filter(n => String(n.id) !== String(id));
+        }
         renderAdminNews();
         if (typeof renderNewsView === 'function') renderNewsView();
         if (typeof renderHomeView === 'function') renderHomeView();
         showToast('Berita & Gambar Dihapus', 'Artikel berita dan seluruh file gambar terkait telah dihapus bersih dari storage.');
+
+        // 2. Sync ke Cloud Vercel Blob di latar belakang
+        try {
+            await Api.deleteNews(id);
+        } catch (err) {
+            console.error('Gagal sync hapus berita ke cloud:', err);
+        }
     }
 }
 
@@ -8379,26 +8464,44 @@ function closeAdminTeamRosterModal() {
 }
 
 async function adminUpdateTeamStatus(regId, newStatus) {
-    const res = await Api.updateTournamentRegistrationStatus(regId, newStatus);
-    if (res.success) {
-        renderAdminTournamentRegistrationsInModal(adminActiveTournamentId || adminSelectedTournamentId);
-        renderAdminEvents();
-        // Refresh modal if still open
-        const modal = document.getElementById('modalAdminTeamRoster');
-        if (modal && !modal.classList.contains('hidden')) {
-            showAdminTeamRosterModal(regId);
-        }
-        showToast('Status Diperbarui', `Status pendaftaran tim diubah menjadi ${newStatus}.`);
+    // 1. Optimistic Update: Langsung ubah status di memori dan re-render seketika (0ms)
+    if (Api._memoryCache['registrations']) {
+        const itm = Api._memoryCache['registrations'].find(r => String(r.id) === String(regId));
+        if (itm) itm.status = newStatus;
+    }
+    renderAdminTournamentRegistrationsInModal(adminActiveTournamentId || adminSelectedTournamentId);
+    renderAdminEvents();
+    const modal = document.getElementById('modalAdminTeamRoster');
+    if (modal && !modal.classList.contains('hidden')) {
+        showAdminTeamRosterModal(regId);
+    }
+    showToast('Status Diperbarui', `Status pendaftaran tim diubah menjadi ${newStatus}.`);
+
+    // 2. Sync ke Cloud Vercel Blob di latar belakang
+    try {
+        await Api.updateTournamentRegistrationStatus(regId, newStatus);
+    } catch (err) {
+        console.error('Gagal sync status tim ke cloud:', err);
     }
 }
 
 async function adminDeleteTeam(regId) {
     if (confirm('Hapus data pendaftaran tim ini dari turnamen? Tindakan ini tidak dapat dibatalkan.')) {
-        await Api.deleteTournamentRegistration(regId);
+        // 1. Optimistic Update: Langsung hapus dari memori dan re-render seketika (0ms)
+        if (Api._memoryCache['registrations']) {
+            Api._memoryCache['registrations'] = Api._memoryCache['registrations'].filter(r => String(r.id) !== String(regId));
+        }
         closeAdminTeamRosterModal();
         renderAdminTournamentRegistrationsInModal(adminActiveTournamentId || adminSelectedTournamentId);
         renderAdminEvents();
         showToast('Data Tim Dihapus', 'Pendaftaran tim telah dihapus.');
+
+        // 2. Sync ke Cloud Vercel Blob di latar belakang
+        try {
+            await Api.deleteTournamentRegistration(regId);
+        } catch (err) {
+            console.error('Gagal sync hapus tim ke cloud:', err);
+        }
     }
 }
 

@@ -26,7 +26,7 @@ function blobPath(collection) {
 }
 
 function blobUrl(collection) {
-    return `${BASE_URL}/data/${collection}.json`;
+    return `${BASE_URL}/data/${collection}.json?_t=${Date.now()}`;
 }
 
 async function fetchCollection(collection) {
