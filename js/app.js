@@ -5063,7 +5063,7 @@ function renderMemberKtaCard() {
                         <div class="min-w-0">
                             <span class="block text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest text-[#DC2626]">KARTU TANDA ANGGOTA ELEKTRONIK</span>
                             <h2 class="font-extrabold text-sm sm:text-base md:text-lg tracking-tight leading-tight truncate">ESI KABUPATEN TRENGGALEK</h2>
-                            <p class="text-[10px] sm:text-[11px] text-slate-400 truncate">Pengurus Kabupaten Esports Indonesia • ESI Trenggalek</p>
+                            <p class="text-[10px] sm:text-[11px] text-slate-400 truncate">Cabang Olahraga Prestasi Esports Indonesia (ESI) Kabupaten Trenggalek</p>
                         </div>
                     </div>
                     <div class="text-left sm:text-right shrink-0 bg-slate-800/60 sm:bg-transparent px-3 py-1.5 sm:p-0 rounded-lg border border-slate-700/50 sm:border-0 w-full sm:w-auto flex sm:block justify-between items-center">
@@ -5937,13 +5937,13 @@ function drawStoryCardCanvas(ctx, m, logoImg, regNo, rankText) {
     ctx.textAlign = 'center';
     // Top organization subtitle
     ctx.fillStyle = '#F59E0B';
-    ctx.font = '800 20px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('PENGURUS ESI KABUPATEN TRENGGALEK', W / 2, 275);
+    ctx.font = '800 18px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('CABANG OLAHRAGA PRESTASI', W / 2, 275);
 
     // Main Title
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '900 36px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('KABUPATEN TRENGGALEK', W / 2, 325);
+    ctx.fillText('ESI KABUPATEN TRENGGALEK', W / 2, 325);
 
     // E-KTA Badge Pill
     ctx.fillStyle = 'rgba(220, 38, 38, 0.2)';
@@ -6301,7 +6301,7 @@ function drawHorizontalCardCanvas(ctx, m, logoImg, regNo, rankText) {
     // Footer note
     ctx.fillStyle = '#64748B';
     ctx.font = '13px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('Pengurus ESI Trenggalek • Berafiliasi PBESI & KONI • #TrenggalekJuara', rightX, 645);
+    ctx.fillText('Cabang Olahraga Prestasi ESI Trenggalek • Berafiliasi PBESI & KONI • #TrenggalekJuara', rightX, 645);
 }
 
 function downloadKtaPng() {
