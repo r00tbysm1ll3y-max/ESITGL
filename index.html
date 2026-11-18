@@ -2346,7 +2346,7 @@
                                 </button>
                                 <button id="adminTabBtnAkun" onclick="switchAdminTab('akun')" data-admintab="akun"
                                     class="admin-tab-btn hidden flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-amber-800 hover:bg-amber-50 flex items-center justify-between gap-2 whitespace-nowrap border border-amber-200">
-                                    <span><i class="fa-solid fa-user-shield w-5 text-amber-600"></i> Kelola Sandi Pengurus</span>
+                                    <span><i class="fa-solid fa-users-gear w-5 text-amber-600"></i> Kelola Akun Admin</span>
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-amber-200 text-amber-900">Super</span>
                                 </button>
                             </div>
@@ -2967,104 +2967,40 @@
 
                             <!-- TAB 4: KELOLA AKUN PENGURUS & KEAMANAN (KHUSUS SUPER ADMIN) -->
                             <div id="admin-panel-akun" class="admin-panel hidden space-y-6">
-                                <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 md:p-7 shadow-sm">
-                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-6 border-b border-slate-200">
-                                        <div>
-                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider mb-1">
-                                                <i class="fa-solid fa-crown text-amber-500"></i> Hak Akses Super Admin
-                                            </div>
-                                            <h3 class="font-black text-xl text-[#0F172A]">Kelola Kata Sandi Akun Pengurus</h3>
-                                            <p class="text-xs text-slate-500 mt-0.5">Atur ulang atau ganti kata sandi akun admin pengurus biasa untuk menjaga keamanan portal ESI Trenggalek.</p>
+
+                                <!-- Header -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider mb-1">
+                                            <i class="fa-solid fa-crown text-amber-500"></i> Hak Akses Super Admin
                                         </div>
-                                        <span class="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 flex items-center gap-1.5 self-start sm:self-auto">
-                                            <i class="fa-solid fa-lock text-slate-400"></i> Akses Terproteksi
+                                        <h3 class="font-black text-xl text-[#0F172A]">Kelola Akun Admin</h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">Tambah, hapus, dan atur kata sandi setiap akun pengurus yang dapat mengakses panel admin ESI Trenggalek.</p>
+                                    </div>
+                                    <button onclick="openAddAdminAccountModal()"
+                                        class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0F172A] hover:bg-slate-700 text-white text-xs font-bold transition shadow-sm active:scale-95">
+                                        <i class="fa-solid fa-user-plus"></i>
+                                        <span>Tambah Akun Admin</span>
+                                    </button>
+                                </div>
+
+                                <!-- Tabel / Card daftar akun -->
+                                <div class="bg-white border border-[#E2E8F0] rounded-2xl shadow-sm overflow-hidden">
+                                    <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                                        <span class="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-users-gear text-slate-400"></i> Daftar Akun Admin
                                         </span>
+                                        <span id="adminAccountCount" class="text-[11px] text-slate-400 font-semibold"></span>
                                     </div>
-
-                                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                                        <!-- Kartu Info Akun Pengurus -->
-                                        <div class="lg:col-span-5 bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-12 h-12 rounded-xl bg-[#0F172A] text-white flex items-center justify-center text-xl shrink-0">
-                                                    <i class="fa-solid fa-user-gear text-amber-400"></i>
-                                                </div>
-                                                <div class="min-w-0">
-                                                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Akun Pengurus Biasa</span>
-                                                    <h4 class="font-black text-sm text-[#0F172A] truncate">admin@esitrenggalek.id</h4>
-                                                    <span class="inline-block mt-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">Status: Aktif</span>
-                                                </div>
-                                            </div>
-
-                                            <div class="text-xs text-slate-600 space-y-2 border-t border-slate-200 pt-3">
-                                                <p><i class="fa-solid fa-circle-info text-amber-600 mr-1.5"></i>Akun ini digunakan oleh staf pengurus daerah untuk verifikasi atlet, jadwal kompetisi, dan artikel.</p>
-                                                <p><i class="fa-solid fa-shield text-blue-600 mr-1.5"></i>Jika Anda mencurigai akun pengurus kebobolan, segera ganti kata sandinya di formulir ini.</p>
-                                            </div>
-
-                                            <div class="p-3.5 bg-white border border-slate-200 rounded-xl space-y-1">
-                                                <div class="text-[10px] uppercase font-bold text-slate-400">Status Kata Sandi Saat Ini:</div>
-                                                <div id="pengurusPasswordStatusText" class="font-mono text-xs font-black text-slate-800 flex items-center gap-1.5">
-                                                    <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
-                                                    <span>Memuat status...</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Form Ubah Password Akun Pengurus -->
-                                        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 md:p-6 space-y-5">
-                                            <div>
-                                                <h4 class="font-black text-base text-[#0F172A] flex items-center gap-2">
-                                                    <i class="fa-solid fa-key text-[#DC2626]"></i>
-                                                    <span>Ganti Kata Sandi Akun Pengurus</span>
-                                                </h4>
-                                                <p class="text-xs text-slate-500 mt-0.5">Kata sandi baru akan langsung berlaku untuk login <code>admin@esitrenggalek.id</code>.</p>
-                                            </div>
-
-                                            <form onsubmit="handleSuperAdminChangePengurusPassword(event)" class="space-y-4">
-                                                <div>
-                                                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">
-                                                        Kata Sandi Baru untuk admin@esitrenggalek.id <span class="text-red-500">*</span>
-                                                    </label>
-                                                    <div class="relative">
-                                                        <input type="password" id="newPengurusPassInput" required placeholder="Masukkan kata sandi baru (min. 5 karakter)..."
-                                                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] font-medium transition">
-                                                        <button type="button" onclick="togglePasswordVisibility('newPengurusPassInput')"
-                                                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
-                                                            aria-label="Lihat Password" title="Lihat Password">
-                                                            <i class="fa-solid fa-eye text-sm" data-pass-toggle="newPengurusPassInput"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">
-                                                        Ulangi Kata Sandi Baru <span class="text-red-500">*</span>
-                                                    </label>
-                                                    <div class="relative">
-                                                        <input type="password" id="confirmPengurusPassInput" required placeholder="Ketik ulang kata sandi baru..."
-                                                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] font-medium transition">
-                                                        <button type="button" onclick="togglePasswordVisibility('confirmPengurusPassInput')"
-                                                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
-                                                            aria-label="Lihat Password" title="Lihat Password">
-                                                            <i class="fa-solid fa-eye text-sm" data-pass-toggle="confirmPengurusPassInput"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex flex-wrap items-center gap-3 pt-2">
-                                                    <button type="submit"
-                                                        class="px-5 py-2.5 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-sm transition active:scale-95">
-                                                        <i class="fa-solid fa-floppy-disk text-xs"></i>
-                                                        <span>Simpan Kata Sandi Pengurus</span>
-                                                    </button>
-                                                    <button type="button" onclick="handleResetPengurusPasswordToDefault()"
-                                                        class="px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition flex items-center gap-1.5">
-                                                        <i class="fa-solid fa-rotate-left"></i>
-                                                        <span>Reset ke Default (admin123)</span>
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
+                                    <div id="adminAccountList" class="divide-y divide-slate-100">
+                                        <!-- Diisi JS -->
                                     </div>
+                                </div>
+
+                                <!-- Catatan -->
+                                <div class="text-xs text-slate-500 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                                    <i class="fa-solid fa-circle-info text-blue-500 mt-0.5 shrink-0"></i>
+                                    <span>Akun <strong>admin@esitrenggalek.id</strong> adalah akun bawaan dan tidak dapat dihapus. Akun baru yang ditambahkan dapat dihapus kapan saja. Kata sandi disimpan di browser lokal portal ini.</span>
                                 </div>
                             </div>
                         </div>
@@ -3916,7 +3852,112 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
     <!-- Modular Application JS (Deferred) -->
-    <!-- ==================== MODAL POPUP DATA PENDAFTAR TURNAMEN (ADMIN) ====================<!-- ==================== MODAL POPUP DATA PENDAFTAR TURNAMEN (ADMIN) ==================== -->
+    <!-- ==================== MODAL TAMBAH AKUN ADMIN (SUPER ADMIN ONLY) ==================== -->
+    <div id="modalAddAdminAccount" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+        <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md shadow-2xl animate-fadeIn">
+            <div class="bg-gradient-to-r from-[#0F172A] to-slate-800 text-white px-5 py-4 flex items-center justify-between rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/30 text-amber-400 flex items-center justify-center">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <span class="font-black text-sm">Tambah Akun Admin Baru</span>
+                </div>
+                <button onclick="closeAddAdminAccountModal()" class="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="handleAddAdminAccount(event)" class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input type="text" id="addAdminName" required placeholder="cth. Budi Santoso"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Email Admin <span class="text-red-500">*</span></label>
+                    <input type="email" id="addAdminEmail" required placeholder="cth. pengurus2@esitrenggalek.id"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Kata Sandi <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input type="password" id="addAdminPassword" required placeholder="Min. 5 karakter"
+                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] transition">
+                        <button type="button" onclick="togglePasswordVisibility('addAdminPassword')"
+                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-eye text-sm" data-pass-toggle="addAdminPassword"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit"
+                        class="flex-1 py-2.5 rounded-xl bg-[#0F172A] hover:bg-slate-700 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition active:scale-95">
+                        <i class="fa-solid fa-user-plus"></i> Tambah Akun
+                    </button>
+                    <button type="button" onclick="closeAddAdminAccountModal()"
+                        class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL SET PASSWORD AKUN ADMIN ==================== -->
+    <div id="modalSetAdminPassword" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+        <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md shadow-2xl animate-fadeIn">
+            <div class="bg-gradient-to-r from-[#0F172A] to-slate-800 text-white px-5 py-4 flex items-center justify-between rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-400/30 text-blue-400 flex items-center justify-center">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div>
+                        <div class="font-black text-sm">Ubah Kata Sandi</div>
+                        <div id="modalSetPassEmail" class="text-slate-400 text-[11px] font-mono"></div>
+                    </div>
+                </div>
+                <button onclick="closeSetAdminPasswordModal()" class="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSetAdminPassword(event)" class="p-5 space-y-4">
+                <input type="hidden" id="modalSetPassTarget">
+                <div>
+                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Kata Sandi Baru <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input type="password" id="modalSetPassNew" required placeholder="Min. 5 karakter"
+                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] transition">
+                        <button type="button" onclick="togglePasswordVisibility('modalSetPassNew')"
+                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-eye text-sm" data-pass-toggle="modalSetPassNew"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Ulangi Kata Sandi <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input type="password" id="modalSetPassConfirm" required placeholder="Ketik ulang kata sandi"
+                            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0F172A] focus:outline-none text-sm text-[#0F172A] transition">
+                        <button type="button" onclick="togglePasswordVisibility('modalSetPassConfirm')"
+                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-eye text-sm" data-pass-toggle="modalSetPassConfirm"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit"
+                        class="flex-1 py-2.5 rounded-xl bg-[#0F172A] hover:bg-slate-700 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition active:scale-95">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan
+                    </button>
+                    <button type="button" onclick="closeSetAdminPasswordModal()"
+                        class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL POPUP DATA PENDAFTAR TURNAMEN (ADMIN) ==================== -->
     <div id="modalAdminTournamentRegistrations" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-900/80 backdrop-blur-sm">
         <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-fadeIn">
             <!-- Header Modal -->
@@ -4332,11 +4373,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261118ag" defer></script>
-    <script src="js/config.js?v=20261118ag" defer></script>
-    <script src="js/supabaseClient.js?v=20261118ag" defer></script>
-    <script src="js/api.js?v=20261118ag" defer></script>
-    <script src="js/app.js?v=20261118ag" defer></script>
+    <script src="js/seedData.js?v=20261118ah" defer></script>
+    <script src="js/config.js?v=20261118ah" defer></script>
+    <script src="js/supabaseClient.js?v=20261118ah" defer></script>
+    <script src="js/api.js?v=20261118ah" defer></script>
+    <script src="js/app.js?v=20261118ah" defer></script>
 </body>
 
 </html>

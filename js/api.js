@@ -584,24 +584,93 @@ const Api = {
     //  5. AUTENTIKASI ADMIN
     // ================================================================
 
-    getPengurusPassword() {
+    // ── Multi-Admin Account Management ──────────────────────────────────
+
+    /** Baca daftar akun pengurus dari localStorage. Selalu termasuk akun default. */
+    getAdminAccounts() {
+        const DEFAULT = [{
+            email: 'admin@esitrenggalek.id',
+            name: 'Pengurus ESI Trenggalek',
+            role: 'pengurus',
+            isDefault: true
+        }];
+        try {
+            const raw = localStorage.getItem('esi_admin_accounts');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
+        } catch (_) {}
+        // Simpan default agar konsisten
+        const defaultWithPass = DEFAULT.map(a => ({ ...a, password: this._getDefaultPengurusPass() }));
+        localStorage.setItem('esi_admin_accounts', JSON.stringify(defaultWithPass));
+        return defaultWithPass;
+    },
+
+    /** Password default pengurus (legacy key compat) */
+    _getDefaultPengurusPass() {
         try {
             const custom = localStorage.getItem('esi_pengurus_custom_password');
             if (custom && custom.trim()) return custom.trim();
         } catch (_) {}
-        return "admin123";
+        return 'admin123';
     },
 
-    updatePengurusPassword(newPassword) {
-        if (!newPassword || newPassword.length < 5) {
-            throw new Error('Kata sandi baru minimal 5 karakter.');
-        }
-        localStorage.setItem('esi_pengurus_custom_password', newPassword);
+    /** Simpan daftar akun */
+    _saveAdminAccounts(list) {
+        localStorage.setItem('esi_admin_accounts', JSON.stringify(list));
+    },
+
+    /** Tambah akun pengurus baru */
+    addAdminAccount(email, name, password) {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        if (!cleanEmail || !name || !password) throw new Error('Email, nama, dan kata sandi wajib diisi.');
+        if (password.length < 5) throw new Error('Kata sandi minimal 5 karakter.');
+        if (cleanEmail === 'robby@rawwy.ae') throw new Error('Email tersebut tidak dapat digunakan.');
+        const accounts = this.getAdminAccounts();
+        if (accounts.find(a => a.email === cleanEmail)) throw new Error('Email sudah terdaftar sebagai akun admin.');
+        const newAcc = { email: cleanEmail, name: name.trim(), password, role: 'pengurus', isDefault: false };
+        accounts.push(newAcc);
+        this._saveAdminAccounts(accounts);
+        return newAcc;
+    },
+
+    /** Hapus akun pengurus (tidak bisa hapus isDefault) */
+    deleteAdminAccount(email) {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        if (cleanEmail === 'robby@rawwy.ae') throw new Error('Akun Super Admin tidak dapat dihapus.');
+        let accounts = this.getAdminAccounts();
+        const acc = accounts.find(a => a.email === cleanEmail);
+        if (!acc) throw new Error('Akun tidak ditemukan.');
+        if (acc.isDefault) throw new Error('Akun pengurus utama tidak dapat dihapus, hanya bisa diubah kata sandinya.');
+        accounts = accounts.filter(a => a.email !== cleanEmail);
+        this._saveAdminAccounts(accounts);
         return true;
     },
 
+    /** Set password akun pengurus tertentu */
+    setAdminAccountPassword(email, newPassword) {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        if (!newPassword || newPassword.length < 5) throw new Error('Kata sandi minimal 5 karakter.');
+        if (cleanEmail === 'robby@rawwy.ae') throw new Error('Gunakan mekanisme lain untuk mengubah kata sandi Super Admin.');
+        const accounts = this.getAdminAccounts();
+        const acc = accounts.find(a => a.email === cleanEmail);
+        if (!acc) throw new Error('Akun tidak ditemukan.');
+        acc.password = newPassword;
+        // Jika akun default, sync ke legacy key juga
+        if (acc.isDefault) localStorage.setItem('esi_pengurus_custom_password', newPassword);
+        this._saveAdminAccounts(accounts);
+        return true;
+    },
+
+    // Legacy compat wrappers
+    getPengurusPassword() { return this._getDefaultPengurusPass(); },
+    updatePengurusPassword(newPassword) { return this.setAdminAccountPassword('admin@esitrenggalek.id', newPassword); },
     resetPengurusPassword() {
         localStorage.removeItem('esi_pengurus_custom_password');
+        const accounts = this.getAdminAccounts();
+        const acc = accounts.find(a => a.email === 'admin@esitrenggalek.id');
+        if (acc) { acc.password = 'admin123'; this._saveAdminAccounts(accounts); }
         return true;
     },
 
@@ -651,20 +720,21 @@ const Api = {
             return { success: true, user: adminUser, role: 'superadmin' };
         }
 
-        // 2. CEK AKUN PENGURUS BIASA: admin@esitrenggalek.id
-        if (cleanEmail === 'admin@esitrenggalek.id') {
-            const activePengurusPass = this.getPengurusPassword();
-            if (password === activePengurusPass) {
-                const adminUser = {
-                    email: 'admin@esitrenggalek.id',
-                    name: 'Pengurus ESI Trenggalek',
-                    role: 'pengurus'
-                };
-                localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
-                localStorage.setItem('esi_admin_current_user', JSON.stringify(adminUser));
-                return { success: true, user: adminUser, role: 'pengurus' };
+        // 2. CEK AKUN PENGURUS — cari di daftar akun terkelola
+        const accounts = this.getAdminAccounts();
+        const matchAcc = accounts.find(a => a.email === cleanEmail);
+        if (matchAcc) {
+            if (password !== matchAcc.password) {
+                return { success: false, message: 'Kata sandi tidak sesuai.' };
             }
-            return { success: false, message: 'Kata sandi pengurus tidak sesuai atau telah diubah oleh Super Admin.' };
+            const adminUser = {
+                email: matchAcc.email,
+                name: matchAcc.name,
+                role: matchAcc.role || 'pengurus'
+            };
+            localStorage.setItem(CONFIG.STORAGE_KEYS.ADMIN_SESSION, 'true');
+            localStorage.setItem('esi_admin_current_user', JSON.stringify(adminUser));
+            return { success: true, user: adminUser, role: adminUser.role };
         }
 
         return { success: false, message: 'Email atau kata sandi tidak terdaftar.' };

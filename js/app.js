@@ -3268,44 +3268,144 @@ function switchAdminTab(tabName) {
 
 // Controller Fitur Super Admin: Kelola Kata Sandi Pengurus
 function renderAdminAkunPanel() {
+    const listEl = document.getElementById('adminAccountList');
+    const countEl = document.getElementById('adminAccountCount');
+    // Legacy compat: juga update status text jika masih ada
     const statusText = document.getElementById('pengurusPasswordStatusText');
-    if (!statusText) return;
+    if (statusText) {
+        const defPass = Api.getPengurusPassword();
+        statusText.innerHTML = defPass !== 'admin123'
+            ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] font-black border border-amber-300"><i class="fa-solid fa-key text-amber-600"></i> Kustom Aktif</span>`
+            : `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold border border-slate-200"><i class="fa-solid fa-lock text-slate-400"></i> Default (admin123)</span>`;
+    }
+    if (!listEl) return;
 
-    const currentPass = Api.getPengurusPassword();
-    const isCustom = currentPass !== 'admin123';
+    const accounts = Api.getAdminAccounts();
+    if (countEl) countEl.textContent = `${accounts.length} akun terdaftar`;
 
-    if (isCustom) {
-        statusText.innerHTML = `
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[11px] font-black border border-amber-300">
-                <i class="fa-solid fa-key text-amber-600"></i> Kustom Aktif (Diatur Super Admin)
-            </span>
+    listEl.innerHTML = accounts.map(acc => {
+        const initials = (acc.name || acc.email).substring(0, 2).toUpperCase();
+        const roleBadge = acc.isDefault
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200"><i class="fa-solid fa-shield-halved text-[9px]"></i>Utama</span>`
+            : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200"><i class="fa-solid fa-user text-[9px]"></i>Pengurus</span>`;
+        const deleteBtn = acc.isDefault
+            ? `<button disabled title="Akun utama tidak dapat dihapus"
+                    class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-300 text-xs font-bold border border-slate-200 cursor-not-allowed">
+                    <i class="fa-solid fa-trash text-[10px]"></i><span class="hidden sm:inline">Hapus</span>
+                </button>`
+            : `<button onclick="handleDeleteAdminAccount('${acc.email}')" title="Hapus akun ini"
+                    class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-600 text-red-600 hover:text-white text-xs font-bold border border-red-200 hover:border-red-600 transition active:scale-95">
+                    <i class="fa-solid fa-trash text-[10px]"></i><span class="hidden sm:inline">Hapus</span>
+                </button>`;
+        return `
+            <div class="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50/60 transition">
+                <div class="w-10 h-10 rounded-xl bg-[#0F172A] text-white font-black text-sm flex items-center justify-center shrink-0">${initials}</div>
+                <div class="min-w-0 flex-1">
+                    <div class="font-bold text-sm text-[#0F172A] truncate">${acc.name}</div>
+                    <div class="text-[11px] text-slate-500 font-mono truncate">${acc.email}</div>
+                    <div class="mt-0.5">${roleBadge}</div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="openSetAdminPasswordModal('${acc.email}', '${acc.name.replace(/'/g, '\\\'')}')" title="Ubah kata sandi"
+                        class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-500 text-amber-700 hover:text-white text-xs font-bold border border-amber-200 hover:border-amber-500 transition active:scale-95">
+                        <i class="fa-solid fa-key text-[10px]"></i><span class="hidden sm:inline">Sandi</span>
+                    </button>
+                    ${deleteBtn}
+                </div>
+            </div>
         `;
-    } else {
-        statusText.innerHTML = `
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold border border-slate-200">
-                <i class="fa-solid fa-lock text-slate-400"></i> Standar Default (admin123)
-            </span>
-        `;
+    }).join('');
+}
+
+// ── Add Account ──────────────────────────────────────────────────────────────
+function openAddAdminAccountModal() {
+    const modal = document.getElementById('modalAddAdminAccount');
+    if (!modal) return;
+    document.getElementById('addAdminName').value = '';
+    document.getElementById('addAdminEmail').value = '';
+    document.getElementById('addAdminPassword').value = '';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeAddAdminAccountModal() {
+    const modal = document.getElementById('modalAddAdminAccount');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function handleAddAdminAccount(e) {
+    e.preventDefault();
+    const name = document.getElementById('addAdminName').value.trim();
+    const email = document.getElementById('addAdminEmail').value.trim();
+    const password = document.getElementById('addAdminPassword').value;
+    try {
+        Api.addAdminAccount(email, name, password);
+        closeAddAdminAccountModal();
+        renderAdminAkunPanel();
+        showToast('Akun Admin Ditambahkan', `Akun "${name}" (${email}) berhasil dibuat.`);
+    } catch (err) {
+        alert(err.message || 'Gagal menambah akun.');
     }
 }
 
+// ── Set Password ─────────────────────────────────────────────────────────────
+function openSetAdminPasswordModal(email, name) {
+    const modal = document.getElementById('modalSetAdminPassword');
+    if (!modal) return;
+    document.getElementById('modalSetPassTarget').value = email;
+    document.getElementById('modalSetPassEmail').textContent = `${name} · ${email}`;
+    document.getElementById('modalSetPassNew').value = '';
+    document.getElementById('modalSetPassConfirm').value = '';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeSetAdminPasswordModal() {
+    const modal = document.getElementById('modalSetAdminPassword');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function handleSetAdminPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById('modalSetPassTarget').value;
+    const p1 = document.getElementById('modalSetPassNew').value;
+    const p2 = document.getElementById('modalSetPassConfirm').value;
+    if (p1 !== p2) { alert('Konfirmasi kata sandi tidak cocok.'); return; }
+    try {
+        Api.setAdminAccountPassword(email, p1);
+        closeSetAdminPasswordModal();
+        renderAdminAkunPanel();
+        showToast('Kata Sandi Diperbarui', `Kata sandi untuk ${email} berhasil diubah.`);
+    } catch (err) {
+        alert(err.message || 'Gagal mengubah kata sandi.');
+    }
+}
+
+// ── Delete Account ────────────────────────────────────────────────────────────
+function handleDeleteAdminAccount(email) {
+    if (!confirm(`Hapus akun admin "${email}"? Aksi ini tidak dapat dibatalkan.`)) return;
+    try {
+        Api.deleteAdminAccount(email);
+        renderAdminAkunPanel();
+        showToast('Akun Dihapus', `Akun ${email} telah dihapus dari sistem.`);
+    } catch (err) {
+        alert(err.message || 'Gagal menghapus akun.');
+    }
+}
+
+// Legacy compat
 function handleSuperAdminChangePengurusPassword(e) {
     e.preventDefault();
     const p1 = document.getElementById('newPengurusPassInput')?.value.trim();
     const p2 = document.getElementById('confirmPengurusPassInput')?.value.trim();
-
-    if (!p1 || p1.length < 5) {
-        alert('Kata sandi baru minimal 5 karakter.');
-        return;
-    }
-
-    if (p1 !== p2) {
-        alert('Konfirmasi kata sandi tidak cocok. Mohon ketik ulang.');
-        return;
-    }
-
+    if (!p1 || p1.length < 5) { alert('Kata sandi baru minimal 5 karakter.'); return; }
+    if (p1 !== p2) { alert('Konfirmasi kata sandi tidak cocok. Mohon ketik ulang.'); return; }
     try {
-        Api.updatePengurusPassword(p1);
+        Api.setAdminAccountPassword('admin@esitrenggalek.id', p1);
         e.target.reset();
         renderAdminAkunPanel();
         showToast('Kata Sandi Pengurus Diperbarui', 'Kata sandi untuk akun admin@esitrenggalek.id berhasil diubah.');
@@ -3315,7 +3415,7 @@ function handleSuperAdminChangePengurusPassword(e) {
 }
 
 function handleResetPengurusPasswordToDefault() {
-    if (confirm('Apakah Anda yakin ingin mereset kata sandi akun pengurus (admin@esitrenggalek.id) kembali ke bawaan default: "admin123"?')) {
+    if (confirm('Reset kata sandi akun pengurus (admin@esitrenggalek.id) kembali ke default "admin123"?')) {
         Api.resetPengurusPassword();
         renderAdminAkunPanel();
         showToast('Kata Sandi Direset', 'Kata sandi pengurus berhasil dikembalikan ke default: admin123.');
