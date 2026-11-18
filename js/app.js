@@ -5729,7 +5729,7 @@ function updateHeaderMemberBadge() {
         const shortName = loggedMember.nickname || (loggedMember.fullName ? loggedMember.fullName.split(' ')[0] : 'Member');
         if (txt) txt.innerHTML = `<span class="truncate max-w-[80px] sm:max-w-none inline-block align-middle">${shortName}</span>`;
         if (btn) {
-            btn.className = "h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#0F172A] hover:bg-slate-800 text-white border border-slate-700 transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap";
+            btn.className = "h-9 sm:h-10 px-3 sm:px-3.5 rounded-lg text-xs sm:text-sm font-bold bg-[#0F172A] hover:bg-slate-800 text-white border border-slate-700 transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap";
             btn.title = `Login sebagai: ${loggedMember.fullName} (${loggedMember.nickname})`;
             if (isAdminLoggedIn) {
                 btn.classList.add('hidden', 'sm:flex');
@@ -5760,16 +5760,16 @@ function updateHeaderMemberBadge() {
             regFormCard.classList.add('hidden');
         }
     } else {
-        if (txt) txt.textContent = 'Login Member';
+        if (txt) txt.textContent = 'Login';
         if (btn) {
-            btn.className = "h-8.5 sm:h-9 px-2.5 sm:px-3 rounded-lg text-xs font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap";
+            btn.className = "h-9 sm:h-10 px-3 sm:px-3.5 rounded-lg text-xs sm:text-sm font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap";
             btn.title = 'Login Member / Atlet ESI Trenggalek';
             if (isAdminLoggedIn) {
                 btn.classList.add('hidden', 'sm:flex');
                 btn.classList.remove('flex');
             }
         }
-        if (drawerTxt) drawerTxt.textContent = 'Login Member';
+        if (drawerTxt) drawerTxt.textContent = 'Login';
 
         // Tampilkan kembali tombol "Daftar Atlet" saat belum login
         if (navBtnDaftar) {
