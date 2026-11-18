@@ -7,6 +7,7 @@
 let athletes = [];
 let events = [];
 let news = [];
+let documents = [];
 let isAdminLoggedIn = false;
 let loggedMember = null;
 
@@ -17,11 +18,12 @@ let eventStatusFilter = 'Semua';
 let klasemenSelectedDiv = 'all';
 let klasemenSearchQuery = '';
 let newsCatFilter = 'Semua';
+let docCategoryFilter = 'Semua';
 let adminActiveTab = 'atlet';
 let memberActiveTab = 'kta';
 let activeArticleId = 2;
 
-const VALID_VIEWS = ['beranda', 'daftar', 'cek-data', 'event', 'event-detail', 'daftar-event', 'klasemen', 'berita', 'baca-berita', 'profil', 'admin', 'member'];
+const VALID_VIEWS = ['beranda', 'daftar', 'cek-data', 'event', 'event-detail', 'daftar-event', 'klasemen', 'berita', 'baca-berita', 'profil', 'dokumen', 'admin', 'member'];
 
 let activeRegisterEventId = 1;
 let adminSelectedTournamentId = null;
@@ -294,6 +296,7 @@ function navigateTo(viewName, updateHash = true) {
     if (viewName === 'klasemen') renderKlasemenView();
     if (viewName === 'berita') renderNewsView();
     if (viewName === 'baca-berita') renderArticleDetailPage(activeArticleId);
+    if (viewName === 'dokumen') renderDocumentsView();
     if (viewName === 'admin') renderAdminView();
     if (viewName === 'member') renderMemberView();
 
@@ -3299,6 +3302,7 @@ function renderAdminView() {
     renderAdminAthletes();
     renderAdminEvents();
     renderAdminNews();
+    renderAdminDocuments();
     if (isSuper) renderAdminAkunPanel();
 }
 
@@ -3326,6 +3330,207 @@ function switchAdminTab(tabName) {
             renderAdminAthletes();
         } else if (tabName === 'akun') {
             renderAdminAkunPanel();
+        } else if (tabName === 'dokumen') {
+            renderAdminDocuments();
+        }
+    }
+}
+
+// ==================== PUSAT DOKUMEN & REGULASI ====================
+
+async function renderDocumentsView() {
+    const container = document.getElementById('dokumenListContainer');
+    const emptyState = document.getElementById('dokumenEmptyState');
+    const loadingEl = document.getElementById('dokumenLoading');
+    if (!container) return;
+
+    if (loadingEl) loadingEl.classList.remove('hidden');
+    if (emptyState) emptyState.classList.add('hidden');
+
+    try {
+        if (!documents.length) {
+            documents = await Api.getDocuments();
+        }
+    } catch (e) {
+        documents = [];
+    }
+
+    if (loadingEl) loadingEl.classList.add('hidden');
+
+    // Show/hide admin upload button
+    const adminSection = document.getElementById('dokumenAdminSection');
+    if (adminSection) {
+        if (isAdminLoggedIn) adminSection.classList.remove('hidden');
+        else adminSection.classList.add('hidden');
+    }
+
+    const filtered = docCategoryFilter === 'Semua'
+        ? documents
+        : documents.filter(d => d.category === docCategoryFilter);
+
+    // Render filter buttons
+    const filterBar = document.getElementById('dokumenFilterBar');
+    if (filterBar) {
+        const categories = ['Semua', ...new Set(documents.map(d => d.category).filter(Boolean))];
+        filterBar.innerHTML = categories.map(cat => `
+            <button onclick="setDocFilter('${cat}')"
+                class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition ${docCategoryFilter === cat
+                    ? 'bg-[#DC2626] text-white shadow'
+                    : 'bg-white text-slate-600 border border-[#E2E8F0] hover:border-[#DC2626] hover:text-[#DC2626]'}">
+                ${cat}
+            </button>`).join('');
+    }
+
+    // Render document cards
+    if (!filtered.length) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    container.innerHTML = filtered.map(doc => {
+        const proxyUrl = `/api/blob?url=${encodeURIComponent(doc.fileUrl)}`;
+        const sizeKB = doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : '';
+        const dateStr = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+        return `
+        <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-start gap-4 shadow-sm hover:shadow-md hover:border-[#DC2626]/30 transition group">
+            <div class="flex-shrink-0 w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center border border-red-100">
+                <i class="fa-solid fa-file-pdf text-2xl text-[#DC2626]"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-start gap-2 mb-1">
+                    <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-500">${doc.category || 'Dokumen Resmi'}</span>
+                    ${sizeKB ? `<span class="text-[11px] text-slate-400">${sizeKB}</span>` : ''}
+                </div>
+                <h3 class="font-bold text-[#0F172A] text-base leading-snug mb-1 group-hover:text-[#DC2626] transition">${doc.title}</h3>
+                ${doc.description ? `<p class="text-sm text-slate-500 mb-1 line-clamp-2">${doc.description}</p>` : ''}
+                ${doc.target ? `<p class="text-xs text-slate-400"><i class="fa-solid fa-users mr-1"></i>Ditujukan untuk: <span class="font-semibold text-slate-600">${doc.target}</span></p>` : ''}
+                ${dateStr ? `<p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i>${dateStr}</p>` : ''}
+            </div>
+            <div class="flex flex-col gap-2 shrink-0">
+                <a href="${proxyUrl}" download="${doc.fileName || doc.title + '.pdf'}"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-sm font-bold transition shadow-sm min-h-[44px]">
+                    <i class="fa-solid fa-download"></i> Unduh
+                </a>
+                ${isAdminLoggedIn ? `<button onclick="deleteDocumentAdmin('${doc.id}')"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-[#DC2626] text-slate-500 text-xs font-bold transition min-h-[36px]">
+                    <i class="fa-solid fa-trash-can"></i> Hapus
+                </button>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function setDocFilter(cat) {
+    docCategoryFilter = cat;
+    renderDocumentsView();
+}
+
+async function deleteDocumentAdmin(docId) {
+    if (!confirm('Hapus dokumen ini?\nFile akan dihapus permanen dari cloud storage.')) return;
+    // Optimistic UI
+    documents = documents.filter(d => d.id !== docId);
+    renderDocumentsView();
+    renderAdminDocuments();
+    try {
+        await Api.deleteDocument(docId);
+        showToast('Dokumen Dihapus', 'Dokumen berhasil dihapus dari cloud storage.', 'success');
+    } catch (e) {
+        showToast('Gagal Menghapus', 'Terjadi kesalahan. Silakan coba lagi.', 'error');
+        documents = await Api.getDocuments();
+        renderDocumentsView();
+        renderAdminDocuments();
+    }
+}
+
+async function renderAdminDocuments() {
+    const listEl = document.getElementById('adminDocumentList');
+    const countEl = document.getElementById('adminDocumentCount');
+    if (!listEl) return;
+
+    if (!documents.length) {
+        try { documents = await Api.getDocuments(); } catch (e) { documents = []; }
+    }
+
+    if (countEl) countEl.textContent = documents.length;
+
+    if (!documents.length) {
+        listEl.innerHTML = `<div class="text-center py-10 text-slate-400">
+            <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
+            <p class="text-sm">Belum ada dokumen yang diupload.</p>
+        </div>`;
+        return;
+    }
+
+    listEl.innerHTML = documents.map(doc => {
+        const sizeKB = doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : '—';
+        const dateStr = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('id-ID') : '—';
+        return `<div id="admin-doc-row-${doc.id}" class="flex items-center gap-3 p-3 rounded-xl border border-[#E2E8F0] hover:bg-slate-50 transition">
+            <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-file-pdf text-[#DC2626] text-lg"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="font-bold text-sm text-[#0F172A] truncate">${doc.title}</p>
+                <p class="text-xs text-slate-400">${doc.category || '—'} &bull; ${sizeKB} &bull; ${dateStr}</p>
+            </div>
+            <button onclick="deleteDocumentAdmin('${doc.id}')"
+                class="shrink-0 w-9 h-9 rounded-lg bg-red-50 hover:bg-red-100 text-[#DC2626] flex items-center justify-center transition">
+                <i class="fa-solid fa-trash-can text-sm"></i>
+            </button>
+        </div>`;
+    }).join('');
+}
+
+async function handleAdminUploadDocument(e) {
+    e.preventDefault();
+    const form = e.target;
+    const fileInput = form.querySelector('#adminDocFileInput');
+    const titleInput = form.querySelector('#adminDocTitle');
+    const categoryInput = form.querySelector('#adminDocCategory');
+    const descInput = form.querySelector('#adminDocDesc');
+    const targetInput = form.querySelector('#adminDocTarget');
+    const submitBtn = form.querySelector('#adminDocSubmitBtn');
+
+    const file = fileInput?.files?.[0];
+    const title = titleInput?.value?.trim();
+    if (!file || !title) {
+        showToast('Form Tidak Lengkap', 'Judul dan file PDF wajib diisi.', 'error');
+        return;
+    }
+    if (file.type !== 'application/pdf') {
+        showToast('File Tidak Valid', 'Hanya file PDF yang diperbolehkan.', 'error');
+        return;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-2"></i>Mengupload...';
+    }
+
+    try {
+        showToast('Mengupload Dokumen...', 'Mohon tunggu, file sedang diupload ke cloud storage.', 'info');
+        const blobResult = await Api.uploadStorageDocument(file, file.name);
+        const docData = {
+            title,
+            fileName: file.name,
+            fileUrl: blobResult.url,
+            fileSize: file.size,
+            category: categoryInput?.value || 'Dokumen Resmi',
+            description: descInput?.value?.trim() || '',
+            target: targetInput?.value?.trim() || '',
+        };
+        const created = await Api.createDocument(docData);
+        documents = [created, ...documents];
+        renderDocumentsView();
+        renderAdminDocuments();
+        form.reset();
+        showToast('Dokumen Berhasil Diupload', `"${title}" sudah tersedia di Pusat Dokumen.`, 'success');
+    } catch (err) {
+        showToast('Upload Gagal', err.message || 'Terjadi kesalahan saat upload.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i>Upload Dokumen';
         }
     }
 }

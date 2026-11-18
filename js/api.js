@@ -398,6 +398,10 @@ const Api = {
         return false;
     },
 
+    async deleteStorageFile(fileUrl) {
+        return this.deleteStorageImage(fileUrl);
+    },
+
     // ================================================================
     //  2. EVENT
     // ================================================================
@@ -868,6 +872,74 @@ const Api = {
 
     async deleteTournamentRegistration(id) {
         await this._storePost('delete', 'registrations', { id });
+        return { success: true };
+    },
+
+    // ================================================================
+    //  7. PUSAT DOKUMEN & REGULASI RESMI (100% Cloud Blob Storage)
+    // ================================================================
+
+    async getDocuments() {
+        const data = await this._storeGet('documents');
+        if (data && data.length > 0) return data;
+        return typeof INITIAL_DOCUMENTS !== 'undefined' ? [...INITIAL_DOCUMENTS] : [];
+    },
+
+    async uploadStorageDocument(fileOrBlob, originalFileName = 'dokumen.pdf') {
+        if (!fileOrBlob) return null;
+        try {
+            const cleanName = (originalFileName || 'dokumen.pdf').replace(/[^a-zA-Z0-9_.-]/g, '_');
+            const blobPath = `documents/${Date.now()}_${cleanName}`;
+            const token = this._BLOB_TOKEN || (CONFIG.VERCEL_BLOB && CONFIG.VERCEL_BLOB.TOKEN);
+
+            const res = await fetch(`https://blob.vercel-storage.com/${blobPath}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'x-api-version': '7',
+                    'x-vercel-blob-access': 'private',
+                    'content-type': 'application/pdf',
+                    'x-allow-overwrite': '1',
+                    'x-add-random-suffix': '0'
+                },
+                body: fileOrBlob
+            });
+
+            if (res.ok) {
+                const blobData = await res.json();
+                if (blobData && blobData.url) return blobData.url;
+            }
+        } catch (err) {
+            console.warn('[Api] Upload document to Blob error:', err);
+        }
+        return null;
+    },
+
+    async createDocument(docData) {
+        const newDoc = {
+            id: 'doc_' + Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            fileType: 'PDF',
+            ...docData
+        };
+        const result = await this._storePost('create', 'documents', newDoc);
+        return (result && result.item) ? result.item : newDoc;
+    },
+
+    async deleteDocument(id) {
+        // Hapus file fisik dari Cloud Vercel Blob terlebih dahulu
+        try {
+            const docs = await this.getDocuments();
+            const doc = docs.find(d => String(d.id) === String(id));
+            if (doc && doc.fileUrl) {
+                await this.deleteStorageFile(doc.fileUrl);
+            }
+        } catch (err) {
+            console.warn('[Api] Gagal menghapus file dokumen dari Blob:', err);
+        }
+
+        // Hapus metadata dokumen dari koleksi documents
+        await this._storePost('delete', 'documents', { id });
         return { success: true };
     },
 

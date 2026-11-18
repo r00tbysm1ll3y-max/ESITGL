@@ -154,6 +154,8 @@
                         class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Klasemen</button>
                     <button onclick="navigateTo('berita')" data-nav="berita"
                         class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Berita</button>
+                    <button onclick="navigateTo('dokumen')" data-nav="dokumen"
+                        class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Dokumen</button>
                     <button onclick="navigateTo('profil')" data-nav="profil"
                         class="nav-link px-3 py-2 rounded-lg text-sm font-semibold transition">Profil</button>
                 </nav>
@@ -196,7 +198,12 @@
                 <span><i class="fa-solid fa-newspaper w-6 text-[#DC2626]"></i> Berita & Pengumuman</span>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
             </button>
-            <button onclick="navigateTo('profil'); toggleMobileDrawer();"
+                        <button onclick="navigateTo('dokumen'); toggleMobileDrawer();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
+                <span><i class="fa-solid fa-folder-open w-6 text-[#D97706]"></i> Pusat Dokumen Resmi</span>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+            </button>
+<button onclick="navigateTo('profil'); toggleMobileDrawer();"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
                 <span><i class="fa-solid fa-sitemap w-6 text-slate-300"></i> Profil & Sekretariat</span>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
@@ -2141,7 +2148,58 @@
             </div>
         </section>
 
-        <!-- ==================== VIEW 7: PROFIL & KONTAK ==================== -->
+                <!-- ==================== VIEW: PUSAT DOKUMEN & REGULASI RESMI ==================== -->
+        <section id="view-dokumen" class="spa-view hidden">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+                <!-- Page Header -->
+                <div class="mb-8">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-[#DC2626]/10 border border-[#DC2626]/20 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-folder-open text-2xl text-[#DC2626]"></i>
+                        </div>
+                        <div>
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#DC2626] text-xs font-bold uppercase tracking-wider mb-1">
+                                <i class="fa-solid fa-shield-halved"></i> ESI Kabupaten Trenggalek
+                            </div>
+                            <h1 class="text-2xl sm:text-3xl font-black text-[#0F172A]">Pusat Dokumen <span class="text-[#DC2626]">&amp;</span> Regulasi Resmi</h1>
+                            <p class="text-slate-500 text-sm mt-0.5">Unduh dokumen, surat, dan regulasi resmi ESI Kabupaten Trenggalek</p>
+                        </div>
+                    </div>
+                    <div class="h-1 w-full rounded-full bg-gradient-to-r from-[#DC2626] via-[#D97706] to-transparent opacity-30"></div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div id="dokumenFilterBar" class="flex gap-2 overflow-x-auto pb-2 mb-6"></div>
+
+                <!-- Loading State -->
+                <div id="dokumenLoading" class="hidden py-16 flex flex-col items-center justify-center gap-3 text-slate-400">
+                    <i class="fa-solid fa-spinner animate-spin text-3xl text-[#DC2626]"></i>
+                    <p class="text-sm font-medium">Memuat dokumen...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="dokumenEmptyState" class="hidden py-16 text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-folder-open text-3xl text-slate-300"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-500 mb-1">Belum Ada Dokumen</h3>
+                    <p class="text-sm text-slate-400">Dokumen resmi akan segera tersedia di sini.</p>
+                </div>
+
+                <!-- Document Cards -->
+                <div id="dokumenListContainer" class="space-y-4"></div>
+
+                <!-- Admin: Upload Button -->
+                <div id="dokumenAdminSection" class="hidden mt-8 pt-8 border-t border-[#E2E8F0]">
+                    <button onclick="navigateTo('admin'); setTimeout(function(){ switchAdminTab('dokumen'); }, 350);"
+                        class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#0F172A] hover:bg-[#1E293B] text-white text-sm font-bold transition shadow">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Dokumen Baru (Panel Admin)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+<!-- ==================== VIEW 7: PROFIL & KONTAK ==================== -->
         <section id="view-profil" class="spa-view hidden">
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
                 <!-- Profil Organisasi Card -->
@@ -2340,6 +2398,10 @@
                                 <button onclick="switchAdminTab('berita')" data-admintab="berita"
                                     class="admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-2 whitespace-nowrap">
                                     <i class="fa-solid fa-newspaper w-5"></i> Kelola Berita
+                                </button>
+                                <button id="adminTabBtnDokumen" onclick="switchAdminTab('dokumen')" data-admintab="dokumen"
+                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-2 whitespace-nowrap">
+                                    <i class="fa-solid fa-folder-open w-5 text-[#D97706]"></i> Kelola Dokumen
                                 </button>
                                 <button id="adminTabBtnAkun" onclick="switchAdminTab('akun')" data-admintab="akun"
                                     class="admin-tab-btn hidden flex-1 lg:flex-none text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-bold text-amber-800 hover:bg-amber-50 flex items-center justify-between gap-2 whitespace-nowrap border border-amber-200">
@@ -3000,6 +3062,77 @@
                                 <div class="text-xs text-slate-500 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-4">
                                     <i class="fa-solid fa-circle-info text-blue-500 mt-0.5 shrink-0"></i>
                                     <span>Akun <strong>admin@esitrenggalek.id</strong> adalah akun bawaan dan tidak dapat dihapus. Akun baru yang ditambahkan dapat dihapus kapan saja. Kata sandi disimpan di browser lokal portal ini.</span>
+                                </div>
+                            </div>
+
+                            <!-- TAB: KELOLA DOKUMEN RESMI -->
+                            <div id="admin-panel-dokumen"
+                                class="admin-panel hidden bg-white border border-[#E2E8F0] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm">
+                                <!-- Header -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-6 border-b border-[#E2E8F0]">
+                                    <div>
+                                        <h2 class="font-extrabold text-base sm:text-lg text-[#0F172A]">Kelola Dokumen Resmi</h2>
+                                        <p class="text-xs text-slate-500 mt-0.5">Upload, kelola, dan hapus dokumen resmi ESI Kabupaten Trenggalek.</p>
+                                    </div>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
+                                        <i class="fa-solid fa-file-pdf text-[#DC2626]"></i>
+                                        <span id="adminDocumentCount">0</span> Dokumen
+                                    </span>
+                                </div>
+
+                                <!-- Upload Form -->
+                                <div class="bg-slate-50 border border-[#E2E8F0] rounded-xl p-4 mb-6">
+                                    <h3 class="font-bold text-sm text-[#0F172A] mb-3 flex items-center gap-2">
+                                        <i class="fa-solid fa-cloud-arrow-up text-[#DC2626]"></i> Upload Dokumen Baru
+                                    </h3>
+                                    <form onsubmit="handleAdminUploadDocument(event)" class="space-y-3">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-600 mb-1">Judul Dokumen <span class="text-red-500">*</span></label>
+                                                <input id="adminDocTitle" type="text" placeholder="Contoh: Surat Pemberitahuan Cabor" required
+                                                    class="w-full px-3 py-2.5 rounded-lg border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 focus:border-[#DC2626] bg-white">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-600 mb-1">Kategori</label>
+                                                <select id="adminDocCategory"
+                                                    class="w-full px-3 py-2.5 rounded-lg border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 focus:border-[#DC2626] bg-white">
+                                                    <option>Surat Pemberitahuan</option>
+                                                    <option>Surat Rekomendasi</option>
+                                                    <option>Surat Keputusan</option>
+                                                    <option>Regulasi</option>
+                                                    <option>Panduan</option>
+                                                    <option>Dokumen Resmi</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 mb-1">Deskripsi (opsional)</label>
+                                            <textarea id="adminDocDesc" rows="2" placeholder="Keterangan singkat tentang dokumen ini..."
+                                                class="w-full px-3 py-2.5 rounded-lg border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 focus:border-[#DC2626] bg-white resize-none"></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 mb-1">Ditujukan Untuk (opsional)</label>
+                                            <input id="adminDocTarget" type="text" placeholder="Contoh: SMK/SMA/MA/MTs se-Kabupaten Trenggalek"
+                                                class="w-full px-3 py-2.5 rounded-lg border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 focus:border-[#DC2626] bg-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-600 mb-1">File PDF <span class="text-red-500">*</span></label>
+                                            <input id="adminDocFileInput" type="file" accept="application/pdf" required
+                                                class="w-full px-3 py-2.5 rounded-lg border border-[#E2E8F0] text-sm text-[#0F172A] bg-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#DC2626] file:text-white hover:file:bg-[#B91C1C]">
+                                        </div>
+                                        <button id="adminDocSubmitBtn" type="submit"
+                                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-sm font-bold transition shadow-sm min-h-[44px]">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Dokumen
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- Document List -->
+                                <div>
+                                    <h3 class="font-bold text-sm text-[#0F172A] mb-3 flex items-center gap-2">
+                                        <i class="fa-solid fa-list text-slate-400"></i> Daftar Dokumen Terupload
+                                    </h3>
+                                    <div id="adminDocumentList" class="space-y-2"></div>
                                 </div>
                             </div>
                         </div>
@@ -4372,11 +4505,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261118am" defer></script>
-    <script src="js/config.js?v=20261118am" defer></script>
-    <script src="js/supabaseClient.js?v=20261118am" defer></script>
-    <script src="js/api.js?v=20261118am" defer></script>
-    <script src="js/app.js?v=20261118am" defer></script>
+    <script src="js/seedData.js?v=20261118an" defer></script>
+    <script src="js/config.js?v=20261118an" defer></script>
+    <script src="js/supabaseClient.js?v=20261118an" defer></script>
+    <script src="js/api.js?v=20261118an" defer></script>
+    <script src="js/app.js?v=20261118an" defer></script>
 </body>
 
 </html>

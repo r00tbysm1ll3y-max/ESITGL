@@ -17,7 +17,7 @@ const { put } = require('@vercel/blob');
 const TOKEN = process.env.BLOB_READ_WRITE_TOKEN || "vercel_blob_rw_LPwrIMxJmWXm9ltj_vCdKTxYyVZ7Dv2niukddQ1bF0v4J1s";
 const BASE_URL = "https://lpwrimxjmwxm9ltj.private.blob.vercel-storage.com";
 
-const VALID_COLLECTIONS = ['athletes', 'events', 'news', 'registrations', 'admins'];
+const VALID_COLLECTIONS = ['athletes', 'events', 'news', 'registrations', 'admins', 'documents'];
 
 // ---- Helpers ----
 
@@ -156,6 +156,13 @@ module.exports = async (req, res) => {
                 const { id } = payload;
                 if (!id) return res.status(400).json({ error: 'payload.id diperlukan untuk delete' });
                 const before = items.length;
+                const target = items.find(i => String(i.id) === String(id));
+                if (target && target.fileUrl) {
+                    try {
+                        const { del } = require('@vercel/blob');
+                        await del(target.fileUrl, { token: TOKEN });
+                    } catch (_) {}
+                }
                 items = items.filter(i => String(i.id) !== String(id));
                 await saveCollection(col, items);
                 return res.status(200).json({ success: true, deleted: before - items.length, items });
