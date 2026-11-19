@@ -1,3 +1,76 @@
+
+// =========================================================================
+//  FILE UPLOAD PREVIEW & HANDLERS FOR PARTNER/EO REGISTRATION
+// =========================================================================
+
+let partnerRegLogoFile = null;
+let partnerRegKtpFile = null;
+let partnerRegPhotoFile = null;
+
+function handlePartnerLogoFileSelect(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    partnerRegLogoFile = file;
+
+    const label = document.getElementById('labelPartnerLogoName');
+    if (label) label.textContent = file.name;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = document.getElementById('previewPartnerLogoImg');
+        if (img) img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function handlePartnerKtpFileSelect(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    partnerRegKtpFile = file;
+
+    const badge = document.getElementById('badgeKtpStatus');
+    if (badge) {
+        badge.textContent = file.name;
+        badge.className = 'text-[10px] text-emerald-600 font-bold truncate max-w-[120px]';
+    }
+
+    const btn = document.getElementById('labelKtpBtn');
+    if (btn) btn.textContent = 'Ganti Foto KTP';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const container = document.getElementById('previewKtpContainer');
+        const img = document.getElementById('previewKtpImg');
+        if (img) img.src = e.target.result;
+        if (container) container.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+
+function handlePartnerPhotoFileSelect(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    partnerRegPhotoFile = file;
+
+    const badge = document.getElementById('badgePhotoStatus');
+    if (badge) {
+        badge.textContent = file.name;
+        badge.className = 'text-[10px] text-blue-600 font-bold truncate max-w-[120px]';
+    }
+
+    const btn = document.getElementById('labelPhotoBtn');
+    if (btn) btn.textContent = 'Ganti Pas Foto';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const container = document.getElementById('previewPhotoContainer');
+        const img = document.getElementById('previewPhotoImg');
+        if (img) img.src = e.target.result;
+        if (container) container.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+
 /**
  * APPLICATION CONTROLLER & UI LOGIC
  * ESI Kabupaten Trenggalek
@@ -3827,17 +3900,39 @@ function openRegisterPartnerModal() {
 
     const noticeEl = document.getElementById('regPartnerMemberNotice');
     
+    // Reset temporary files
+    partnerRegLogoFile = null;
+    partnerRegKtpFile = null;
+    partnerRegPhotoFile = null;
+
     // Auto-fill jika member sedang login
     if (typeof loggedMember !== 'undefined' && loggedMember) {
         const picInput = document.getElementById('regPartnerPic');
         const phoneInput = document.getElementById('regPartnerPhone');
         const emailInput = document.getElementById('regPartnerEmail');
         const kecInput = document.getElementById('regPartnerKecamatan');
+        const nikInput = document.getElementById('regPartnerNik');
+        const addrInput = document.getElementById('regPartnerAddress');
 
         if (picInput && !picInput.value) picInput.value = loggedMember.fullName || loggedMember.name || '';
         if (phoneInput && !phoneInput.value) phoneInput.value = loggedMember.phone || loggedMember.whatsapp || '';
         if (emailInput && !emailInput.value) emailInput.value = loggedMember.email || '';
-        if (kecInput && !kecInput.value) kecInput.value = loggedMember.kecamatan || loggedMember.domicile || '';
+        if (kecInput && !kecInput.value) kecInput.value = loggedMember.kecamatan || loggedMember.domisili || '';
+        if (nikInput && !nikInput.value) nikInput.value = loggedMember.nik || '';
+        if (addrInput && !addrInput.value) addrInput.value = loggedMember.alamat || loggedMember.address || '';
+
+        // Auto preview foto diri jika member punya avatarUrl
+        if (loggedMember.avatarUrl) {
+            const container = document.getElementById('previewPhotoContainer');
+            const img = document.getElementById('previewPhotoImg');
+            const badge = document.getElementById('badgePhotoStatus');
+            if (img) img.src = loggedMember.avatarUrl;
+            if (container) container.classList.remove('hidden');
+            if (badge) {
+                badge.textContent = 'Dari Akun Member';
+                badge.className = 'text-[10px] text-blue-600 font-bold';
+            }
+        }
 
         if (noticeEl) {
             noticeEl.innerHTML = `
@@ -3890,7 +3985,7 @@ async function handlePartnerRegistrationSubmit(e) {
     const btn = document.getElementById('btnSubmitPartnerReg');
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1.5"></i>Mengirim...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1.5"></i>Mengunggah &amp; Mengirim...';
     }
 
     const name = document.getElementById('regPartnerName')?.value?.trim();
@@ -3900,33 +3995,82 @@ async function handlePartnerRegistrationSubmit(e) {
     const phone = document.getElementById('regPartnerPhone')?.value?.trim();
     const email = document.getElementById('regPartnerEmail')?.value?.trim();
     const instagram = document.getElementById('regPartnerIg')?.value?.trim();
-    const kecamatan = document.getElementById('regPartnerKecamatan')?.value?.trim();
+    const fullAddress = document.getElementById('regPartnerAddress')?.value?.trim() || '';
+    const kecamatan = document.getElementById('regPartnerKecamatan')?.value?.trim() || 'Trenggalek';
     const rawGames = document.getElementById('regPartnerGames')?.value?.trim();
     const description = document.getElementById('regPartnerDesc')?.value?.trim();
+    const nik = document.getElementById('regPartnerNik')?.value?.trim();
+
+    // Validasi NIK 16 digit
+    if (nik && !/^[0-9]{16}$/.test(nik)) {
+        showToast('NIK Tidak Valid', 'Nomor Induk Kependudukan (NIK) harus terdiri dari 16 digit angka.', 'warning');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i>Kirim Pengajuan Kemitraan';
+        }
+        return;
+    }
 
     const gameFocus = rawGames ? rawGames.split(/[,/]+/).map(s => s.trim()).filter(Boolean) : ['Esports'];
 
-    const partnerPayload = {
-        name,
-        type,
-        category: type,
-        establishedYear,
-        picName,
-        phone,
-        whatsapp: phone.replace(/[^0-9]/g, ''),
-        email,
-        instagram,
-        kecamatan,
-        city: 'Trenggalek',
-        gameFocus,
-        games: gameFocus,
-        description,
-        ownerMemberId: (typeof loggedMember !== 'undefined' && loggedMember) ? String(loggedMember.id) : null,
-        memberId: (typeof loggedMember !== 'undefined' && loggedMember) ? String(loggedMember.id) : null,
-        managerIds: (typeof loggedMember !== 'undefined' && loggedMember) ? [String(loggedMember.id)] : []
-    };
+    let logoUrl = 'assets/images/logo-esi.png';
+    let ktpUrl = null;
+    let personalPhotoUrl = (typeof loggedMember !== 'undefined' && loggedMember) ? (loggedMember.avatarUrl || null) : null;
 
     try {
+        // Upload Logo Komunitas jika dipilih
+        if (partnerRegLogoFile) {
+            try {
+                const uploadedLogo = await Api.uploadStorageImage(partnerRegLogoFile, 'partners');
+                if (uploadedLogo) logoUrl = uploadedLogo;
+            } catch (err) { console.warn('Upload logo failed, fallback to default:', err); }
+        }
+
+        // Upload KTP jika dipilih
+        if (partnerRegKtpFile) {
+            try {
+                const uploadedKtp = await Api.uploadStorageImage(partnerRegKtpFile, 'partner-docs');
+                if (uploadedKtp) ktpUrl = uploadedKtp;
+            } catch (err) { console.warn('Upload KTP failed:', err); }
+        }
+
+        // Upload Pas Foto jika dipilih
+        if (partnerRegPhotoFile) {
+            try {
+                const uploadedPhoto = await Api.uploadStorageImage(partnerRegPhotoFile, 'partner-docs');
+                if (uploadedPhoto) personalPhotoUrl = uploadedPhoto;
+            } catch (err) { console.warn('Upload foto diri failed:', err); }
+        }
+
+        const partnerPayload = {
+            name,
+            type,
+            category: type,
+            gameCategory: rawGames,
+            gameFocus,
+            games: gameFocus,
+            establishedYear,
+            picName,
+            phone,
+            whatsapp: phone.replace(/[^0-9]/g, ''),
+            email,
+            instagram,
+            address: fullAddress,
+            fullAddress,
+            kecamatan,
+            city: 'Trenggalek',
+            region: `${kecamatan}, Kabupaten Trenggalek`,
+            nik,
+            ktpUrl,
+            personalPhotoUrl,
+            logoUrl,
+            description,
+            status: 'pending',
+            ownerMemberId: (typeof loggedMember !== 'undefined' && loggedMember) ? String(loggedMember.id) : null,
+            memberId: (typeof loggedMember !== 'undefined' && loggedMember) ? String(loggedMember.id) : null,
+            managerIds: (typeof loggedMember !== 'undefined' && loggedMember) ? [String(loggedMember.id)] : []
+        };
+
         const created = await Api.createPartner(partnerPayload);
         partners = [created, ...partners];
         if (typeof renderPartnersView === 'function') renderPartnersView();
@@ -3935,7 +4079,13 @@ async function handlePartnerRegistrationSubmit(e) {
         if (typeof updateHeaderEOBadge === 'function') updateHeaderEOBadge();
         closeRegisterPartnerModal();
         e.target.reset();
-        showToast('Pendaftaran Berhasil Dikirim', 'Pengajuan kemitraan EO Anda telah tercatat dan sedang dalam peninjauan oleh Pengurus ESI Trenggalek.', 'success');
+
+        // Reset temporary file inputs
+        partnerRegLogoFile = null;
+        partnerRegKtpFile = null;
+        partnerRegPhotoFile = null;
+
+        showToast('Pendaftaran Berhasil Dikirim', 'Pengajuan kemitraan EO Anda lengkap dengan dokumen verifikasi telah tercatat dan sedang dalam peninjauan oleh Pengurus ESI Trenggalek.', 'success');
     } catch (err) {
         showToast('Gagal Mendaftar', err.message || 'Terjadi kesalahan sistem.', 'error');
     } finally {
@@ -3983,6 +4133,40 @@ async function openPartnerDetailModal(partnerId) {
     document.getElementById('detailPartnerYear').textContent = p.establishedYear || '-';
     document.getElementById('detailPartnerBio').textContent = p.description || 'Tidak ada deskripsi profil.';
     document.getElementById('detailPartnerPic').textContent = p.picName || 'Pengurus Komunitas';
+
+    const docsBox = document.getElementById('detailPartnerDocsBox');
+    if (docsBox) {
+        const nikBadge = document.getElementById('detailPartnerNikBadge');
+        const addrText = document.getElementById('detailPartnerAddressText');
+        const ktpBox = document.getElementById('detailPartnerKtpBox');
+        const ktpImg = document.getElementById('detailPartnerKtpImg');
+        const photoBox = document.getElementById('detailPartnerPhotoBox');
+        const photoImg = document.getElementById('detailPartnerPhotoImg');
+
+        if (p.nik) {
+            if (nikBadge) nikBadge.textContent = 'NIK: ' + p.nik;
+        } else {
+            if (nikBadge) nikBadge.textContent = 'NIK: -';
+        }
+
+        if (addrText) {
+            addrText.textContent = (p.fullAddress || p.address || '-') + (p.kecamatan ? ' (' + p.kecamatan + ', Trenggalek)' : '');
+        }
+
+        if (p.ktpUrl && ktpImg && ktpBox) {
+            ktpImg.src = p.ktpUrl;
+            ktpBox.classList.remove('hidden');
+        } else if (ktpBox) {
+            ktpBox.classList.add('hidden');
+        }
+
+        if (p.personalPhotoUrl && photoImg && photoBox) {
+            photoImg.src = p.personalPhotoUrl;
+            photoBox.classList.remove('hidden');
+        } else if (photoBox) {
+            photoBox.classList.add('hidden');
+        }
+    }
     document.getElementById('detailPartnerIg').textContent = p.instagram || '-';
 
     // Games pills

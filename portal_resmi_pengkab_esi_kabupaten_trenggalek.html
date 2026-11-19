@@ -4464,87 +4464,205 @@
     </div>
 
     
-    <!-- ==================== MODAL 1: DAFTAR PARTNER KOMUNITAS / EO ==================== -->
+        <!-- ==================== MODAL 1: DAFTAR PARTNER KOMUNITAS / EO ==================== -->
     <div id="modalPartnerRegister" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-900/80 backdrop-blur-xs overflow-y-auto" onclick="if(event.target===this) closeRegisterPartnerModal()">
-        <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-xl my-8 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-2xl my-6 overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
             <!-- Modal Header -->
-            <div class="bg-[#0F172A] text-white px-5 py-4 flex items-center justify-between shrink-0">
+            <div class="bg-[#0F172A] text-white px-5 sm:px-6 py-4 flex items-center justify-between shrink-0 border-b border-slate-800">
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-sm">
                         <i class="fa-solid fa-handshake-angle"></i>
                     </div>
                     <div>
-                        <h3 class="font-extrabold text-sm sm:text-base">Daftar Partner Komunitas &amp; EO</h3>
-                        <p class="text-[11px] text-slate-400">Pengajuan kemitraan resmi ESI Kabupaten Trenggalek</p>
+                        <h3 class="font-extrabold text-sm sm:text-base">Pengajuan Kemitraan Komunitas &amp; EO</h3>
+                        <p class="text-[11px] text-slate-400">Verifikasi legalitas &amp; pendaftaran penyelenggara resmi PB ESI Trenggalek</p>
                     </div>
                 </div>
-                <button onclick="closeRegisterPartnerModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                <button type="button" onclick="closeRegisterPartnerModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
                     <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
 
             <!-- Modal Form Body -->
-            <form id="formPartnerRegister" onsubmit="handlePartnerRegistrationSubmit(event)" class="overflow-y-auto p-5 sm:p-6 space-y-4 flex-1">
+            <form id="formPartnerRegister" onsubmit="handlePartnerRegistrationSubmit(event)" class="overflow-y-auto p-5 sm:p-6 space-y-5 flex-1 text-slate-800">
                 <div id="regPartnerMemberNotice" class="hidden"></div>
-                <div class="bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-3.5 text-xs text-emerald-900 leading-relaxed flex items-start gap-2.5">
+
+                <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3.5 text-xs text-emerald-950 leading-relaxed flex items-start gap-2.5">
                     <i class="fa-solid fa-shield-halved text-emerald-600 mt-0.5 text-sm shrink-0"></i>
-                    <span>Setelah diajukan, tim pengurus ESI Trenggalek akan memvalidasi data dan menghubungi PIC untuk pemberian <strong>Lencana Terverifikasi Resmi</strong>.</span>
+                    <span>Harap melengkapi dokumen identitas dan data komunitas secara valid. Tim Pengurus PB ESI Trenggalek akan memvalidasi data untuk pemberian <strong>Lencana Terverifikasi Resmi &amp; Hak Akses Panel EO</strong>.</span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Organisasi / Komunitas / EO <span class="text-red-500">*</span></label>
-                        <input type="text" id="regPartnerName" required placeholder="Contoh: Trenggalek Gamers Syndicate"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                <!-- SECTION 1: PROFIL KOMUNITAS / EO -->
+                <div class="space-y-3.5 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear text-emerald-600"></i>
+                        <span>1. Informasi Komunitas / Organisasi</span>
+                    </h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Community Name (Nama Komunitas / EO) <span class="text-red-500">*</span></label>
+                            <input type="text" id="regPartnerName" required placeholder="Contoh: Trenggalek Gamers Syndicate"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Tipe Entitas <span class="text-red-500">*</span></label>
+                            <select id="regPartnerType" required
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                                <option value="Event Organizer">Event Organizer (EO)</option>
+                                <option value="Komunitas">Komunitas Esports</option>
+                                <option value="Akademi / Klub">Akademi / Tim Amatir</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Berdiri</label>
+                            <input type="number" id="regPartnerYear" placeholder="Contoh: 2023" min="2015" max="2030"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Game Category (Kategori Game yang Difokuskan) <span class="text-red-500">*</span></label>
+                            <input type="text" id="regPartnerGames" required placeholder="Contoh: Mobile Legends (MLBB), Free Fire, eFootball, PUBG Mobile"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Community Description (Profil &amp; Visi Singkat) <span class="text-red-500">*</span></label>
+                            <textarea id="regPartnerDesc" rows="3" required placeholder="Ceritakan latar belakang organisasi, visi, misi, dan aktivitas turnamen rutin..."
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626] resize-none"></textarea>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Community Logo (Logo Komunitas/EO)</label>
+                            <div class="flex items-center gap-3.5">
+                                <div id="previewPartnerLogoContainer" class="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                                    <img id="previewPartnerLogoImg" src="assets/images/logo-esi.png" alt="Preview Logo" class="w-full h-full object-contain">
+                                </div>
+                                <div class="flex-1">
+                                    <input type="file" id="regPartnerLogoFile" accept="image/*" class="hidden" onchange="handlePartnerLogoFileSelect(this)">
+                                    <button type="button" onclick="document.getElementById('regPartnerLogoFile').click()"
+                                        class="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                                        <i class="fa-solid fa-cloud-arrow-up text-emerald-600"></i>
+                                        <span>Pilih File Logo</span>
+                                    </button>
+                                    <p class="text-[11px] text-slate-400 mt-1" id="labelPartnerLogoName">Format PNG/JPG (Maks. 3MB)</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+
+                <!-- SECTION 2: DATA KETUA / PENANGGUNG JAWAB -->
+                <div class="space-y-3.5 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-user-tie text-blue-600"></i>
+                        <span>2. Identitas Ketua / Penanggung Jawab (PIC)</span>
+                    </h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Leader / Representative Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="regPartnerPic" required placeholder="Nama lengkap sesuai KTP"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number / WhatsApp <span class="text-red-500">*</span></label>
+                            <input type="tel" id="regPartnerPhone" required placeholder="08xxxxxxxxxx"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Email <span class="text-red-500">*</span></label>
+                            <input type="email" id="regPartnerEmail" required placeholder="email@organisasi.com"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Instagram / Media Sosial</label>
+                            <input type="text" id="regPartnerIg" placeholder="@nama_akun"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Full Address / Region (Alamat Lengkap Sekretariat) <span class="text-red-500">*</span></label>
+                            <textarea id="regPartnerAddress" rows="2" required placeholder="Alamat lengkap sekretariat / basecamp komunitas..."
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626] resize-none mb-2"></textarea>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Kecamatan di Kabupaten Trenggalek <span class="text-red-500">*</span></label>
+                            <select id="regPartnerKecamatan" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                                <option value="">-- Pilih Kecamatan di Trenggalek --</option>
+                                <option value="Trenggalek">Trenggalek (Kota)</option>
+                                <option value="Karangan">Karangan</option>
+                                <option value="Durenan">Durenan</option>
+                                <option value="Gandusari">Gandusari</option>
+                                <option value="Pogalan">Pogalan</option>
+                                <option value="Kampak">Kampak</option>
+                                <option value="Watulimo">Watulimo</option>
+                                <option value="Panggul">Panggul</option>
+                                <option value="Munjungan">Munjungan</option>
+                                <option value="Tugu">Tugu</option>
+                                <option value="Pule">Pule</option>
+                                <option value="Dongko">Dongko</option>
+                                <option value="Bendungan">Bendungan</option>
+                                <option value="Suruh">Suruh</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: DOKUMEN LEGALITAS & VERIFIKASI (NIK & UPLOAD KTP/FOTO) -->
+                <div class="space-y-3.5 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-id-card text-purple-600"></i>
+                        <span>3. Dokumen Legalitas &amp; Verifikasi Identitas</span>
+                    </h4>
+
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Tipe Entitas <span class="text-red-500">*</span></label>
-                        <select id="regPartnerType" required
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
-                            <option value="Event Organizer">Event Organizer (EO)</option>
-                            <option value="Komunitas">Komunitas Esports</option>
-                            <option value="Akademi / Klub">Akademi / Tim Amatir</option>
-                        </select>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Personal Identity Number (NIK KTP Ketua) <span class="text-red-500">*</span></label>
+                        <input type="text" id="regPartnerNik" required maxlength="16" minlength="16" pattern="[0-9]{16}" placeholder="16 digit NIK sesuai KTP"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] font-mono focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        <p class="text-[11px] text-slate-400 mt-1"><i class="fa-solid fa-lock text-slate-400 mr-1"></i>NIK digunakan khusus verifikasi internal PB ESI Trenggalek dan tidak dipublikasikan.</p>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Berdiri</label>
-                        <input type="number" id="regPartnerYear" placeholder="Contoh: 2023" min="2015" max="2030"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Ketua / PIC <span class="text-red-500">*</span></label>
-                        <input type="text" id="regPartnerPic" required placeholder="Nama lengkap penanggung jawab"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp PIC <span class="text-red-500">*</span></label>
-                        <input type="tel" id="regPartnerPhone" required placeholder="Contoh: 087712345678"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Email Resmi</label>
-                        <input type="email" id="regPartnerEmail" placeholder="organisasi@gmail.com"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Instagram / Medsos</label>
-                        <input type="text" id="regPartnerIg" placeholder="@nama_akun"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Domisili Kecamatan di Trenggalek</label>
-                        <input type="text" id="regPartnerKecamatan" placeholder="Contoh: Trenggalek Kota, Karangan, Watulimo"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Fokus Divisi Game</label>
-                        <input type="text" id="regPartnerGames" placeholder="Contoh: MLBB, Free Fire, eFootball"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Profil &amp; Deskripsi Singkat <span class="text-red-500">*</span></label>
-                        <textarea id="regPartnerDesc" rows="3" required placeholder="Ceritakan latar belakang organisasi, visi, dan aktivitas rutin..."
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626] resize-none"></textarea>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                        <!-- KTP Upload -->
+                        <div class="p-3 bg-white rounded-xl border border-slate-200">
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                <span>KTP Upload (Foto KTP PIC) <span class="text-red-500">*</span></span>
+                                <span id="badgeKtpStatus" class="text-[10px] text-slate-400">Belum dipilih</span>
+                            </label>
+                            <div id="previewKtpContainer" class="hidden mb-2.5 w-full h-28 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative">
+                                <img id="previewKtpImg" src="" alt="Preview KTP" class="w-full h-full object-cover">
+                            </div>
+                            <input type="file" id="regPartnerKtpFile" accept="image/*" class="hidden" onchange="handlePartnerKtpFileSelect(this)">
+                            <button type="button" onclick="document.getElementById('regPartnerKtpFile').click()"
+                                class="w-full py-2 px-3 rounded-xl border border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/50 text-slate-600 hover:text-emerald-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-id-card text-emerald-600"></i>
+                                <span id="labelKtpBtn">Pilih Foto KTP</span>
+                            </button>
+                        </div>
+
+                        <!-- Personal Photo Upload -->
+                        <div class="p-3 bg-white rounded-xl border border-slate-200">
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                <span>Personal Photo (Foto Diri PIC) <span class="text-red-500">*</span></span>
+                                <span id="badgePhotoStatus" class="text-[10px] text-slate-400">Belum dipilih</span>
+                            </label>
+                            <div id="previewPhotoContainer" class="hidden mb-2.5 w-full h-28 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative">
+                                <img id="previewPhotoImg" src="" alt="Preview Foto Diri" class="w-full h-full object-cover">
+                            </div>
+                            <input type="file" id="regPartnerPhotoFile" accept="image/*" class="hidden" onchange="handlePartnerPhotoFileSelect(this)">
+                            <button type="button" onclick="document.getElementById('regPartnerPhotoFile').click()"
+                                class="w-full py-2 px-3 rounded-xl border border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/50 text-slate-600 hover:text-blue-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-camera text-blue-600"></i>
+                                <span id="labelPhotoBtn">Pilih Pas Foto</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -4555,9 +4673,9 @@
                         Batal
                     </button>
                     <button type="submit" id="btnSubmitPartnerReg"
-                        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-bold transition shadow-sm">
+                        class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-bold transition shadow-sm">
                         <i class="fa-solid fa-paper-plane"></i>
-                        <span>Kirim Pendaftaran</span>
+                        <span>Kirim Pengajuan Kemitraan</span>
                     </button>
                 </div>
             </form>
@@ -4612,6 +4730,37 @@
                         <i class="fa-solid fa-align-left text-[#DC2626]"></i> Tentang Organisasi
                     </h4>
                     <p id="detailPartnerBio" class="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line"></p>
+                </div>
+
+                
+                <!-- Dokumen Legalitas & Verifikasi (NIK, KTP, Foto Diri, Alamat) -->
+                <div id="detailPartnerDocsBox" class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-file-shield text-purple-600"></i> Dokumen Verifikasi &amp; Legalitas Organisasi</span>
+                        <span id="detailPartnerNikBadge" class="text-[10px] font-mono font-bold bg-slate-200 px-2 py-0.5 rounded text-slate-700"></span>
+                    </h4>
+
+                    <div class="text-xs text-slate-600">
+                        <span class="font-bold text-slate-700">Alamat Lengkap / Region:</span>
+                        <p id="detailPartnerAddressText" class="text-slate-600 mt-0.5"></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <!-- Preview KTP -->
+                        <div id="detailPartnerKtpBox" class="p-2.5 bg-white rounded-lg border border-slate-200 text-xs">
+                            <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Foto KTP Ketua / PIC</span>
+                            <div class="h-28 rounded overflow-hidden bg-slate-100 flex items-center justify-center">
+                                <img id="detailPartnerKtpImg" src="" alt="KTP PIC" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="window.open(this.src, '_blank')">
+                            </div>
+                        </div>
+                        <!-- Preview Pas Foto Diri -->
+                        <div id="detailPartnerPhotoBox" class="p-2.5 bg-white rounded-lg border border-slate-200 text-xs">
+                            <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">Pas Foto Diri PIC</span>
+                            <div class="h-28 rounded overflow-hidden bg-slate-100 flex items-center justify-center">
+                                <img id="detailPartnerPhotoImg" src="" alt="Foto Diri PIC" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="window.open(this.src, '_blank')">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Divisi Games -->
@@ -5342,11 +5491,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261119ai" defer></script>
-    <script src="js/config.js?v=20261119ai" defer></script>
-    <script src="js/supabaseClient.js?v=20261119ai" defer></script>
-    <script src="js/api.js?v=20261119ai" defer></script>
-    <script src="js/app.js?v=20261119ai" defer></script>
+    <script src="js/seedData.js?v=20261119ak" defer></script>
+    <script src="js/config.js?v=20261119ak" defer></script>
+    <script src="js/supabaseClient.js?v=20261119ak" defer></script>
+    <script src="js/api.js?v=20261119ak" defer></script>
+    <script src="js/app.js?v=20261119ak" defer></script>
 </body>
 
 </html>
