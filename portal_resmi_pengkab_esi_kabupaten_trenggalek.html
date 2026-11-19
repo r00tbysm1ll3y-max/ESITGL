@@ -4459,7 +4459,7 @@
 
     
     <!-- ==================== MODAL 1: DAFTAR PARTNER KOMUNITAS / EO ==================== -->
-    <div id="modalPartnerRegister" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-900/80 backdrop-blur-xs overflow-y-auto">
+    <div id="modalPartnerRegister" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-900/80 backdrop-blur-xs overflow-y-auto" onclick="if(event.target===this) closeRegisterPartnerModal()">
         <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-xl my-8 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <!-- Modal Header -->
             <div class="bg-[#0F172A] text-white px-5 py-4 flex items-center justify-between shrink-0">
@@ -4479,6 +4479,7 @@
 
             <!-- Modal Form Body -->
             <form id="formPartnerRegister" onsubmit="handlePartnerRegistrationSubmit(event)" class="overflow-y-auto p-5 sm:p-6 space-y-4 flex-1">
+                <div id="regPartnerMemberNotice" class="hidden"></div>
                 <div class="bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-3.5 text-xs text-emerald-900 leading-relaxed flex items-start gap-2.5">
                     <i class="fa-solid fa-shield-halved text-emerald-600 mt-0.5 text-sm shrink-0"></i>
                     <span>Setelah diajukan, tim pengurus ESI Trenggalek akan memvalidasi data dan menghubungi PIC untuk pemberian <strong>Lencana Terverifikasi Resmi</strong>.</span>
@@ -5239,11 +5240,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261119af" defer></script>
-    <script src="js/config.js?v=20261119af" defer></script>
-    <script src="js/supabaseClient.js?v=20261119af" defer></script>
-    <script src="js/api.js?v=20261119af" defer></script>
-    <script src="js/app.js?v=20261119af" defer></script>
+    <script src="js/seedData.js?v=20261119ag" defer></script>
+    <script src="js/config.js?v=20261119ag" defer></script>
+    <script src="js/supabaseClient.js?v=20261119ag" defer></script>
+    <script src="js/api.js?v=20261119ag" defer></script>
+    <script src="js/app.js?v=20261119ag" defer></script>
 </body>
 
 </html>

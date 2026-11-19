@@ -3812,13 +3812,68 @@ function resetPartnerFilters() {
     setPartnerStatusFilter('all');
 }
 
-// Modals: Register Partner
+// Modals: Register Partner & EO
+function openPartnerRegisterModal() {
+    openRegisterPartnerModal();
+}
+
+function closePartnerRegisterModal() {
+    closeRegisterPartnerModal();
+}
+
 function openRegisterPartnerModal() {
     const m = document.getElementById('modalPartnerRegister');
-    if (m) {
-        m.classList.remove('hidden');
-        m.classList.add('flex');
+    if (!m) return;
+
+    const noticeEl = document.getElementById('regPartnerMemberNotice');
+    
+    // Auto-fill jika member sedang login
+    if (typeof loggedMember !== 'undefined' && loggedMember) {
+        const picInput = document.getElementById('regPartnerPic');
+        const phoneInput = document.getElementById('regPartnerPhone');
+        const emailInput = document.getElementById('regPartnerEmail');
+        const kecInput = document.getElementById('regPartnerKecamatan');
+
+        if (picInput && !picInput.value) picInput.value = loggedMember.fullName || loggedMember.name || '';
+        if (phoneInput && !phoneInput.value) phoneInput.value = loggedMember.phone || loggedMember.whatsapp || '';
+        if (emailInput && !emailInput.value) emailInput.value = loggedMember.email || '';
+        if (kecInput && !kecInput.value) kecInput.value = loggedMember.kecamatan || loggedMember.domicile || '';
+
+        if (noticeEl) {
+            noticeEl.innerHTML = `
+                <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl p-3 border border-slate-700/80 flex items-center justify-between text-xs gap-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black shrink-0">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <div class="truncate">
+                            <p class="font-bold text-slate-100 truncate">${escapeHtml(loggedMember.fullName || 'Member')} <span class="text-emerald-400 font-normal">(${escapeHtml(loggedMember.nickname || '-')})</span></p>
+                            <p class="text-[11px] text-slate-400">Akun Member Anda otomatis terhubung sebagai <strong>Pemilik Utama EO</strong>.</p>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap shrink-0">Akun Terhubung</span>
+                </div>
+            `;
+            noticeEl.classList.remove('hidden');
+        }
+    } else {
+        if (noticeEl) {
+            noticeEl.innerHTML = `
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-300 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-amber-400 shrink-0"></i>
+                        <span>Anda belum login. Login terlebih dahulu agar otomatis terhubung ke Panel EO setelah disetujui.</span>
+                    </div>
+                    <button type="button" onclick="closeRegisterPartnerModal(); navigateTo('member');" class="text-xs font-bold text-amber-400 hover:underline shrink-0">Login &rarr;</button>
+                </div>
+            `;
+            noticeEl.classList.remove('hidden');
+        }
     }
+
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeRegisterPartnerModal() {
@@ -3827,6 +3882,7 @@ function closeRegisterPartnerModal() {
         m.classList.add('hidden');
         m.classList.remove('flex');
     }
+    document.body.style.overflow = '';
 }
 
 async function handlePartnerRegistrationSubmit(e) {
@@ -3873,11 +3929,13 @@ async function handlePartnerRegistrationSubmit(e) {
     try {
         const created = await Api.createPartner(partnerPayload);
         partners = [created, ...partners];
-        renderPartnersView();
-        renderAdminPartners();
+        if (typeof renderPartnersView === 'function') renderPartnersView();
+        if (typeof renderAdminPartners === 'function') renderAdminPartners();
+        if (typeof renderMemberEOStatusBanner === 'function') renderMemberEOStatusBanner();
+        if (typeof updateHeaderEOBadge === 'function') updateHeaderEOBadge();
         closeRegisterPartnerModal();
         e.target.reset();
-        showToast('Pendaftaran Berhasil Dikirim', 'Pengajuan kemitraan Anda akan ditinjau oleh Pengurus ESI Trenggalek.', 'success');
+        showToast('Pendaftaran Berhasil Dikirim', 'Pengajuan kemitraan EO Anda telah tercatat dan sedang dalam peninjauan oleh Pengurus ESI Trenggalek.', 'success');
     } catch (err) {
         showToast('Gagal Mendaftar', err.message || 'Terjadi kesalahan sistem.', 'error');
     } finally {
@@ -4202,11 +4260,10 @@ async function verifyPartnerAdmin(partnerId, newStatus) {
     p.verifiedBy = newStatus === 'verified' ? adminUser.name : null;
 
     renderAdminPartners();
-    renderPartnersView();
-    if (typeof loggedMember !== 'undefined' && loggedMember && p.memberId && String(p.memberId) === String(loggedMember.id)) {
-        if (typeof renderEOTab === 'function') renderEOTab();
-        if (typeof renderMemberView === 'function') renderMemberView();
-    }
+    if (typeof renderPartnersView === 'function') renderPartnersView();
+    if (typeof updateHeaderEOBadge === 'function') updateHeaderEOBadge();
+    if (typeof renderMemberEOStatusBanner === 'function') renderMemberEOStatusBanner();
+    if (typeof renderMemberView === 'function' && typeof loggedMember !== 'undefined' && loggedMember) renderMemberView();
 
     try {
         await Api.verifyPartner(partnerId, newStatus, adminUser.name);
