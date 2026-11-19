@@ -8,6 +8,12 @@ let athletes = [];
 let events = [];
 let news = [];
 let documents = [];
+let partners = [];
+let partnerTypeFilter = 'all';
+let partnerStatusFilter = 'all';
+let partnerGameFilter = 'all';
+let partnerSearchQuery = '';
+let activeDetailPartnerId = null;
 let eventOrganizerFilter = 'all';
 let isAdminLoggedIn = false;
 let loggedMember = null;
@@ -24,7 +30,7 @@ let adminActiveTab = 'atlet';
 let memberActiveTab = 'kta';
 let activeArticleId = 2;
 
-const VALID_VIEWS = ['beranda', 'daftar', 'cek-data', 'event', 'event-detail', 'daftar-event', 'partner', 'klasemen', 'berita', 'baca-berita', 'profil', 'dokumen', 'admin', 'member'];
+const VALID_VIEWS = ['beranda', 'daftar', 'cek-data', 'event', 'event-detail', 'daftar-event', 'partner', 'klasemen', 'berita', 'baca-berita', 'profil', 'dokumen', 'admin', 'member', 'eo'];
 
 let activeRegisterEventId = 1;
 let adminSelectedTournamentId = null;
@@ -75,11 +81,13 @@ async function initApp() {
     initSupabase();
     isAdminLoggedIn = Api.isAdminLoggedIn();
     loggedMember = Api.getLoggedMember();
+
+    // Load initial data dari Cloud Vercel Blob terlebih dahulu
+    await refreshAllData();
+
+    // Perbarui header dan badge setelah data siap
     updateHeaderAdminBadge();
     updateHeaderMemberBadge();
-
-    // Load initial data dari Cloud Vercel Blob
-    await refreshAllData();
 
     // Pastikan data member tersinkronisasi jika poin/status diupdate oleh admin
     if (loggedMember) {
@@ -141,15 +149,19 @@ async function initApp() {
 
 async function refreshAllData() {
     try {
-        const [a, e, n] = await Promise.all([
+        const [a, e, n, p, d] = await Promise.all([
             Api.getAthletes(),
             Api.getEvents(),
             Api.getNews(),
+            Api.getPartners().catch(() => []),
+            Api.getDocuments().catch(() => []),
             Api.getTournamentRegistrations().catch(() => [])
         ]);
         athletes = a || [];
         events = e || [];
         news = n || [];
+        partners = p || [];
+        documents = d || [];
 
         // Sinkronisasi otomatis agar ilomilo nomor 1 & danbii nomor 2
         if (Array.isArray(athletes)) {
@@ -3380,6 +3392,7 @@ function renderAdminView() {
     renderAdminEvents();
     renderAdminNews();
     renderAdminDocuments();
+    if (typeof renderAdminPartners === 'function') renderAdminPartners();
     if (isSuper) renderAdminAkunPanel();
 }
 
@@ -3409,6 +3422,8 @@ function switchAdminTab(tabName) {
             renderAdminAkunPanel();
         } else if (tabName === 'dokumen') {
             renderAdminDocuments();
+        } else if (tabName === 'partner') {
+            if (typeof renderAdminPartners === 'function') renderAdminPartners();
         }
     }
 }
