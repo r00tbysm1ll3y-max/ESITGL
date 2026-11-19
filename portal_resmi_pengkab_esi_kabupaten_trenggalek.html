@@ -175,6 +175,13 @@
                         <i class="fa-solid fa-bars text-sm sm:text-base"></i>
                     </button>
 
+                    <!-- EO Button (Tampil otomatis hanya jika member terverifikasi sebagai pengurus EO) -->
+                    <button onclick="navigateTo('eo')" id="headerEOBtn" aria-label="Panel EO"
+                        class="hidden h-9 sm:h-10 px-2.5 sm:px-3 rounded-lg text-xs sm:text-sm font-bold bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 transition items-center gap-1.5 shrink-0 whitespace-nowrap shadow-sm">
+                        <i class="fa-solid fa-handshake-angle text-emerald-400 text-xs sm:text-sm"></i>
+                        <span id="headerEOText">Panel EO</span>
+                    </button>
+
                     <!-- Admin Button (Tampil otomatis saat admin login) -->
                     <button onclick="navigateTo('admin')" id="headerAdminBtn" aria-label="Dashboard Admin"
                         class="hidden h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-lg text-xs sm:text-sm font-bold bg-[#1E293B] hover:bg-slate-700 text-amber-400 border border-amber-500/30 transition items-center gap-1.5 shrink-0 whitespace-nowrap">
@@ -235,6 +242,13 @@
                 <span class="flex items-center gap-2"><i class="fa-solid fa-id-card text-[#DC2626]"></i> <span id="mobileDrawerMemberText">Login</span></span>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
             </button>
+            <!-- Tombol Panel EO Khusus Pengurus EO Terverifikasi -->
+            <button onclick="navigateTo('eo'); toggleMobileDrawer();" id="mobileDrawerEOBtn"
+                class="hidden w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-500/40 items-center justify-between">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-handshake-angle text-emerald-400"></i> <span id="mobileDrawerEOText">Panel Manajemen EO</span></span>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+            </button>
+
             <button onclick="navigateTo('admin'); toggleMobileDrawer();" id="mobileDrawerAdminBtn"
                 class="hidden w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-300 hover:bg-slate-700 items-center justify-between">
                 <span class="flex items-center gap-2"><i class="fa-solid fa-lock text-amber-500"></i> <span id="mobileDrawerAdminText">Panel Admin</span></span>
@@ -3522,6 +3536,7 @@
 
                     <!-- Alert Banner (Jika status pending / rejected) -->
                     <div id="memberStatusAlertBox"></div>
+                    <div id="memberEOStatusBanner"></div>
 
                     <!-- Kartu Tanda Anggota (KTA) Digital Visual Card -->
                     <div id="memberKtaCard"></div>
@@ -3548,10 +3563,7 @@
                             class="member-tab-btn shrink-0 whitespace-nowrap px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#0F172A] hover:bg-slate-100 transition">
                             <i class="fa-solid fa-key mr-1.5"></i> Ganti Password
                         </button>
-                        <button onclick="switchMemberTab('eo')" data-membertab="eo" id="memberTabBtnEO"
-                            class="member-tab-btn shrink-0 whitespace-nowrap px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:text-[#0F172A] hover:bg-emerald-50 hover:text-emerald-700 transition">
-                            <i class="fa-solid fa-handshake-angle mr-1.5 text-emerald-500"></i> Panel EO
-                        </button>
+
                     </div>
 
                     <!-- Tab Content 1: KTA & Informasi Cepat -->
@@ -3774,160 +3786,220 @@
 
             </div>
 
-                    <!-- Tab Content EO: Panel Event Organizer & Mitra -->
-                    <div id="member-tab-eo" class="member-tab-content hidden space-y-5">
 
-                        <!-- Status Banner (dynamic via JS) -->
-                        <div id="eoPanelStatusBanner"></div>
 
-                        <!-- Form Apply EO (shown when no application) -->
-                        <div id="eoPanelApplyForm">
-                            <div class="bg-gradient-to-br from-[#0F172A] to-slate-800 rounded-2xl p-6 border border-slate-700 text-white mb-5">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                        <i class="fa-solid fa-handshake-angle text-emerald-400 text-lg"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs font-black uppercase tracking-wider text-emerald-400">Program Mitra ESI Trenggalek</p>
-                                        <h3 class="font-extrabold text-base text-white">Daftarkan Komunitas / EO Anda</h3>
-                                    </div>
-                                </div>
-                                <p class="text-xs text-slate-300 leading-relaxed">Ajukan komunitas esports atau Event Organizer (EO) Anda untuk mendapatkan verifikasi resmi ESI Trenggalek. Setelah disetujui, Anda dapat mempublikasikan event turnamen langsung dari akun ini.</p>
-                            </div>
-                            <form onsubmit="handleEOApplication(event)" class="bg-white border border-[#E2E8F0] rounded-xl p-5 md:p-6 space-y-4">
-                                <h4 class="font-extrabold text-sm text-[#0F172A] flex items-center gap-2 mb-1">
-                                    <i class="fa-solid fa-file-pen text-[#DC2626]"></i> Formulir Pendaftaran Mitra
-                                </h4>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Nama Komunitas / EO *</label>
-                                        <input type="text" id="eoFormName" required placeholder="cth. Trenggalek Gaming Squad"
-                                            class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 focus:border-[#DC2626]">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Jenis Organisasi *</label>
-                                        <select id="eoFormType" required class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                            <option value="">-- Pilih Jenis --</option>
-                                            <option value="Komunitas Esports">Komunitas Esports</option>
-                                            <option value="Event Organizer (EO)">Event Organizer (EO)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Kecamatan Domisili *</label>
-                                        <input type="text" id="eoFormKecamatan" required placeholder="cth. Trenggalek, Pogalan, Durenan"
-                                            class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Game Fokus Utama *</label>
-                                        <input type="text" id="eoFormGame" required placeholder="cth. MLBB, Free Fire, PUBG Mobile"
-                                            class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                    </div>
-                                    <div class="sm:col-span-2">
-                                        <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Link Portofolio / Media Sosial</label>
-                                        <input type="text" id="eoFormPortfolio" placeholder="Instagram, TikTok, atau Google Drive proposal"
-                                            class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                    </div>
-                                    <div class="sm:col-span-2">
-                                        <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Deskripsi Singkat *</label>
-                                        <textarea id="eoFormDesc" required rows="3" placeholder="Ceritakan singkat tentang komunitas/EO Anda, pengalaman, dan rencana event..."
-                                            class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 resize-none"></textarea>
-                                    </div>
-                                </div>
-                                <button type="submit" class="w-full min-h-[44px] py-2.5 px-4 rounded-lg font-bold text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center justify-center gap-2 shadow-sm">
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                    <span>Kirim Pengajuan Pendaftaran</span>
-                                </button>
-                            </form>
-                        </div>
+        </section>
 
-                        <!-- EO Dashboard (shown when verified partner) -->
-                        <div id="eoPanelDashboard" class="hidden space-y-5">
-                            <!-- Partner Info Card -->
-                            <div id="eoDashboardCard"></div>
 
-                            <!-- Create Event Form -->
-                            <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 md:p-6">
-                                <h4 class="font-extrabold text-sm text-[#0F172A] flex items-center gap-2 mb-4">
-                                    <i class="fa-solid fa-calendar-plus text-[#DC2626]"></i> Publikasikan Event / Turnamen Baru
-                                </h4>
-                                <form onsubmit="handleEOCreateEvent(event)" class="space-y-4">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div class="sm:col-span-2">
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Nama Event / Turnamen *</label>
-                                            <input type="text" id="eoEventTitle" required placeholder="cth. Open Tournament MLBB Season 1"
-                                                class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Divisi / Game *</label>
-                                            <select id="eoEventDivision" required class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                                <option value="">-- Pilih Game --</option>
-                                                <option>Mobile Legends Bang Bang (MLBB)</option>
-                                                <option>Free Fire</option>
-                                                <option>PUBG Mobile</option>
-                                                <option>eFootball</option>
-                                                <option>Honor of Kings (HOK)</option>
-                                                <option>Chess / Catur Online</option>
-                                                <option>Valorant</option>
-                                                <option>Multi-Game</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Tanggal Pelaksanaan *</label>
-                                            <input type="text" id="eoEventDate" required placeholder="cth. 25 Desember 2026"
-                                                class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Lokasi / Venue *</label>
-                                            <input type="text" id="eoEventLocation" required placeholder="cth. Gedung GOR Trenggalek / Online"
-                                                class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Total Hadiah</label>
-                                            <input type="text" id="eoEventPrize" placeholder="cth. Rp 2.000.000 + Piala"
-                                                class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Biaya Pendaftaran</label>
-                                            <input type="text" id="eoEventFee" placeholder="cth. Rp 50.000 / Tim (atau Gratis)"
-                                                class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Nomor WhatsApp Panitia *</label>
-                                            <input type="tel" id="eoEventContact" required placeholder="cth. 08123456789"
-                                                class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Link Poster Event</label>
-                                            <input type="url" id="eoEventImage" placeholder="https://... (opsional)"
-                                                class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30">
-                                        </div>
-                                        <div class="sm:col-span-2">
-                                            <label class="block text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-1.5">Deskripsi Event *</label>
-                                            <textarea id="eoEventDesc" required rows="3" placeholder="Ceritakan detail event, kategori peserta, format pertandingan, dll."
-                                                class="w-full px-3.5 py-2.5 rounded-lg bg-[#F4F6F9] border border-[#E2E8F0] text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 resize-none"></textarea>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="w-full min-h-[44px] py-2.5 px-4 rounded-lg font-bold text-xs uppercase tracking-wider bg-[#DC2626] hover:bg-[#B91C1C] text-white transition flex items-center justify-center gap-2 shadow-sm">
-                                        <i class="fa-solid fa-calendar-plus"></i>
-                                        <span>Publikasikan Event Sekarang</span>
-                                    </button>
-                                </form>
-                            </div>
+        <!-- ==================== VIEW 9: PAGE KHUSUS EO & KOMUNITAS TERVERIFIKASI ==================== -->
+        <section id="view-eo" class="spa-view hidden bg-[#0B1120] min-h-screen py-8 md:py-12 text-slate-100">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-                            <!-- My Events List -->
-                            <div class="bg-white border border-[#E2E8F0] rounded-xl p-5 md:p-6">
-                                <h4 class="font-extrabold text-sm text-[#0F172A] flex items-center gap-2 mb-4">
-                                    <i class="fa-solid fa-list-check text-[#DC2626]"></i> Event yang Saya Publikasikan
-                                </h4>
-                                <div id="eoMyEventsList" class="space-y-2 text-sm text-slate-500">
-                                    <p class="text-center py-4 text-slate-400 text-xs">Belum ada event yang dipublikasikan.</p>
-                                </div>
-                            </div>
-                        </div>
-
+                <!-- Breadcrumb & Top Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <button onclick="navigateTo('member')"
+                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-extrabold uppercase tracking-wider transition">
+                        <i class="fa-solid fa-arrow-left text-[#DC2626]"></i>
+                        <span>Kembali ke Akun Member</span>
+                    </button>
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+                        <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                        <span>Panel Resmi Penyelenggara Event ESI Trenggalek</span>
                     </div>
-                    <!-- END Tab EO -->
+                </div>
 
+                <!-- EO Profile Banner -->
+                <div id="eoPageBanner" class="relative bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0A0F1D] border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-2xl text-white overflow-hidden">
+                    <!-- Dynamic rendering via JS: Logo, Partner Name, Verified Badge, Kecamatan, PIC, Game tags, Quick Stats -->
+                </div>
+
+                <!-- EO Navigation Tabs (Buat Event Baru, Event Saya, Tim Pengurus & Invite) -->
+                <div class="bg-[#1E293B] border border-slate-700 rounded-xl p-1.5 flex flex-wrap gap-1.5" id="eoPageNavTabs">
+                    <button onclick="switchEOPagesTab('create-event')" data-eotab="create-event"
+                        class="eo-sub-tab px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-wider bg-[#DC2626] text-white transition flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-plus"></i> Publikasikan Event Baru
+                    </button>
+                    <button onclick="switchEOPagesTab('my-events')" data-eotab="my-events"
+                        class="eo-sub-tab px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-wider bg-transparent text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
+                        <i class="fa-solid fa-trophy"></i> Daftar Event Saya (<span id="eoMyEventsCountBadge">0</span>)
+                    </button>
+                    <button onclick="switchEOPagesTab('team')" data-eotab="team"
+                        class="eo-sub-tab px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-wider bg-transparent text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear"></i> Tim Pengurus &amp; Invite Anggota (<span id="eoTeamCountBadge">0</span>)
+                    </button>
+                </div>
+
+                <!-- TAB 1: FORM BUAT EVENT BARU -->
+                <div id="eo-view-tab-create-event" class="eo-page-tab-content space-y-6">
+                    <div class="bg-[#1E293B] border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-xl">
+                        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-700/60">
+                            <div class="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500 text-lg">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base sm:text-lg font-black text-white">Formulir Publikasi Turnamen Resmi</h3>
+                                <p class="text-xs text-slate-400">Event akan langsung terbit di Kalender Jadwal Event publik dengan badge Partner Terverifikasi.</p>
+                            </div>
+                        </div>
+
+                        <form id="formEOCreateTournament" onsubmit="handleEOPublishTournamentSubmit(event)" class="space-y-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                                <div class="sm:col-span-2 lg:col-span-3">
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Nama Event / Judul Turnamen *</label>
+                                    <input type="text" id="eoNewEventTitle" required placeholder="Contoh: Piala Bergilir MLBB Trenggalek Championship Season 2"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Divisi Game Utama *</label>
+                                    <select id="eoNewEventDivision" required class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                        <option value="">-- Pilih Game --</option>
+                                        <option value="Mobile Legends (MLBB)">Mobile Legends (MLBB)</option>
+                                        <option value="Free Fire">Free Fire</option>
+                                        <option value="PUBG Mobile">PUBG Mobile</option>
+                                        <option value="eFootball">eFootball</option>
+                                        <option value="Honor of Kings">Honor of Kings</option>
+                                        <option value="Valorant">Valorant</option>
+                                        <option value="Chess / Catur Online">Chess / Catur Online</option>
+                                        <option value="Multi-Game Esports">Multi-Game Esports</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Tanggal Pelaksanaan *</label>
+                                    <input type="text" id="eoNewEventDate" required placeholder="Contoh: 28 - 29 Desember 2026"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Lokasi / Venue *</label>
+                                    <input type="text" id="eoNewEventLocation" required placeholder="Contoh: Gedung Pemuda Trenggalek / Online"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Total Hadiah (Prize Pool) *</label>
+                                    <input type="text" id="eoNewEventPrize" required placeholder="Contoh: Rp 3.000.000 + E-Sertifikat ESI"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Biaya Pendaftaran *</label>
+                                    <input type="text" id="eoNewEventFee" required placeholder="Contoh: Gratis / Free Entry atau Rp 50.000/Tim"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Kuota Maksimal Slot Tim *</label>
+                                    <input type="number" id="eoNewEventSlots" min="4" max="256" value="32" required
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Nomor WhatsApp Panitia / CP *</label>
+                                    <input type="tel" id="eoNewEventContact" required placeholder="Contoh: 081234567890"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Kategori Peserta</label>
+                                    <input type="text" id="eoNewEventCategory" placeholder="Contoh: Umum &amp; Pelajar Kab. Trenggalek" value="Umum & Pelajar Kab. Trenggalek"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">URL Gambar Poster (Opsional)</label>
+                                    <input type="url" id="eoNewEventImage" placeholder="https://... (link poster)"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+                                </div>
+
+                                <div class="sm:col-span-2 lg:col-span-3">
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Deskripsi Singkat &amp; Ringkasan Event *</label>
+                                    <textarea id="eoNewEventDesc" rows="3" required placeholder="Tuliskan gambaran umum turnamen, jadwal kualifikasi hingga grand final..."
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500 resize-none"></textarea>
+                                </div>
+
+                                <div class="sm:col-span-2 lg:col-span-3">
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Peraturan &amp; Rulebook Turnamen (Satu per baris)</label>
+                                    <textarea id="eoNewEventRules" rows="4" placeholder="Peserta wajib hadir 15 menit sebelum tanding&#10;Dilarang menggunakan cheat/skin script&#10;Keputusan panitia wasit mutlak"
+                                        class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500 font-mono text-xs"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-700/60">
+                                <button type="reset" class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+                                    Reset Form
+                                </button>
+                                <button type="submit" id="btnSubmitEONewEvent"
+                                    class="px-6 py-3 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs font-black uppercase tracking-wider transition flex items-center gap-2 shadow-lg shadow-red-600/30">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span>Publikasikan Turnamen Sekarang</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- TAB 2: DAFTAR EVENT SAYA -->
+                <div id="eo-view-tab-my-events" class="eo-page-tab-content hidden space-y-4">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-black text-white">Turnamen yang Anda Kelola</h3>
+                            <p class="text-xs text-slate-400">Pantau progres turnamen dan unduh rekap data peserta tim pendaftar.</p>
+                        </div>
+                        <button onclick="switchEOPagesTab('create-event')" class="px-3.5 py-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-black uppercase tracking-wider transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Tambah Event
+                        </button>
+                    </div>
+                    <div id="eoPageEventsListContainer" class="space-y-4">
+                        <!-- Rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- TAB 3: TIM PENGURUS & INVITE ANGGOTA -->
+                <div id="eo-view-tab-team" class="eo-page-tab-content hidden space-y-6">
+                    <!-- Invite Member Box -->
+                    <div class="bg-[#1E293B] border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-xl">
+                        <div class="flex items-center gap-3 mb-5 pb-4 border-b border-slate-700/60">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
+                                <i class="fa-solid fa-user-plus"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base sm:text-lg font-black text-white">Undang Rekan Member Menjadi Panitia / Pengurus EO</h3>
+                                <p class="text-xs text-slate-400">Member yang ditambahkan akan otomatis mendapatkan akses ke Panel EO ini untuk bersama-sama mengelola turnamen.</p>
+                            </div>
+                        </div>
+
+                        <form onsubmit="handleEOInviteMemberSubmit(event)" class="space-y-4 max-w-2xl">
+                            <div>
+                                <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1.5">Cari &amp; Pilih Atlet/Member ESI Trenggalek *</label>
+                                <select id="eoInviteMemberSelect" required class="w-full px-4 py-3 rounded-xl bg-[#0F172A] border border-slate-700 text-white text-sm focus:outline-none focus:border-emerald-500">
+                                    <option value="">-- Pilih Atlet / Member Terdaftar --</option>
+                                    <!-- Populated via JS from verified athletes -->
+                                </select>
+                                <p class="text-[11px] text-slate-400 mt-1.5"><i class="fa-solid fa-circle-info mr-1"></i>Hanya atlet/member yang telah terdaftar di database ESI Trenggalek yang dapat diundang.</p>
+                            </div>
+                            <button type="submit" id="btnSubmitEOInvite"
+                                class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-black uppercase tracking-wider transition flex items-center gap-2 shadow-lg shadow-emerald-900/30">
+                                <i class="fa-solid fa-user-check"></i>
+                                <span>Beri Akses Pengurus EO</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Current Team Members List -->
+                    <div class="bg-[#1E293B] border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-xl space-y-4">
+                        <h4 class="text-sm font-black uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                            <i class="fa-solid fa-users text-emerald-400"></i>
+                            <span>Daftar Pengurus yang Memiliki Akses</span>
+                        </h4>
+                        <div id="eoPageTeamListContainer" class="space-y-3">
+                            <!-- Rendered via JS: Owner + Managers -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </section>
 
     </main>
@@ -5167,11 +5239,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261119ad" defer></script>
-    <script src="js/config.js?v=20261119ad" defer></script>
-    <script src="js/supabaseClient.js?v=20261119ad" defer></script>
-    <script src="js/api.js?v=20261119ad" defer></script>
-    <script src="js/app.js?v=20261119ad" defer></script>
+    <script src="js/seedData.js?v=20261119ae" defer></script>
+    <script src="js/config.js?v=20261119ae" defer></script>
+    <script src="js/supabaseClient.js?v=20261119ae" defer></script>
+    <script src="js/api.js?v=20261119ae" defer></script>
+    <script src="js/app.js?v=20261119ae" defer></script>
 </body>
 
 </html>

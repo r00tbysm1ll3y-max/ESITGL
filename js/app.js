@@ -298,8 +298,18 @@ function navigateTo(viewName, updateHash = true) {
     if (viewName === 'berita') renderNewsView();
     if (viewName === 'baca-berita') renderArticleDetailPage(activeArticleId);
     if (viewName === 'dokumen') renderDocumentsView();
+    if (viewName === 'partner') renderPartnersView();
     if (viewName === 'admin') renderAdminView();
     if (viewName === 'member') renderMemberView();
+    if (viewName === 'eo') {
+        const vp = getMemberVerifiedPartner(loggedMember);
+        if (!vp) {
+            showToast('Akses Khusus Pengurus EO', 'Halaman ini khusus untuk komunitas/EO yang telah berstatus Terverifikasi resmi oleh ESI Trenggalek.', 'warning');
+            navigateTo(loggedMember ? 'member' : 'beranda');
+            return;
+        }
+        renderEOPageView(vp);
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -3839,7 +3849,10 @@ async function handlePartnerRegistrationSubmit(e) {
         city: 'Trenggalek',
         gameFocus,
         games: gameFocus,
-        description
+        description,
+        ownerMemberId: (typeof loggedMember !== 'undefined' && loggedMember) ? String(loggedMember.id) : null,
+        memberId: (typeof loggedMember !== 'undefined' && loggedMember) ? String(loggedMember.id) : null,
+        managerIds: (typeof loggedMember !== 'undefined' && loggedMember) ? [String(loggedMember.id)] : []
     };
 
     try {
@@ -6401,6 +6414,7 @@ function updateHeaderMemberBadge() {
                 alreadyName.textContent = `Halo, ${loggedMember.fullName || loggedMember.nickname}!`;
             }
         }
+        if (typeof updateHeaderEOBadge === 'function') updateHeaderEOBadge();
         if (regFormCard) {
             regFormCard.classList.add('hidden');
         }
@@ -6544,6 +6558,10 @@ function renderMemberView() {
 
     // 3. Render Tab Aktif
     switchMemberTab(memberActiveTab || 'kta');
+
+    // 4. Render EO Status Banner & Sync EO Header Button
+    if (typeof updateHeaderEOBadge === 'function') updateHeaderEOBadge();
+    if (typeof renderMemberEOStatusBanner === 'function') renderMemberEOStatusBanner();
 }
 
 function renderMemberKtaCard() {
@@ -6843,9 +6861,7 @@ function switchMemberTab(tabName) {
     const target = document.getElementById(`member-tab-${tabName}`);
     if (target) target.classList.remove('hidden');
 
-    if (tabName === 'eo') {
-        renderEOTab();
-    }
+    
 }
 
 async function handleUpdateMemberProfile(e) {
@@ -9535,250 +9551,636 @@ function exportTournamentTeamsCsv(eventId) {
     exportTournamentTeamsExcel(eventId);
 }
 
+// =========================================================================
+// 9. DEDICATED EVENT ORGANIZER & COMMUNITY SYSTEM (MULTI-ADMIN & SECURE)
+// =========================================================================
 
+let activeEOPartnerId = null;
+let activeEOTab = 'create-event';
 
-// ==================== EO (EVENT ORGANIZER) PANEL ====================
+/**
+ * Mencari partner/EO yang terkait dengan member tertentu
+ * (baik sebagai owner maupun sebagai manager/panitia yang di-invite)
+ */
+function getMemberPartner(member) {
+    if (!member || !member.id) return null;
+    const mId = String(member.id);
+    return (Array.isArray(partners) ? partners : []).find(p => {
+        const isOwner = (p.ownerMemberId && String(p.ownerMemberId) === mId) || (p.memberId && String(p.memberId) === mId);
+        const isManager = Array.isArray(p.managerIds) && p.managerIds.map(String).includes(mId);
+        return isOwner || isManager;
+    }) || null;
+}
 
-async function renderEOTab() {
-    const statusBanner = document.getElementById('eoPanelStatusBanner');
-    const applyForm = document.getElementById('eoPanelApplyForm');
-    const dashboard = document.getElementById('eoPanelDashboard');
-    if (!statusBanner || !applyForm || !dashboard) return;
+/**
+ * Mencari partner/EO terverifikasi (status === 'verified') yang dapat diakses oleh member
+ */
+function getMemberVerifiedPartner(member) {
+    const p = getMemberPartner(member);
+    return (p && p.status === 'verified') ? p : null;
+}
 
-    // Load fresh partners
-    try {
-        if (!partners || !partners.length) partners = await Api.getPartners();
-    } catch (e) { partners = []; }
+/**
+ * Mengontrol visibilitas tombol EO di Header Desktop & Mobile Drawer
+ * Aturan: Jika tidak punya akses ke EO terverifikasi, UI EO TIDAK AKAN PERNAH MUNCUL!
+ */
+function updateHeaderEOBadge() {
+    const desktopBtn = document.getElementById('headerEOBtn');
+    const drawerBtn = document.getElementById('mobileDrawerEOBtn');
+    const vp = getMemberVerifiedPartner(loggedMember);
 
-    // Find partner linked to this member
-    const myPartner = (Array.isArray(partners) ? partners : []).find(p =>
-        p.memberId && String(p.memberId) === String(loggedMember.id)
-    );
-
-    if (!myPartner) {
-        // No application yet — show form
-        applyForm.classList.remove('hidden');
-        dashboard.classList.add('hidden');
-        statusBanner.innerHTML = '';
-    } else if (myPartner.status === 'pending') {
-        // Applied but waiting
-        applyForm.classList.add('hidden');
-        dashboard.classList.add('hidden');
-        statusBanner.innerHTML = `
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                <i class="fa-solid fa-clock text-amber-500 text-lg mt-0.5"></i>
-                <div>
-                    <p class="font-extrabold text-sm text-amber-800">Pengajuan Sedang Ditinjau</p>
-                    <p class="text-xs text-amber-700 mt-0.5">Pengajuan EO <strong>${escapeHtml(myPartner.name)}</strong> Anda sedang diproses oleh Admin ESI Trenggalek. Harap tunggu notifikasi persetujuan.</p>
-                </div>
-            </div>`;
-    } else if (myPartner.status === 'rejected') {
-        // Rejected — show form again with note
-        applyForm.classList.remove('hidden');
-        dashboard.classList.add('hidden');
-        statusBanner.innerHTML = `
-            <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 mb-2">
-                <i class="fa-solid fa-circle-xmark text-red-500 text-lg mt-0.5"></i>
-                <div>
-                    <p class="font-extrabold text-sm text-red-800">Pengajuan Ditolak</p>
-                    <p class="text-xs text-red-700 mt-0.5">Pengajuan <strong>${escapeHtml(myPartner.name)}</strong> ditolak. ${myPartner.adminNote ? 'Catatan admin: ' + escapeHtml(myPartner.adminNote) : 'Silakan ajukan ulang dengan melengkapi informasi.'}</p>
-                </div>
-            </div>`;
-    } else if (myPartner.status === 'verified') {
-        // APPROVED — show EO dashboard
-        applyForm.classList.add('hidden');
-        dashboard.classList.remove('hidden');
-        statusBanner.innerHTML = `
-            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
-                <i class="fa-solid fa-circle-check text-emerald-500 text-xl"></i>
-                <div>
-                    <p class="font-extrabold text-sm text-emerald-800">Status: Partner Terverifikasi ESI Trenggalek</p>
-                    <p class="text-xs text-emerald-700 mt-0.5">Anda memiliki akses penuh untuk mempublikasikan event turnamen atas nama <strong>${escapeHtml(myPartner.name)}</strong>.</p>
-                </div>
-            </div>`;
-        renderEODashboardCard(myPartner);
-        renderEOMyEvents(myPartner);
+    if (vp) {
+        if (desktopBtn) {
+            desktopBtn.classList.remove('hidden');
+            desktopBtn.classList.add('flex');
+            const txt = document.getElementById('headerEOText');
+            if (txt) txt.textContent = 'Panel EO';
+            desktopBtn.title = `Panel Manajemen EO: ${vp.name}`;
+        }
+        if (drawerBtn) {
+            drawerBtn.classList.remove('hidden');
+            drawerBtn.classList.add('flex');
+            const drawerTxt = document.getElementById('mobileDrawerEOText');
+            if (drawerTxt) drawerTxt.textContent = `Panel EO (${vp.name})`;
+        }
+    } else {
+        if (desktopBtn) {
+            desktopBtn.classList.add('hidden');
+            desktopBtn.classList.remove('flex');
+        }
+        if (drawerBtn) {
+            drawerBtn.classList.add('hidden');
+            drawerBtn.classList.remove('flex');
+        }
     }
 }
 
-function renderEODashboardCard(partner) {
-    const el = document.getElementById('eoDashboardCard');
-    if (!el) return;
-    const games = Array.isArray(partner.gameFocus) ? partner.gameFocus : (Array.isArray(partner.games) ? partner.games : []);
-    el.innerHTML = `
-        <div class="bg-gradient-to-r from-[#0F172A] to-slate-800 rounded-xl p-4 border border-emerald-500/30 flex items-center gap-4">
-            <div class="w-14 h-14 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center shrink-0 text-2xl font-black text-emerald-400">
-                ${(partner.name || 'EO').substring(0,2).toUpperCase()}
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="flex flex-wrap items-center gap-2 mb-0.5">
-                    <span class="font-extrabold text-white text-base">${escapeHtml(partner.name)}</span>
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        <i class="fa-solid fa-circle-check"></i> Terverifikasi
-                    </span>
+/**
+ * Render Banner Status EO di dalam Dasbor Member (view-member)
+ */
+function renderMemberEOStatusBanner() {
+    const bannerEl = document.getElementById('memberEOStatusBanner');
+    if (!bannerEl) return;
+
+    if (!loggedMember) {
+        bannerEl.innerHTML = '';
+        return;
+    }
+
+    const partner = getMemberPartner(loggedMember);
+
+    // KASUS 1: Member sudah memiliki EO Terverifikasi (Akses Penuh!)
+    if (partner && partner.status === 'verified') {
+        const isOwner = (partner.ownerMemberId && String(partner.ownerMemberId) === String(loggedMember.id)) || (partner.memberId && String(partner.memberId) === String(loggedMember.id));
+        const roleLabel = isOwner ? 'Ketua / Pemilik EO' : 'Tim Pengurus / Panitia';
+
+        bannerEl.innerHTML = `
+            <div class="rounded-2xl bg-gradient-to-r from-emerald-950 via-[#0F172A] to-slate-900 border border-emerald-500/40 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl shadow-emerald-950/20">
+                <div class="flex items-center gap-3.5 w-full sm:w-auto">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xl shrink-0">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-black uppercase tracking-wider text-emerald-400">Penyelenggara Resmi ESI</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                <i class="fa-solid fa-circle-check"></i> Terverifikasi
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold">${roleLabel}</span>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-black text-white leading-tight mt-0.5 truncate">${escapeHtml(partner.name)}</h3>
+                        <p class="text-xs text-slate-300 mt-0.5">Kelola turnamen, buat event resmi, dan undang rekan panitia.</p>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-400">${escapeHtml(partner.type || 'Mitra ESI')} &bull; ${escapeHtml(partner.kecamatan || 'Trenggalek')}</p>
-                <div class="flex flex-wrap gap-1 mt-1.5">
-                    ${games.slice(0,3).map(g => `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-700 text-slate-300">${escapeHtml(g)}</span>`).join('')}
+                <button onclick="navigateTo('eo')"
+                    class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-emerald-900/40 transition flex items-center justify-center gap-2 whitespace-nowrap shrink-0">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    <span>Buka Dasbor EO &rarr;</span>
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    // KASUS 2: Pengajuan Sedang Menunggu Verifikasi Admin (Pending)
+    if (partner && partner.status === 'pending') {
+        bannerEl.innerHTML = `
+            <div class="rounded-2xl bg-amber-950/40 border border-amber-500/30 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg shrink-0">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <p class="text-xs font-black uppercase tracking-wider text-amber-400">Pengajuan Kemitraan EO Sedang Ditinjau</p>
+                            <span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">Status: Pending</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-0.5">Organisasi <strong>${escapeHtml(partner.name)}</strong> sedang dalam proses kurasi kelayakan oleh Pengurus PB ESI Trenggalek.</p>
+                    </div>
+                </div>
+                <span class="text-xs text-amber-300 font-bold shrink-0 self-end sm:self-center">Mohon menunggu persetujuan admin</span>
+            </div>
+        `;
+        return;
+    }
+
+    // KASUS 3: Pengajuan Ditolak
+    if (partner && partner.status === 'rejected') {
+        bannerEl.innerHTML = `
+            <div class="rounded-2xl bg-red-950/40 border border-red-500/30 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 text-lg shrink-0">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wider text-red-400">Pengajuan Kemitraan Belum Disetujui</p>
+                        <p class="text-xs text-slate-300 mt-0.5">Pengajuan <strong>${escapeHtml(partner.name)}</strong> belum memenuhi persyaratan. ${partner.adminNote ? 'Catatan: ' + escapeHtml(partner.adminNote) : 'Silakan ajukan kembali dengan data yang lebih lengkap.'}</p>
+                    </div>
+                </div>
+                <button onclick="openPartnerRegisterModal()" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition shrink-0 whitespace-nowrap">
+                    Ajukan Ulang
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    // KASUS 4: Member Belum Pernah Mendaftar (Tampilkan ajakan elegan & rapi)
+    bannerEl.innerHTML = `
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg shrink-0">
+                    <i class="fa-solid fa-handshake-angle"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs sm:text-sm font-extrabold text-white">Punya Komunitas atau Event Organizer Esports?</h4>
+                    <p class="text-xs text-slate-400 mt-0.5">Daftarkan organisasi Anda ke PB ESI Trenggalek untuk mendapatkan verifikasi resmi dan hak publikasi turnamen.</p>
                 </div>
             </div>
-        </div>`;
+            <button onclick="openPartnerRegisterModal()"
+                class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-emerald-600 hover:text-white border border-slate-700 hover:border-emerald-500 text-slate-200 font-bold text-xs transition flex items-center justify-center gap-2 whitespace-nowrap shrink-0 shadow-sm">
+                <i class="fa-solid fa-plus text-emerald-400"></i>
+                <span>Ajukan Komunitas / EO</span>
+            </button>
+        </div>
+    `;
 }
 
-function renderEOMyEvents(partner) {
-    const el = document.getElementById('eoMyEventsList');
-    if (!el) return;
+/**
+ * Controller Utama Halaman Dedicated EO (#view-eo)
+ */
+function renderEOPageView(partner) {
+    if (!partner) return;
+    activeEOPartnerId = partner.id;
+
+    // 1. Render Banner Profil Organisasi
+    renderEOPageBanner(partner);
+
+    // 2. Render Daftar Turnamen Saya
+    renderEOMyEventsList(partner);
+
+    // 3. Render Tim Pengurus & Anggota
+    renderEOTeamList(partner);
+
+    // 4. Default ke Tab Buat Event
+    switchEOPagesTab(activeEOTab || 'create-event');
+}
+
+/**
+ * Render Header Banner di Halaman EO
+ */
+function renderEOPageBanner(partner) {
+    const bannerEl = document.getElementById('eoPageBanner');
+    if (!bannerEl) return;
+
+    const monogram = (partner.name || 'EO').substring(0, 2).toUpperCase();
+    const logoHtml = partner.logoUrl && !partner.logoUrl.includes('logo-esi.png')
+        ? `<img src="${partner.logoUrl}" alt="${partner.name}" class="w-full h-full object-contain">`
+        : `<div class="w-full h-full bg-gradient-to-tr from-[#DC2626] to-[#991B1B] text-white font-black text-2xl flex items-center justify-center shadow-inner">${monogram}</div>`;
+
+    const isOwner = (partner.ownerMemberId && String(partner.ownerMemberId) === String(loggedMember.id)) || (partner.memberId && String(partner.memberId) === String(loggedMember.id));
+    const myRoleBadge = isOwner
+        ? `<span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-black"><i class="fa-solid fa-crown text-amber-400 mr-1"></i>Pemilik / Ketua EO</span>`
+        : `<span class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-black"><i class="fa-solid fa-user-shield text-blue-400 mr-1"></i>Tim Pengurus / Panitia</span>`;
+
+    const games = Array.isArray(partner.gameFocus) ? partner.gameFocus : (Array.isArray(partner.games) ? partner.games : []);
+    const gamePills = games.slice(0, 4).map(g => `<span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">${escapeHtml(g)}</span>`).join('');
+
+    // Hitung turnamen & tim pengurus
     const myEvents = (Array.isArray(events) ? events : []).filter(ev =>
-        (ev.partnerId && ev.partnerId === partner.id) ||
+        (ev.partnerId && String(ev.partnerId) === String(partner.id)) ||
         ((ev.organizer || '').toLowerCase() === (partner.name || '').toLowerCase())
     );
-    if (!myEvents.length) {
-        el.innerHTML = `<p class="text-center py-4 text-slate-400 text-xs">Belum ada event yang dipublikasikan.</p>`;
-        return;
-    }
-    el.innerHTML = myEvents.map(ev => {
-        let dot = ev.status === 'Upcoming' ? 'bg-amber-400' : ev.status === 'Ongoing' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400';
-        return `
-        <div class="flex items-center justify-between gap-3 px-3.5 py-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#DC2626]/30 transition">
-            <div class="flex items-center gap-2.5 min-w-0">
-                <span class="w-2.5 h-2.5 rounded-full ${dot} shrink-0"></span>
-                <div class="min-w-0">
-                    <p class="font-bold text-xs text-[#0F172A] truncate">${escapeHtml(ev.title)}</p>
-                    <p class="text-[11px] text-slate-400">${escapeHtml(ev.date)} &bull; ${escapeHtml(ev.location)}</p>
+    const teamCount = 1 + (Array.isArray(partner.managerIds) ? partner.managerIds.filter(id => String(id) !== String(partner.ownerMemberId)).length : 0);
+
+    const countEventsEl = document.getElementById('eoMyEventsCountBadge');
+    if (countEventsEl) countEventsEl.textContent = myEvents.length;
+    const countTeamEl = document.getElementById('eoTeamCountBadge');
+    if (countTeamEl) countTeamEl.textContent = teamCount;
+
+    bannerEl.innerHTML = `
+        <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div class="flex items-start sm:items-center gap-5">
+                <div class="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl border-2 border-slate-700 bg-slate-900 p-1.5 shrink-0 overflow-hidden shadow-2xl">
+                    <div class="w-full h-full rounded-xl overflow-hidden">
+                        ${logoHtml}
+                    </div>
+                </div>
+                <div class="space-y-1.5 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            <i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i>Terverifikasi PB ESI Trenggalek
+                        </span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 uppercase tracking-wider">${escapeHtml(partner.type || 'Event Organizer')}</span>
+                        ${myRoleBadge}
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">${escapeHtml(partner.name)}</h1>
+                    <p class="text-xs text-slate-400 flex items-center gap-3 flex-wrap">
+                        <span><i class="fa-solid fa-location-dot text-red-500 mr-1"></i>${escapeHtml(partner.kecamatan || 'Kabupaten Trenggalek')}</span>
+                        <span>&bull;</span>
+                        <span><i class="fa-solid fa-user-tie text-amber-500 mr-1"></i>Ketua PIC: <strong>${escapeHtml(partner.picName || 'PIC')}</strong></span>
+                    </p>
+                    <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                        ${gamePills}
+                    </div>
                 </div>
             </div>
-            <button onclick="openEventDetail('${ev.id}')" class="shrink-0 px-2.5 py-1 rounded text-[11px] font-bold bg-slate-100 hover:bg-[#0F172A] hover:text-white text-slate-600 transition">
-                Lihat
-            </button>
-        </div>`;
-    }).join('');
+
+            <!-- Stats Ringkas -->
+            <div class="flex items-center gap-3 shrink-0 w-full md:w-auto justify-between sm:justify-start pt-4 md:pt-0 border-t md:border-t-0 border-slate-800">
+                <div class="bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-2.5 text-center min-w-[90px]">
+                    <div class="text-lg font-black text-white">${myEvents.length}</div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Turnamen</div>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-2.5 text-center min-w-[90px]">
+                    <div class="text-lg font-black text-emerald-400">${teamCount}</div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pengurus</div>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-2.5 text-center min-w-[90px]">
+                    <div class="text-lg font-black text-amber-400">${Number(partner.followersCount || 0)}</div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pengikut</div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
-async function handleEOApplication(e) {
-    e.preventDefault();
-    if (!loggedMember) return;
+/**
+ * Tab Switcher di Halaman Dedicated EO
+ */
+function switchEOPagesTab(tabName) {
+    activeEOTab = tabName;
 
-    const name = document.getElementById('eoFormName').value.trim();
-    const type = document.getElementById('eoFormType').value;
-    const kecamatan = document.getElementById('eoFormKecamatan').value.trim();
-    const game = document.getElementById('eoFormGame').value.trim();
-    const portfolio = document.getElementById('eoFormPortfolio').value.trim();
-    const desc = document.getElementById('eoFormDesc').value.trim();
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengirim...';
-    }
-
-    try {
-        const payload = {
-            id: 'partner_' + Date.now(),
-            name,
-            type,
-            kecamatan,
-            gameFocus: game.split(',').map(g => g.trim()).filter(Boolean),
-            games: game.split(',').map(g => g.trim()).filter(Boolean),
-            portfolio,
-            description: desc,
-            status: 'pending',
-            memberId: String(loggedMember.id),
-            picName: loggedMember.fullName || loggedMember.nickname,
-            whatsapp: loggedMember.whatsapp || '',
-            email: loggedMember.email || '',
-            createdAt: new Date().toISOString(),
-            followersCount: 0,
-            eventsCount: 0,
-        };
-
-        const res = await Api.createPartner(payload);
-        if (res && res.id) {
-            partners = await Api.getPartners();
-            showToast('Pengajuan Terkirim', 'Pengajuan EO/Komunitas Anda sedang ditinjau oleh Admin ESI Trenggalek.');
-            renderEOTab();
+    // Update Tab Buttons
+    document.querySelectorAll('.eo-sub-tab').forEach(btn => {
+        const isMatch = btn.dataset.eotab === tabName;
+        if (isMatch) {
+            btn.className = 'eo-sub-tab px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-wider bg-[#DC2626] text-white transition flex items-center gap-2 shadow-sm';
         } else {
-            showToast('Gagal', 'Gagal mengirim pengajuan. Coba lagi.', 'error');
+            btn.className = 'eo-sub-tab px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase tracking-wider bg-transparent text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-2';
         }
-    } catch (err) {
-        console.error('EO apply error:', err);
-        showToast('Error', 'Terjadi kesalahan. Periksa koneksi internet.', 'error');
-    } finally {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i><span>Kirim Pengajuan Pendaftaran</span>';
+    });
+
+    // Update Tab Content View
+    ['create-event', 'my-events', 'team'].forEach(t => {
+        const content = document.getElementById(`eo-view-tab-${t}`);
+        if (content) {
+            if (t === tabName) content.classList.remove('hidden');
+            else content.classList.add('hidden');
         }
+    });
+
+    const partner = getMemberVerifiedPartner(loggedMember);
+    if (!partner) return;
+
+    if (tabName === 'my-events') {
+        renderEOMyEventsList(partner);
+    } else if (tabName === 'team') {
+        renderEOTeamList(partner);
     }
 }
 
-async function handleEOCreateEvent(e) {
+/**
+ * Handler Submit Pembuatan Event Turnamen Baru oleh EO
+ */
+async function handleEOPublishTournamentSubmit(e) {
     e.preventDefault();
     if (!loggedMember) return;
 
-    // Find my verified partner
-    const myPartner = (Array.isArray(partners) ? partners : []).find(p =>
-        p.memberId && String(p.memberId) === String(loggedMember.id) && p.status === 'verified'
-    );
-    if (!myPartner) {
-        showToast('Akses Ditolak', 'Anda belum memiliki status EO terverifikasi.', 'error');
+    const partner = getMemberVerifiedPartner(loggedMember);
+    if (!partner) {
+        showToast('Akses Ditolak', 'Akun Anda tidak memiliki hak akses sebagai penyelenggara terverifikasi.', 'error');
         return;
     }
 
-    const title = document.getElementById('eoEventTitle').value.trim();
-    const division = document.getElementById('eoEventDivision').value;
-    const date = document.getElementById('eoEventDate').value.trim();
-    const location = document.getElementById('eoEventLocation').value.trim();
-    const prize = document.getElementById('eoEventPrize').value.trim();
-    const fee = document.getElementById('eoEventFee').value.trim();
-    const contact = document.getElementById('eoEventContact').value.trim();
-    const imageUrl = document.getElementById('eoEventImage').value.trim();
-    const description = document.getElementById('eoEventDesc').value.trim();
+    const title = document.getElementById('eoNewEventTitle').value.trim();
+    const division = document.getElementById('eoNewEventDivision').value;
+    const date = document.getElementById('eoNewEventDate').value.trim();
+    const location = document.getElementById('eoNewEventLocation').value.trim();
+    const prizePool = document.getElementById('eoNewEventPrize').value.trim();
+    const fee = document.getElementById('eoNewEventFee').value.trim();
+    const slots = parseInt(document.getElementById('eoNewEventSlots').value, 10) || 32;
+    const contact = document.getElementById('eoNewEventContact').value.trim();
+    const category = document.getElementById('eoNewEventCategory').value.trim() || 'Umum & Pelajar Kab. Trenggalek';
+    const imageUrl = document.getElementById('eoNewEventImage').value.trim();
+    const description = document.getElementById('eoNewEventDesc').value.trim();
+    const rules = document.getElementById('eoNewEventRules').value.trim();
 
-    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const submitBtn = document.getElementById('btnSubmitEONewEvent');
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mempublikasikan...';
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Menerbitkan Turnamen...';
     }
 
     try {
-        const eventPayload = {
+        const newEventPayload = {
             id: 'ev_' + Date.now(),
             title,
             division,
             date,
             location,
-            prizePool: prize || 'Lihat detail event',
-            fee: fee || 'Gratis',
+            prizePool,
+            fee,
+            slots,
             contact,
+            category,
             imageUrl: imageUrl || '',
             description,
+            rules,
             status: 'Upcoming',
-            organizer: myPartner.name,
-            partnerId: myPartner.id,
+            organizer: partner.name,
+            partnerId: partner.id,
             createdByMemberId: String(loggedMember.id),
-            createdAt: new Date().toISOString(),
-            slots: 32,
+            createdAt: new Date().toISOString()
         };
 
-        const res = await Api.createEvent(eventPayload);
+        const res = await Api.createEvent(newEventPayload);
         if (res && res.id) {
+            // Perbarui state lokal
             events = await Api.getEvents();
-            // Update partner event count
-            await Api.updatePartner(myPartner.id, { eventsCount: (Number(myPartner.eventsCount) || 0) + 1 });
+            
+            // Tambahkan counter eventsCount di partner
+            const updatedCount = (Number(partner.eventsCount) || 0) + 1;
+            partner.eventsCount = updatedCount;
+            await Api.updatePartner(partner.id, { eventsCount: updatedCount });
             partners = await Api.getPartners();
 
-            showToast('Event Dipublikasikan!', `"${title}" berhasil ditambahkan ke Jadwal Event.`);
+            showToast('Turnamen Berhasil Dipublikasikan!', `"${title}" telah resmi terbit dan dapat dilihat di halaman Jadwal Event.`, 'success');
+            
+            // Reset form dan pindah ke tab daftar event
             e.target.reset();
-            renderEOMyEvents(myPartner);
+            renderEventsView();
+            renderEOPageBanner(partner);
+            switchEOPagesTab('my-events');
         } else {
-            showToast('Gagal', 'Gagal mempublikasikan event. Coba lagi.', 'error');
+            showToast('Gagal Menerbitkan', 'Terjadi kendala saat menyimpan data turnamen.', 'error');
         }
     } catch (err) {
-        console.error('EO create event error:', err);
-        showToast('Error', 'Terjadi kesalahan saat mempublikasikan event.', 'error');
+        console.error('EO publish event error:', err);
+        showToast('Error', 'Gagal mempublikasikan turnamen. Periksa koneksi internet.', 'error');
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fa-solid fa-calendar-plus"></i><span>Publikasikan Event Sekarang</span>';
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i><span>Publikasikan Turnamen Sekarang</span>';
         }
+    }
+}
+
+/**
+ * Render Tab 2: Daftar Event yang Dikelola oleh EO Ini
+ */
+function renderEOMyEventsList(partner) {
+    const container = document.getElementById('eoPageEventsListContainer');
+    if (!container) return;
+
+    const myEvents = (Array.isArray(events) ? events : []).filter(ev =>
+        (ev.partnerId && String(ev.partnerId) === String(partner.id)) ||
+        ((ev.organizer || '').toLowerCase() === (partner.name || '').toLowerCase())
+    );
+
+    const countEventsEl = document.getElementById('eoMyEventsCountBadge');
+    if (countEventsEl) countEventsEl.textContent = myEvents.length;
+
+    if (!myEvents.length) {
+        container.innerHTML = `
+            <div class="text-center py-12 px-4 rounded-2xl bg-[#1E293B] border border-slate-700/80">
+                <i class="fa-solid fa-calendar-xmark text-3xl text-slate-500 mb-3 block"></i>
+                <h4 class="font-bold text-white text-base">Belum Ada Turnamen yang Dibuat</h4>
+                <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">Publikasikan turnamen resmi pertama komunitas Anda untuk menjaring tim-tim terbaik di Kabupaten Trenggalek.</p>
+                <button onclick="switchEOPagesTab('create-event')" class="mt-4 px-4 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-extrabold uppercase tracking-wider transition">
+                    + Buat Turnamen Sekarang
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = myEvents.map(ev => {
+        let statusBadge = '';
+        if (ev.status === 'Upcoming') {
+            statusBadge = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30"><span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Upcoming</span>';
+        } else if (ev.status === 'Ongoing') {
+            statusBadge = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Sedang Berlangsung</span>';
+        } else {
+            statusBadge = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">Selesai</span>';
+        }
+
+        const regs = (typeof Api !== 'undefined' && typeof Api.getLocalTournamentRegistrations === 'function')
+            ? Api.getLocalTournamentRegistrations(ev.id)
+            : [];
+        const regCount = regs ? regs.length : 0;
+        const slots = ev.slots || 32;
+
+        return `
+            <div class="bg-[#1E293B] border border-slate-700/80 rounded-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 hover:border-slate-600 transition shadow-lg">
+                <div class="space-y-2 min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-2.5 py-0.5 rounded-lg bg-red-600 text-white text-[11px] font-black uppercase tracking-wider">${escapeHtml(ev.division)}</span>
+                        ${statusBadge}
+                        <span class="text-xs font-mono text-slate-400"><i class="fa-solid fa-users text-slate-500 mr-1"></i>${regCount} / ${slots} Tim Terdaftar</span>
+                    </div>
+                    <h4 class="text-lg font-black text-white leading-snug">${escapeHtml(ev.title)}</h4>
+                    <div class="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                        <span><i class="fa-regular fa-calendar text-red-400 mr-1.5"></i>${escapeHtml(ev.date)}</span>
+                        <span><i class="fa-solid fa-location-dot text-amber-400 mr-1.5"></i>${escapeHtml(ev.location)}</span>
+                        <span><i class="fa-solid fa-trophy text-yellow-400 mr-1.5"></i>${escapeHtml(ev.prizePool || 'Piala & Hadiah')}</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-700">
+                    <button onclick="openEventDetail('${ev.id}')"
+                        class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        <span>Lihat Publik</span>
+                    </button>
+                    <button onclick="exportTournamentTeamsExcel('${ev.id}')"
+                        class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold uppercase tracking-wider transition flex items-center gap-1.5 shadow-sm shadow-emerald-950/40"
+                        title="Unduh data tim pendaftar turnamen ke file Excel">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Ekspor Excel (${regCount})</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Render Tab 3: Tim Pengurus & Invite Anggota Baru (Multi-Admin EO)
+ */
+function renderEOTeamList(partner) {
+    const listContainer = document.getElementById('eoPageTeamListContainer');
+    const selectEl = document.getElementById('eoInviteMemberSelect');
+    if (!listContainer) return;
+
+    const ownerId = partner.ownerMemberId || partner.memberId;
+    const managerIds = Array.isArray(partner.managerIds) ? partner.managerIds.map(String) : [];
+    
+    // Pastikan ownerId masuk ke managerIds
+    if (ownerId && !managerIds.includes(String(ownerId))) {
+        managerIds.unshift(String(ownerId));
+    }
+
+    const countTeamEl = document.getElementById('eoTeamCountBadge');
+    if (countTeamEl) countTeamEl.textContent = managerIds.length;
+
+    // 1. Populate Dropdown Atlet Terdaftar untuk Diundang (kecuali yang sudah masuk tim)
+    if (selectEl) {
+        const availableAthletes = (Array.isArray(athletes) ? athletes : [])
+            .filter(a => !managerIds.includes(String(a.id)))
+            .sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+
+        selectEl.innerHTML = `
+            <option value="">-- Pilih Atlet / Member Terdaftar (${availableAthletes.length} Atlet Tersedia) --</option>
+            ${availableAthletes.map(a => {
+                const regNo = getAthleteRegNo(a);
+                return `<option value="${a.id}">${escapeHtml(a.fullName)} (${escapeHtml(a.nickname)}) - No. Reg: ${regNo} - Divisi: ${escapeHtml(a.division)}</option>`;
+            }).join('')}
+        `;
+    }
+
+    // 2. Render Daftar Pengurus yang Aktif
+    const isCurrentUserOwner = ownerId && String(ownerId) === String(loggedMember.id);
+
+    listContainer.innerHTML = managerIds.map(mId => {
+        const athlete = (Array.isArray(athletes) ? athletes : []).find(a => String(a.id) === String(mId));
+        const isOwner = ownerId && String(ownerId) === String(mId);
+        const name = athlete ? (athlete.fullName || athlete.nickname) : (isOwner ? (partner.picName || 'Ketua EO') : `Member #${mId}`);
+        const nickname = athlete ? athlete.nickname : '-';
+        const division = athlete ? athlete.division : (partner.gameFocus ? partner.gameFocus[0] : 'Esports');
+        const regNo = athlete ? getAthleteRegNo(athlete) : 'ESI-TRG';
+
+        const roleBadge = isOwner
+            ? `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30"><i class="fa-solid fa-crown mr-1"></i>Pemilik / Ketua EO</span>`
+            : `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/30"><i class="fa-solid fa-user-shield mr-1"></i>Tim Panitia / Co-Organizer</span>`;
+
+        // Tombol hapus akses (hanya bisa dilakukan oleh Owner terhadap panitia lain)
+        let deleteBtn = '';
+        if (isCurrentUserOwner && !isOwner) {
+            deleteBtn = `
+                <button onclick="removeEOManager('${partner.id}', '${mId}')"
+                    class="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 text-xs font-bold transition flex items-center gap-1.5"
+                    title="Cabut akses pengurus dari member ini">
+                    <i class="fa-solid fa-user-minus"></i>
+                    <span>Cabut Akses</span>
+                </button>
+            `;
+        }
+
+        return `
+            <div class="bg-[#0F172A] border border-slate-700/80 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-black text-slate-300 text-sm shrink-0">
+                        ${name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h5 class="text-sm font-extrabold text-white truncate">${escapeHtml(name)}</h5>
+                            ${roleBadge}
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Nickname: <strong class="text-red-400">${escapeHtml(nickname)}</strong> &bull; Divisi: <strong class="text-slate-300">${escapeHtml(division)}</strong> &bull; No. KTA: <span class="font-mono text-slate-400">${regNo}</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="shrink-0 self-end sm:self-center">
+                    ${deleteBtn}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Handler Invite Member Menjadi Pengurus EO
+ */
+async function handleEOInviteMemberSubmit(e) {
+    e.preventDefault();
+    if (!loggedMember) return;
+
+    const partner = getMemberVerifiedPartner(loggedMember);
+    if (!partner) return;
+
+    const selectEl = document.getElementById('eoInviteMemberSelect');
+    const memberIdToInvite = selectEl ? selectEl.value : null;
+
+    if (!memberIdToInvite) {
+        showToast('Pilih Member', 'Silakan pilih atlet/member yang ingin diundang.', 'warning');
+        return;
+    }
+
+    const invitedAthlete = (Array.isArray(athletes) ? athletes : []).find(a => String(a.id) === String(memberIdToInvite));
+    const athleteName = invitedAthlete ? (invitedAthlete.fullName || invitedAthlete.nickname) : `Member #${memberIdToInvite}`;
+
+    const submitBtn = document.getElementById('btnSubmitEOInvite');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Menambahkan...';
+    }
+
+    try {
+        const currentManagers = Array.isArray(partner.managerIds) ? partner.managerIds.map(String) : [];
+        if (!currentManagers.includes(String(memberIdToInvite))) {
+            currentManagers.push(String(memberIdToInvite));
+        }
+
+        partner.managerIds = currentManagers;
+        await Api.updatePartner(partner.id, { managerIds: currentManagers });
+        partners = await Api.getPartners();
+
+        showToast('Akses Berhasil Diberikan!', `${athleteName} kini resmi menjadi tim panitia/pengurus ${partner.name}.`, 'success');
+        renderEOTeamList(partner);
+        renderEOPageBanner(partner);
+    } catch (err) {
+        console.error('EO invite member error:', err);
+        showToast('Error', 'Gagal menambahkan anggota. Periksa koneksi internet.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Beri Akses Pengurus EO</span>';
+        }
+    }
+}
+
+/**
+ * Handler Cabut Akses Pengurus EO (Khusus Owner)
+ */
+async function removeEOManager(partnerId, memberId) {
+    if (!confirm('Cabut akses pengurus EO dari member ini? Member tersebut tidak akan dapat lagi mengelola turnamen organisasi Anda.')) return;
+
+    const partner = (Array.isArray(partners) ? partners : []).find(p => String(p.id) === String(partnerId));
+    if (!partner) return;
+
+    try {
+        partner.managerIds = (Array.isArray(partner.managerIds) ? partner.managerIds : []).filter(id => String(id) !== String(memberId));
+        await Api.updatePartner(partner.id, { managerIds: partner.managerIds });
+        partners = await Api.getPartners();
+
+        showToast('Akses Dicabut', 'Akses pengurus berhasil dinonaktifkan.', 'success');
+        renderEOTeamList(partner);
+        renderEOPageBanner(partner);
+    } catch (err) {
+        console.error('Remove manager error:', err);
+        showToast('Error', 'Gagal mencabut akses pengurus.', 'error');
     }
 }
