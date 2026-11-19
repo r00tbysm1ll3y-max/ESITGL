@@ -4117,6 +4117,7 @@ async function renderAdminPartners() {
                         <span class="font-extrabold text-sm text-[#0F172A] truncate">${p.name}</span>
                         ${statusBadge}
                         <span class="text-[10px] px-2 py-0.2 rounded bg-slate-100 text-slate-500 font-bold">${p.type || 'Komunitas'}</span>
+                        ${p.memberId ? `<span class="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold inline-flex items-center gap-1"><i class="fa-solid fa-user-check text-[9px]"></i> Akun Member: ${escapeHtml(p.picName || 'Member')}</span>` : ''}
                     </div>
                     <div class="text-xs text-slate-500 flex flex-wrap items-center gap-2.5 mt-1">
                         <span><i class="fa-solid fa-user-tie mr-1 text-slate-400"></i>${p.picName || 'PIC'}</span>
@@ -4174,6 +4175,10 @@ async function verifyPartnerAdmin(partnerId, newStatus) {
 
     renderAdminPartners();
     renderPartnersView();
+    if (typeof loggedMember !== 'undefined' && loggedMember && p.memberId && String(p.memberId) === String(loggedMember.id)) {
+        if (typeof renderEOTab === 'function') renderEOTab();
+        if (typeof renderMemberView === 'function') renderMemberView();
+    }
 
     try {
         await Api.verifyPartner(partnerId, newStatus, adminUser.name);
@@ -6523,7 +6528,13 @@ function renderMemberView() {
     const elName = document.getElementById('memberGreetingName');
     const elSub = document.getElementById('memberGreetingSub');
     if (elName) elName.textContent = loggedMember.fullName || 'Atlet ESI Trenggalek';
-    if (elSub) elSub.innerHTML = `Divisi: <strong class="text-white">${loggedMember.division}</strong> • Nickname: <strong class="text-red-400">${loggedMember.nickname}</strong> • Tim: <strong class="text-white">${loggedMember.teamName || 'Individu'}</strong>`;
+    if (elSub) {
+        elSub.innerHTML = `Divisi: <strong class="text-white">${loggedMember.division}</strong> • Nickname: <strong class="text-red-400">${loggedMember.nickname}</strong> • Tim: <strong class="text-white">${loggedMember.teamName || 'Individu'}</strong>`;
+        const myVerifiedPartner = (Array.isArray(partners) ? partners : []).find(p => p.memberId && String(p.memberId) === String(loggedMember.id) && p.status === 'verified');
+        if (myVerifiedPartner) {
+            elSub.innerHTML += ` • <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"><i class="fa-solid fa-circle-check"></i> Mitra EO: ${escapeHtml(myVerifiedPartner.name)}</span>`;
+        }
+    }
 
     // 1b. Render Avatar di banner & edit tab
     updateAllAvatarUI(loggedMember.avatarUrl || '');
@@ -6831,6 +6842,10 @@ function switchMemberTab(tabName) {
     document.querySelectorAll('.member-tab-content').forEach(c => c.classList.add('hidden'));
     const target = document.getElementById(`member-tab-${tabName}`);
     if (target) target.classList.remove('hidden');
+
+    if (tabName === 'eo') {
+        renderEOTab();
+    }
 }
 
 async function handleUpdateMemberProfile(e) {
@@ -9518,4 +9533,252 @@ function exportTournamentTeamsExcel(eventId) {
 // Alias backward compatibility
 function exportTournamentTeamsCsv(eventId) {
     exportTournamentTeamsExcel(eventId);
+}
+
+
+
+// ==================== EO (EVENT ORGANIZER) PANEL ====================
+
+async function renderEOTab() {
+    const statusBanner = document.getElementById('eoPanelStatusBanner');
+    const applyForm = document.getElementById('eoPanelApplyForm');
+    const dashboard = document.getElementById('eoPanelDashboard');
+    if (!statusBanner || !applyForm || !dashboard) return;
+
+    // Load fresh partners
+    try {
+        if (!partners || !partners.length) partners = await Api.getPartners();
+    } catch (e) { partners = []; }
+
+    // Find partner linked to this member
+    const myPartner = (Array.isArray(partners) ? partners : []).find(p =>
+        p.memberId && String(p.memberId) === String(loggedMember.id)
+    );
+
+    if (!myPartner) {
+        // No application yet — show form
+        applyForm.classList.remove('hidden');
+        dashboard.classList.add('hidden');
+        statusBanner.innerHTML = '';
+    } else if (myPartner.status === 'pending') {
+        // Applied but waiting
+        applyForm.classList.add('hidden');
+        dashboard.classList.add('hidden');
+        statusBanner.innerHTML = `
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                <i class="fa-solid fa-clock text-amber-500 text-lg mt-0.5"></i>
+                <div>
+                    <p class="font-extrabold text-sm text-amber-800">Pengajuan Sedang Ditinjau</p>
+                    <p class="text-xs text-amber-700 mt-0.5">Pengajuan EO <strong>${escapeHtml(myPartner.name)}</strong> Anda sedang diproses oleh Admin ESI Trenggalek. Harap tunggu notifikasi persetujuan.</p>
+                </div>
+            </div>`;
+    } else if (myPartner.status === 'rejected') {
+        // Rejected — show form again with note
+        applyForm.classList.remove('hidden');
+        dashboard.classList.add('hidden');
+        statusBanner.innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 mb-2">
+                <i class="fa-solid fa-circle-xmark text-red-500 text-lg mt-0.5"></i>
+                <div>
+                    <p class="font-extrabold text-sm text-red-800">Pengajuan Ditolak</p>
+                    <p class="text-xs text-red-700 mt-0.5">Pengajuan <strong>${escapeHtml(myPartner.name)}</strong> ditolak. ${myPartner.adminNote ? 'Catatan admin: ' + escapeHtml(myPartner.adminNote) : 'Silakan ajukan ulang dengan melengkapi informasi.'}</p>
+                </div>
+            </div>`;
+    } else if (myPartner.status === 'verified') {
+        // APPROVED — show EO dashboard
+        applyForm.classList.add('hidden');
+        dashboard.classList.remove('hidden');
+        statusBanner.innerHTML = `
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-emerald-500 text-xl"></i>
+                <div>
+                    <p class="font-extrabold text-sm text-emerald-800">Status: Partner Terverifikasi ESI Trenggalek</p>
+                    <p class="text-xs text-emerald-700 mt-0.5">Anda memiliki akses penuh untuk mempublikasikan event turnamen atas nama <strong>${escapeHtml(myPartner.name)}</strong>.</p>
+                </div>
+            </div>`;
+        renderEODashboardCard(myPartner);
+        renderEOMyEvents(myPartner);
+    }
+}
+
+function renderEODashboardCard(partner) {
+    const el = document.getElementById('eoDashboardCard');
+    if (!el) return;
+    const games = Array.isArray(partner.gameFocus) ? partner.gameFocus : (Array.isArray(partner.games) ? partner.games : []);
+    el.innerHTML = `
+        <div class="bg-gradient-to-r from-[#0F172A] to-slate-800 rounded-xl p-4 border border-emerald-500/30 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center shrink-0 text-2xl font-black text-emerald-400">
+                ${(partner.name || 'EO').substring(0,2).toUpperCase()}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-0.5">
+                    <span class="font-extrabold text-white text-base">${escapeHtml(partner.name)}</span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <i class="fa-solid fa-circle-check"></i> Terverifikasi
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400">${escapeHtml(partner.type || 'Mitra ESI')} &bull; ${escapeHtml(partner.kecamatan || 'Trenggalek')}</p>
+                <div class="flex flex-wrap gap-1 mt-1.5">
+                    ${games.slice(0,3).map(g => `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-700 text-slate-300">${escapeHtml(g)}</span>`).join('')}
+                </div>
+            </div>
+        </div>`;
+}
+
+function renderEOMyEvents(partner) {
+    const el = document.getElementById('eoMyEventsList');
+    if (!el) return;
+    const myEvents = (Array.isArray(events) ? events : []).filter(ev =>
+        (ev.partnerId && ev.partnerId === partner.id) ||
+        ((ev.organizer || '').toLowerCase() === (partner.name || '').toLowerCase())
+    );
+    if (!myEvents.length) {
+        el.innerHTML = `<p class="text-center py-4 text-slate-400 text-xs">Belum ada event yang dipublikasikan.</p>`;
+        return;
+    }
+    el.innerHTML = myEvents.map(ev => {
+        let dot = ev.status === 'Upcoming' ? 'bg-amber-400' : ev.status === 'Ongoing' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400';
+        return `
+        <div class="flex items-center justify-between gap-3 px-3.5 py-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#DC2626]/30 transition">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full ${dot} shrink-0"></span>
+                <div class="min-w-0">
+                    <p class="font-bold text-xs text-[#0F172A] truncate">${escapeHtml(ev.title)}</p>
+                    <p class="text-[11px] text-slate-400">${escapeHtml(ev.date)} &bull; ${escapeHtml(ev.location)}</p>
+                </div>
+            </div>
+            <button onclick="openEventDetail('${ev.id}')" class="shrink-0 px-2.5 py-1 rounded text-[11px] font-bold bg-slate-100 hover:bg-[#0F172A] hover:text-white text-slate-600 transition">
+                Lihat
+            </button>
+        </div>`;
+    }).join('');
+}
+
+async function handleEOApplication(e) {
+    e.preventDefault();
+    if (!loggedMember) return;
+
+    const name = document.getElementById('eoFormName').value.trim();
+    const type = document.getElementById('eoFormType').value;
+    const kecamatan = document.getElementById('eoFormKecamatan').value.trim();
+    const game = document.getElementById('eoFormGame').value.trim();
+    const portfolio = document.getElementById('eoFormPortfolio').value.trim();
+    const desc = document.getElementById('eoFormDesc').value.trim();
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengirim...';
+    }
+
+    try {
+        const payload = {
+            id: 'partner_' + Date.now(),
+            name,
+            type,
+            kecamatan,
+            gameFocus: game.split(',').map(g => g.trim()).filter(Boolean),
+            games: game.split(',').map(g => g.trim()).filter(Boolean),
+            portfolio,
+            description: desc,
+            status: 'pending',
+            memberId: String(loggedMember.id),
+            picName: loggedMember.fullName || loggedMember.nickname,
+            whatsapp: loggedMember.whatsapp || '',
+            email: loggedMember.email || '',
+            createdAt: new Date().toISOString(),
+            followersCount: 0,
+            eventsCount: 0,
+        };
+
+        const res = await Api.createPartner(payload);
+        if (res && res.id) {
+            partners = await Api.getPartners();
+            showToast('Pengajuan Terkirim', 'Pengajuan EO/Komunitas Anda sedang ditinjau oleh Admin ESI Trenggalek.');
+            renderEOTab();
+        } else {
+            showToast('Gagal', 'Gagal mengirim pengajuan. Coba lagi.', 'error');
+        }
+    } catch (err) {
+        console.error('EO apply error:', err);
+        showToast('Error', 'Terjadi kesalahan. Periksa koneksi internet.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i><span>Kirim Pengajuan Pendaftaran</span>';
+        }
+    }
+}
+
+async function handleEOCreateEvent(e) {
+    e.preventDefault();
+    if (!loggedMember) return;
+
+    // Find my verified partner
+    const myPartner = (Array.isArray(partners) ? partners : []).find(p =>
+        p.memberId && String(p.memberId) === String(loggedMember.id) && p.status === 'verified'
+    );
+    if (!myPartner) {
+        showToast('Akses Ditolak', 'Anda belum memiliki status EO terverifikasi.', 'error');
+        return;
+    }
+
+    const title = document.getElementById('eoEventTitle').value.trim();
+    const division = document.getElementById('eoEventDivision').value;
+    const date = document.getElementById('eoEventDate').value.trim();
+    const location = document.getElementById('eoEventLocation').value.trim();
+    const prize = document.getElementById('eoEventPrize').value.trim();
+    const fee = document.getElementById('eoEventFee').value.trim();
+    const contact = document.getElementById('eoEventContact').value.trim();
+    const imageUrl = document.getElementById('eoEventImage').value.trim();
+    const description = document.getElementById('eoEventDesc').value.trim();
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mempublikasikan...';
+    }
+
+    try {
+        const eventPayload = {
+            id: 'ev_' + Date.now(),
+            title,
+            division,
+            date,
+            location,
+            prizePool: prize || 'Lihat detail event',
+            fee: fee || 'Gratis',
+            contact,
+            imageUrl: imageUrl || '',
+            description,
+            status: 'Upcoming',
+            organizer: myPartner.name,
+            partnerId: myPartner.id,
+            createdByMemberId: String(loggedMember.id),
+            createdAt: new Date().toISOString(),
+            slots: 32,
+        };
+
+        const res = await Api.createEvent(eventPayload);
+        if (res && res.id) {
+            events = await Api.getEvents();
+            // Update partner event count
+            await Api.updatePartner(myPartner.id, { eventsCount: (Number(myPartner.eventsCount) || 0) + 1 });
+            partners = await Api.getPartners();
+
+            showToast('Event Dipublikasikan!', `"${title}" berhasil ditambahkan ke Jadwal Event.`);
+            e.target.reset();
+            renderEOMyEvents(myPartner);
+        } else {
+            showToast('Gagal', 'Gagal mempublikasikan event. Coba lagi.', 'error');
+        }
+    } catch (err) {
+        console.error('EO create event error:', err);
+        showToast('Error', 'Terjadi kesalahan saat mempublikasikan event.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-calendar-plus"></i><span>Publikasikan Event Sekarang</span>';
+        }
+    }
 }
