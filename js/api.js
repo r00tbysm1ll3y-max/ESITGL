@@ -944,7 +944,93 @@ const Api = {
     },
 
     // ================================================================
-    //  6b. DISKUSI & KOMENTAR BERITA (via /api/comments)
+    //  6b. COMMUNITY & EVENT ORGANIZER PARTNER SYSTEM
+    // ================================================================
+
+    async getPartners() {
+        const data = await this._storeGet('partners');
+        if (data && data.length > 0) return data;
+        return typeof INITIAL_PARTNERS !== 'undefined' ? [...INITIAL_PARTNERS] : [];
+    },
+
+    async getPartnerById(id) {
+        const partners = await this.getPartners();
+        return partners.find(p => String(p.id) === String(id)) || null;
+    },
+
+    async createPartner(partnerData) {
+        const newPartner = {
+            id: 'partner_' + Date.now(),
+            slug: (partnerData.name || 'partner').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+            status: 'pending', // Baru daftar berstatus pending hingga diverifikasi admin ESI
+            verifiedAt: null,
+            verifiedBy: null,
+            logoUrl: partnerData.logoUrl || 'assets/images/logo-esi.png',
+            followersCount: 0,
+            eventsCount: 0,
+            rating: 5.0,
+            establishedYear: partnerData.establishedYear || new Date().getFullYear(),
+            createdAt: new Date().toISOString(),
+            ...partnerData
+        };
+        const result = await this._storePost('create', 'partners', newPartner);
+        return (result && result.item) ? result.item : newPartner;
+    },
+
+    async updatePartner(id, updateData) {
+        const result = await this._storePost('update', 'partners', { id, data: updateData });
+        return (result && result.item) ? result.item : null;
+    },
+
+    async deletePartner(id) {
+        await this._storePost('delete', 'partners', { id });
+        return { success: true };
+    },
+
+    async verifyPartner(id, status = 'verified', adminName = 'Admin ESI Trenggalek') {
+        const updateData = {
+            status,
+            verifiedAt: status === 'verified' ? new Date().toISOString() : null,
+            verifiedBy: status === 'verified' ? adminName : null
+        };
+        return await this.updatePartner(id, updateData);
+    },
+
+    async getSubscriptions(partnerId = null) {
+        const data = await this._storeGet('subscriptions');
+        const list = (data && data.length > 0) ? data : (typeof INITIAL_SUBSCRIPTIONS !== 'undefined' ? [...INITIAL_SUBSCRIPTIONS] : []);
+        if (partnerId) {
+            return list.filter(s => String(s.partnerId) === String(partnerId));
+        }
+        return list;
+    },
+
+    async subscribePartner(partnerId, subscriberData) {
+        const partner = await this.getPartnerById(partnerId);
+        const newSub = {
+            id: 'sub_' + Date.now(),
+            partnerId: String(partnerId),
+            partnerName: partner ? partner.name : '',
+            subscriberName: subscriberData.name || 'Peserta',
+            subscriberEmail: subscriberData.email || '',
+            subscriberWhatsapp: subscriberData.whatsapp || '',
+            createdAt: new Date().toISOString()
+        };
+
+        // Simpan subscription
+        await this._storePost('create', 'subscriptions', newSub);
+
+        // Update followers count pada partner
+        if (partner) {
+            const currentFollowers = Number(partner.followersCount || 0) + 1;
+            await this.updatePartner(partnerId, { followersCount: currentFollowers });
+        }
+
+        return newSub;
+    },
+
+    // ================================================================
+    //  6c. DISKUSI & KOMENTAR BERITA (via /api/comments)
     // ================================================================
 
     async getArticleComments(articleId) {

@@ -883,3 +883,189 @@ const INITIAL_DOCUMENTS = [
         fileType: "PDF"
     }
 ];
+
+// ================================================================
+// 7. DATA DUMMY AWAL KOMUNITAS & EVENT ORGANIZER (PARTNER ESI)
+// ================================================================
+
+const INITIAL_PARTNERS = [
+    {
+        id: "partner_1",
+        name: "Trenggalek Gamers Syndicate (TGS EO)",
+        slug: "trenggalek-gamers-syndicate",
+        type: "Event Organizer",
+        category: "Event Organizer",
+        status: "verified",
+        verifiedAt: "2026-08-15",
+        verifiedBy: "Pengkab ESI Trenggalek",
+        logoUrl: "assets/images/logo-esi.png",
+        picName: "Fajar Wicaksono",
+        phone: "087712345678",
+        whatsapp: "6287712345678",
+        email: "tgs.organizer@gmail.com",
+        instagram: "@tgs_esports.id",
+        city: "Trenggalek",
+        kecamatan: "Trenggalek Kota",
+        address: "Jl. Panglima Sudirman No. 45, Trenggalek",
+        gameFocus: ["MLBB", "Free Fire", "eFootball"],
+        games: ["Mobile Legends", "Free Fire", "eFootball"],
+        followersCount: 892,
+        eventsCount: 12,
+        rating: 4.9,
+        establishedYear: 2022,
+        description: "Penyelenggara turnamen esports grassroots profesional di Kabupaten Trenggalek dengan standar kompetisi resmi, equipment lengkap, caster berpengalaman, dan live streaming production.",
+        vision: "Menciptakan ekosistem turnamen yang sportif, terstandarisasi, dan menjadi jembatan atlet lokal menuju panggung nasional.",
+        portfolio: [
+            "Trenggalek MLBB Championship 2025 (64 Tim)",
+            "Piala Menak Sopal Free Fire Season 1 (48 Tim)",
+            "eFootball Ramadhan Cup 2025"
+        ],
+        createdAt: "2026-01-10T08:00:00.000Z"
+    },
+    {
+        id: "partner_2",
+        name: "Menak Sopal Esports Community",
+        slug: "menak-sopal-esports",
+        type: "Komunitas",
+        category: "Komunitas",
+        status: "verified",
+        verifiedAt: "2026-09-02",
+        verifiedBy: "Pengkab ESI Trenggalek",
+        logoUrl: "assets/images/logo-esi.png",
+        picName: "Andra Maulana",
+        phone: "081234567890",
+        whatsapp: "6281234567890",
+        email: "menaksopal.esports@gmail.com",
+        instagram: "@menaksopal_esports",
+        city: "Trenggalek",
+        kecamatan: "Trenggalek Kota",
+        address: "Kel. Sumbergedong, Kec. Trenggalek",
+        gameFocus: ["MLBB", "PUBG Mobile"],
+        games: ["Mobile Legends", "PUBG Mobile"],
+        followersCount: 540,
+        eventsCount: 6,
+        rating: 4.8,
+        establishedYear: 2023,
+        description: "Komunitas wadah silaturahmi, mabar rutin, dan pembinaan bibit atlet esports di wilayah Trenggalek Kota. Memiliki jadwal scrim dan coaching clinic berkala bersama atlet senior.",
+        vision: "Menghubungkan seluruh gamers berbakat di Trenggalek agar terwadahi dan terarah ke jalur prestasi olahraga.",
+        portfolio: [
+            "Menak Sopal MLBB Rookie League",
+            "PUBG Mobile Trenggalek Scrim Series"
+        ],
+        createdAt: "2026-02-14T10:00:00.000Z"
+    },
+    {
+        id: "partner_3",
+        name: "Trenggalek Mobile Legends Community (TMLC)",
+        slug: "trenggalek-mlbb-community",
+        type: "Komunitas",
+        category: "Komunitas",
+        status: "verified",
+        verifiedAt: "2026-09-20",
+        verifiedBy: "Pengkab ESI Trenggalek",
+        logoUrl: "assets/images/logo-esi.png",
+        picName: "Bagus Setiawan",
+        phone: "085811223344",
+        whatsapp: "6285811223344",
+        email: "tmlc.community@gmail.com",
+        instagram: "@tmlc_official",
+        city: "Trenggalek",
+        kecamatan: "Karangan",
+        address: "Jl. Raya Trenggalek - Karangan KM 3",
+        gameFocus: ["MLBB"],
+        games: ["Mobile Legends: Bang Bang"],
+        followersCount: 675,
+        eventsCount: 8,
+        rating: 4.9,
+        establishedYear: 2021,
+        description: "Basis komunitas pemain Mobile Legends terbesar di Trenggalek dengan lebih dari 800 member di grup komunikasi. Rutin menggelar turnamen mini bulanan dan gathering player.",
+        vision: "Menjadikan komunitas MLBB Trenggalek sebagai lumbung atlet yang disegani di tingkat Jawa Timur.",
+        portfolio: [
+            "TMLC Monthly Cup Season 1 - 6",
+            "Gathering & Turnamen Pelajar Karangan"
+        ],
+        createdAt: "2026-03-01T12:00:00.000Z"
+    },
+    {
+        id: "partner_4",
+        name: "South Beach Esports Organizer",
+        slug: "south-beach-esports",
+        type: "Event Organizer",
+        category: "Event Organizer",
+        status: "verified",
+        verifiedAt: "2026-10-05",
+        verifiedBy: "Pengkab ESI Trenggalek",
+        logoUrl: "assets/images/logo-esi.png",
+        picName: "Eko Wahyudi",
+        phone: "082199887766",
+        whatsapp: "6282199887766",
+        email: "southbeach.esports@gmail.com",
+        instagram: "@southbeach.esports",
+        city: "Trenggalek",
+        kecamatan: "Watulimo",
+        address: "Prigi, Kec. Watulimo, Trenggalek",
+        gameFocus: ["Free Fire", "PUBG Mobile"],
+        games: ["Free Fire", "PUBG Mobile"],
+        followersCount: 388,
+        eventsCount: 5,
+        rating: 4.7,
+        establishedYear: 2023,
+        description: "Inisiatif penggerak ekosistem esports pesisir selatan Trenggalek (Watulimo, Prigi, Munjungan, Panggul). Membuka akses kompetisi esports berstandar resmi bagi pemuda daerah pesisir.",
+        vision: "Meratakan potensi esports dan prestasi atlet hingga ke pelosok pesisir Kabupaten Trenggalek.",
+        portfolio: [
+            "Piala Pesisir Selatan Free Fire 2025",
+            "Prigi Beach Esports Festival"
+        ],
+        createdAt: "2026-04-12T09:00:00.000Z"
+    },
+    {
+        id: "partner_5",
+        name: "Durenan Gaming Hub",
+        slug: "durenan-gaming-hub",
+        type: "Komunitas",
+        category: "Komunitas",
+        status: "pending",
+        verifiedAt: null,
+        verifiedBy: null,
+        logoUrl: "assets/images/logo-esi.png",
+        picName: "Rizky Dwi Santoso",
+        phone: "081344556677",
+        whatsapp: "6281344556677",
+        email: "durenan.gaming@gmail.com",
+        instagram: "@durenan.gaming",
+        city: "Trenggalek",
+        kecamatan: "Durenan",
+        address: "Kecamatan Durenan, Kab. Trenggalek",
+        gameFocus: ["MLBB", "Free Fire"],
+        games: ["Mobile Legends", "Free Fire"],
+        followersCount: 142,
+        eventsCount: 1,
+        rating: 4.5,
+        establishedYear: 2024,
+        description: "Komunitas pemuda penggiat gaming di kawasan Durenan dan sekitarnya. Saat ini sedang dalam tahap pengajuan verifikasi kemitraan resmi ESI Kabupaten Trenggalek.",
+        vision: "Membangun wadah positif bagi pemuda Durenan agar hobi bermain game terarah menjadi prestasi kompetitif.",
+        portfolio: [
+            "Turnamen Kemerdekaan Durenan 2025"
+        ],
+        createdAt: "2026-11-10T14:30:00.000Z"
+    }
+];
+
+const INITIAL_SUBSCRIPTIONS = [
+    {
+        id: "sub_1",
+        partnerId: "partner_1",
+        subscriberName: "Robby Ihza Amanata",
+        subscriberEmail: "robby@rawwy.ae",
+        subscriberWhatsapp: "6287840800351",
+        createdAt: "2026-11-01T10:00:00.000Z"
+    },
+    {
+        id: "sub_2",
+        partnerId: "partner_1",
+        subscriberName: "Wildan Danbii",
+        subscriberEmail: "wildan@danbii.id",
+        subscriberWhatsapp: "6281234998877",
+        createdAt: "2026-11-05T12:00:00.000Z"
+    }
+];

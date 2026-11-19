@@ -23,7 +23,7 @@ let adminActiveTab = 'atlet';
 let memberActiveTab = 'kta';
 let activeArticleId = 2;
 
-const VALID_VIEWS = ['beranda', 'daftar', 'cek-data', 'event', 'event-detail', 'daftar-event', 'klasemen', 'berita', 'baca-berita', 'profil', 'dokumen', 'admin', 'member'];
+const VALID_VIEWS = ['beranda', 'daftar', 'cek-data', 'event', 'event-detail', 'daftar-event', 'partner', 'klasemen', 'berita', 'baca-berita', 'profil', 'dokumen', 'admin', 'member'];
 
 let activeRegisterEventId = 1;
 let adminSelectedTournamentId = null;
@@ -1428,6 +1428,16 @@ function renderEventsView() {
         else statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">Selesai</span>`;
 
         const eventUrl = getEventUrl(ev.id);
+        const organizer = ev.organizer || 'ESI Trenggalek';
+        const matchedPartner = (Array.isArray(partners) ? partners : []).find(p => (ev.partnerId && p.id === ev.partnerId) || (p.name && p.name.toLowerCase() === organizer.toLowerCase()));
+        let organizerHtml = '';
+        if (matchedPartner && matchedPartner.status === 'verified') {
+            organizerHtml = `<button onclick="event.stopPropagation(); openPartnerDetailModal('${matchedPartner.id}')" class="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-800 hover:underline"><i class="fa-solid fa-circle-check text-emerald-500 text-[10px]"></i> ${escapeHtml(matchedPartner.name)}</button>`;
+        } else if (organizer.toLowerCase().includes('esi') || organizer.toLowerCase().includes('pengkab')) {
+            organizerHtml = `<span class="inline-flex items-center gap-1 font-bold text-slate-800"><i class="fa-solid fa-shield-halved text-[#DC2626] text-[10px]"></i> ${escapeHtml(organizer)} <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">Official</span></span>`;
+        } else {
+            organizerHtml = `<span class="font-medium text-slate-700">${escapeHtml(organizer)}</span>`;
+        }
 
         return `
             <div class="bg-white border border-[#E2E8F0] rounded-xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-slate-300 transition">
@@ -1440,6 +1450,7 @@ function renderEventsView() {
                     <div class="space-y-1.5 text-xs text-slate-600 mb-4">
                         <p><i class="fa-regular fa-calendar w-5 text-[#DC2626]"></i> <strong>Tanggal:</strong> ${ev.date}</p>
                         <p><i class="fa-solid fa-location-dot w-5 text-[#D97706]"></i> <strong>Lokasi:</strong> ${ev.location}</p>
+                        <p><i class="fa-solid fa-handshake-angle w-5 text-slate-400"></i> <strong>Penyelenggara:</strong> ${organizerHtml}</p>
                     </div>
                     <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">${ev.description}</p>
                 </div>
@@ -2833,6 +2844,16 @@ function renderEventDetailPage(id) {
     const cleanContact = contact.replace(/[^0-9]/g, '');
     const waContact = cleanContact.startsWith('0') ? '62' + cleanContact.slice(1) : cleanContact;
     const shareUrl = `${window.location.origin}${window.location.pathname}#event/${ev.id}`;
+    const matchedPartner = (Array.isArray(partners) ? partners : []).find(p => (ev.partnerId && p.id === ev.partnerId) || (p.name && p.name.toLowerCase() === organizer.toLowerCase()));
+    let organizerDetailHtml = '';
+    if (matchedPartner && matchedPartner.status === 'verified') {
+        organizerDetailHtml = `<span class="inline-flex items-center gap-1.5 font-bold text-slate-700"><i class="fa-solid fa-handshake-angle text-emerald-600"></i><span>Penyelenggara:</span><button onclick="openPartnerDetailModal('${matchedPartner.id}')" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-extrabold hover:underline">${escapeHtml(matchedPartner.name)}<i class="fa-solid fa-circle-check text-emerald-500 text-[11px]" title="Partner Resmi Terverifikasi ESI Trenggalek"></i></button><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">Partner Terverifikasi</span></span>`;
+    } else if (organizer.toLowerCase().includes('esi') || organizer.toLowerCase().includes('pengkab')) {
+        organizerDetailHtml = `<span class="inline-flex items-center gap-1.5 font-bold text-slate-700"><i class="fa-solid fa-shield-halved text-[#DC2626]"></i><span>Penyelenggara: <strong class="text-slate-900">${escapeHtml(organizer)}</strong></span><span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-50 text-red-700 border border-red-200">Official ESI</span></span>`;
+    } else {
+        organizerDetailHtml = `<span class="inline-flex items-center gap-1.5 font-bold text-slate-700"><i class="fa-solid fa-user-group text-slate-500"></i><span>Penyelenggara: <strong class="text-slate-900">${escapeHtml(organizer)}</strong></span></span>`;
+    }
+
 
     // Data Pendaftar Real-time
     const regs = (typeof Api !== 'undefined' && typeof Api.getLocalTournamentRegistrations === 'function')
@@ -3000,10 +3021,7 @@ function renderEventDetailPage(id) {
                     </h1>
 
                     <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-2 border-t border-slate-100">
-                        <span class="flex items-center gap-1.5 font-bold text-slate-700">
-                            <i class="fa-solid fa-shield-halved text-[#DC2626]"></i>
-                            <span>Penyelenggara: ${organizer}</span>
-                        </span>
+                        ${organizerDetailHtml}
                         <span class="text-slate-300">&bull;</span>
                         <span><i class="fa-regular fa-clock mr-1 text-slate-400"></i>Musim Kompetisi 2026</span>
                     </div>
@@ -3567,6 +3585,600 @@ async function handleAdminUploadDocument(e) {
         }
     }
 }
+
+
+// ==================== COMMUNITY & EVENT ORGANIZER PARTNER SYSTEM ====================
+
+async function renderPartnersView() {
+    const container = document.getElementById('partnerListContainer');
+    const emptyState = document.getElementById('partnerEmptyState');
+    const loadingEl = document.getElementById('partnerLoading');
+    if (!container) return;
+
+    if (loadingEl) loadingEl.classList.remove('hidden');
+    if (emptyState) emptyState.classList.add('hidden');
+
+    try {
+        if (!partners || !partners.length) {
+            partners = await Api.getPartners();
+        }
+    } catch (e) {
+        partners = [];
+    }
+
+    if (loadingEl) loadingEl.classList.add('hidden');
+
+    // Filter Logic
+    let filtered = [...partners];
+
+    if (partnerTypeFilter !== 'all') {
+        filtered = filtered.filter(p => p.type === partnerTypeFilter || p.category === partnerTypeFilter);
+    }
+
+    if (partnerStatusFilter !== 'all') {
+        filtered = filtered.filter(p => p.status === partnerStatusFilter);
+    }
+
+    if (partnerGameFilter !== 'all') {
+        filtered = filtered.filter(p => {
+            const list = Array.isArray(p.gameFocus) ? p.gameFocus : (Array.isArray(p.games) ? p.games : []);
+            const haystack = list.join(' ').toLowerCase();
+            return haystack.includes(partnerGameFilter.toLowerCase());
+        });
+    }
+
+    if (partnerSearchQuery) {
+        const q = partnerSearchQuery.toLowerCase();
+        filtered = filtered.filter(p => {
+            const haystack = [p.name, p.picName, p.city, p.kecamatan, p.description, p.type].filter(Boolean).join(' ').toLowerCase();
+            return haystack.includes(q);
+        });
+    }
+
+    if (!filtered.length) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+    }
+
+    container.innerHTML = filtered.map(p => {
+        const isVerified = p.status === 'verified';
+        const verifyBadge = isVerified
+            ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs"><i class="fa-solid fa-circle-check text-emerald-500"></i> Terverifikasi ESI</span>'
+            : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200"><i class="fa-solid fa-clock text-amber-500"></i> Dalam Peninjauan</span>';
+
+        const games = Array.isArray(p.gameFocus) ? p.gameFocus : (Array.isArray(p.games) ? p.games : []);
+        const gamePills = games.slice(0, 3).map(g => 
+            `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">${g}</span>`
+        ).join('');
+
+        const monogram = (p.name || 'PT').substring(0, 2).toUpperCase();
+        const logoHtml = p.logoUrl && !p.logoUrl.includes('logo-esi.png')
+            ? `<img src="${p.logoUrl}" alt="${p.name}" class="w-full h-full object-contain">`
+            : `<div class="w-full h-full bg-gradient-to-tr from-[#0F172A] to-slate-800 text-white font-black text-base flex items-center justify-center">${monogram}</div>`;
+
+        const followers = Number(p.followersCount || 0);
+        const eventsCount = Number(p.eventsCount || 0);
+
+        return `
+        <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-xs hover:shadow-md hover:border-[#DC2626]/30 transition-all flex flex-col justify-between group">
+            <div>
+                <!-- Top Card: Logo, Type & Status -->
+                <div class="flex items-start justify-between gap-3 mb-3.5">
+                    <div class="w-13 h-13 rounded-2xl border border-slate-200 overflow-hidden shrink-0 shadow-xs p-1 bg-white flex items-center justify-center">
+                        ${logoHtml}
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        ${verifyBadge}
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${p.type || 'Komunitas'}</span>
+                    </div>
+                </div>
+
+                <!-- Title & Location -->
+                <h3 class="font-extrabold text-base text-[#0F172A] group-hover:text-[#DC2626] transition leading-snug mb-1">
+                    ${p.name}
+                </h3>
+                <p class="text-xs text-slate-400 mb-2.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-location-dot text-slate-400 text-[11px]"></i>
+                    <span>${p.kecamatan ? p.kecamatan + ', Trenggalek' : 'Kabupaten Trenggalek'}</span>
+                </p>
+
+                <!-- Description snippet -->
+                <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3.5">
+                    ${p.description || 'Komunitas/Event Organizer resmi mitra pembinaan cabang olahraga esports PB ESI Kabupaten Trenggalek.'}
+                </p>
+
+                <!-- Game Tags -->
+                <div class="flex flex-wrap items-center gap-1 mb-4">
+                    ${gamePills}
+                </div>
+            </div>
+
+            <!-- Footer Stats & Actions -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
+                    <span title="Jumlah Pengikut"><i class="fa-solid fa-user-group text-slate-400 mr-1"></i>${followers}</span>
+                    <span title="Turnamen Diadakan"><i class="fa-solid fa-trophy text-amber-500 mr-1"></i>${eventsCount} Event</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="openPartnerSubscribeModal('${p.id}')" title="Follow & Dapatkan Notifikasi Turnamen"
+                        class="h-8.5 px-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#DC2626] text-xs font-bold transition flex items-center gap-1">
+                        <i class="fa-solid fa-bell text-xs"></i>
+                        <span class="hidden sm:inline">Follow</span>
+                    </button>
+                    <button onclick="openPartnerDetailModal('${p.id}')"
+                        class="h-8.5 px-3 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1 shadow-xs">
+                        <span>Detail</span>
+                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Filter Handlers
+function setPartnerTypeFilter(type) {
+    partnerTypeFilter = type;
+    renderPartnersView();
+}
+
+function setPartnerGameFilter(game) {
+    partnerGameFilter = game;
+    renderPartnersView();
+}
+
+function setPartnerStatusFilter(status) {
+    partnerStatusFilter = status;
+    document.querySelectorAll('.partner-status-btn').forEach(btn => {
+        btn.className = "partner-status-btn px-3 py-1 rounded-full text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition whitespace-nowrap";
+    });
+    const activeBtn = document.getElementById(`pFilterBtn_${status}`);
+    if (activeBtn) {
+        activeBtn.className = "partner-status-btn px-3 py-1 rounded-full text-xs font-bold bg-[#0F172A] text-white transition whitespace-nowrap";
+    }
+    renderPartnersView();
+}
+
+function handlePartnerSearch(val) {
+    partnerSearchQuery = (val || '').trim();
+    renderPartnersView();
+}
+
+function resetPartnerFilters() {
+    partnerTypeFilter = 'all';
+    partnerGameFilter = 'all';
+    partnerStatusFilter = 'all';
+    partnerSearchQuery = '';
+    const sInput = document.getElementById('partnerSearchInput');
+    if (sInput) sInput.value = '';
+    const tSelect = document.getElementById('partnerTypeFilter');
+    if (tSelect) tSelect.value = 'all';
+    const gSelect = document.getElementById('partnerGameFilter');
+    if (gSelect) gSelect.value = 'all';
+    setPartnerStatusFilter('all');
+}
+
+// Modals: Register Partner
+function openRegisterPartnerModal() {
+    const m = document.getElementById('modalPartnerRegister');
+    if (m) {
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+    }
+}
+
+function closeRegisterPartnerModal() {
+    const m = document.getElementById('modalPartnerRegister');
+    if (m) {
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+    }
+}
+
+async function handlePartnerRegistrationSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitPartnerReg');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1.5"></i>Mengirim...';
+    }
+
+    const name = document.getElementById('regPartnerName')?.value?.trim();
+    const type = document.getElementById('regPartnerType')?.value || 'Komunitas';
+    const establishedYear = parseInt(document.getElementById('regPartnerYear')?.value, 10) || new Date().getFullYear();
+    const picName = document.getElementById('regPartnerPic')?.value?.trim();
+    const phone = document.getElementById('regPartnerPhone')?.value?.trim();
+    const email = document.getElementById('regPartnerEmail')?.value?.trim();
+    const instagram = document.getElementById('regPartnerIg')?.value?.trim();
+    const kecamatan = document.getElementById('regPartnerKecamatan')?.value?.trim();
+    const rawGames = document.getElementById('regPartnerGames')?.value?.trim();
+    const description = document.getElementById('regPartnerDesc')?.value?.trim();
+
+    const gameFocus = rawGames ? rawGames.split(/[,/]+/).map(s => s.trim()).filter(Boolean) : ['Esports'];
+
+    const partnerPayload = {
+        name,
+        type,
+        category: type,
+        establishedYear,
+        picName,
+        phone,
+        whatsapp: phone.replace(/[^0-9]/g, ''),
+        email,
+        instagram,
+        kecamatan,
+        city: 'Trenggalek',
+        gameFocus,
+        games: gameFocus,
+        description
+    };
+
+    try {
+        const created = await Api.createPartner(partnerPayload);
+        partners = [created, ...partners];
+        renderPartnersView();
+        renderAdminPartners();
+        closeRegisterPartnerModal();
+        e.target.reset();
+        showToast('Pendaftaran Berhasil Dikirim', 'Pengajuan kemitraan Anda akan ditinjau oleh Pengurus ESI Trenggalek.', 'success');
+    } catch (err) {
+        showToast('Gagal Mendaftar', err.message || 'Terjadi kesalahan sistem.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i>Kirim Pendaftaran';
+        }
+    }
+}
+
+// Modals: Detail Partner
+async function openPartnerDetailModal(partnerId) {
+    activeDetailPartnerId = partnerId;
+    const p = partners.find(item => String(item.id) === String(partnerId)) || await Api.getPartnerById(partnerId);
+    if (!p) return;
+
+    const modal = document.getElementById('modalPartnerDetail');
+    if (!modal) return;
+
+    document.getElementById('detailPartnerName').textContent = p.name || 'Partner ESI';
+    document.getElementById('detailPartnerTypeBadge').textContent = p.type || 'Komunitas';
+
+    const isVerified = p.status === 'verified';
+    const vBadge = document.getElementById('detailPartnerVerifyBadge');
+    if (vBadge) {
+        if (isVerified) {
+            vBadge.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i> Partner Resmi Terverifikasi ESI';
+            vBadge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        } else {
+            vBadge.innerHTML = '<i class="fa-solid fa-clock text-amber-400"></i> Dalam Proses Verifikasi';
+            vBadge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40';
+        }
+    }
+
+    const locEl = document.getElementById('detailPartnerLoc');
+    if (locEl) {
+        locEl.innerHTML = `<i class="fa-solid fa-location-dot text-slate-400"></i> ${p.kecamatan ? p.kecamatan + ', Kabupaten Trenggalek' : 'Kabupaten Trenggalek'}`;
+    }
+
+    const logoEl = document.getElementById('detailPartnerLogo');
+    if (logoEl) logoEl.src = p.logoUrl || 'assets/images/logo-esi.png';
+
+    document.getElementById('detailPartnerFollowers').textContent = Number(p.followersCount || 0);
+    document.getElementById('detailPartnerEventsCount').textContent = Number(p.eventsCount || 0);
+    document.getElementById('detailPartnerYear').textContent = p.establishedYear || '-';
+    document.getElementById('detailPartnerBio').textContent = p.description || 'Tidak ada deskripsi profil.';
+    document.getElementById('detailPartnerPic').textContent = p.picName || 'Pengurus Komunitas';
+    document.getElementById('detailPartnerIg').textContent = p.instagram || '-';
+
+    // Games pills
+    const gamesCont = document.getElementById('detailPartnerGamesList');
+    if (gamesCont) {
+        const games = Array.isArray(p.gameFocus) ? p.gameFocus : (Array.isArray(p.games) ? p.games : []);
+        gamesCont.innerHTML = games.map(g => 
+            `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200"><i class="fa-solid fa-gamepad text-slate-400 mr-1"></i>${g}</span>`
+        ).join('') || '<span class="text-xs text-slate-400">Semua Game Esports</span>';
+    }
+
+    // WA Link
+    const waLink = document.getElementById('detailPartnerWaLink');
+    if (waLink) {
+        const cleanWa = (p.whatsapp || p.phone || '').replace(/[^0-9]/g, '');
+        const targetWa = cleanWa.startsWith('0') ? '62' + cleanWa.slice(1) : cleanWa;
+        waLink.href = targetWa ? `https://wa.me/${targetWa}?text=Halo%20${encodeURIComponent(p.name)},%20saya%20mengetahui%20organisasi%20Anda%20melalui%20Website%20Resmi%20ESI%20Trenggalek.` : '#';
+    }
+
+    // Events associated with this partner
+    const evListCont = document.getElementById('detailPartnerEventsList');
+    if (evListCont) {
+        const pEvents = events.filter(ev => {
+            const org = (ev.organizer || '').toLowerCase();
+            const pName = (p.name || '').toLowerCase();
+            return org.includes(pName) || pName.includes(org);
+        });
+
+        if (pEvents.length) {
+            evListCont.innerHTML = pEvents.map(ev => `
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs sm:text-sm text-[#0F172A] truncate">${ev.title}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i>${ev.date || 'Jadwal Segera'} &bull; ${ev.division || ''}</div>
+                    </div>
+                    <button onclick="closePartnerDetailModal(); openEventDetail(${ev.id});" class="shrink-0 px-3 py-1.5 rounded-lg bg-[#DC2626] text-white text-xs font-bold hover:bg-[#B91C1C] transition">
+                        Lihat
+                    </button>
+                </div>
+            `).join('');
+        } else {
+            evListCont.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <i class="fa-regular fa-calendar-xmark text-lg mb-1 block"></i>
+                Belum ada turnamen aktif dari partner ini saat ini.
+            </div>`;
+        }
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closePartnerDetailModal() {
+    const modal = document.getElementById('modalPartnerDetail');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function openPartnerDetailByName(partnerName) {
+    if (!partnerName) return;
+    const target = partners.find(p => p.name.toLowerCase() === partnerName.toLowerCase());
+    if (target) {
+        openPartnerDetailModal(target.id);
+    } else {
+        navigateTo('partner');
+    }
+}
+
+// Modals: Follow / Subscribe
+function openPartnerSubscribeModal(partnerId) {
+    const p = partners.find(item => String(item.id) === String(partnerId));
+    if (!p) return;
+
+    document.getElementById('subPartnerId').value = p.id;
+    document.getElementById('subPartnerName').textContent = p.name;
+
+    const modal = document.getElementById('modalPartnerSubscribe');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function openSubscribeModalFromDetail() {
+    if (activeDetailPartnerId) {
+        closePartnerDetailModal();
+        openPartnerSubscribeModal(activeDetailPartnerId);
+    }
+}
+
+function closePartnerSubscribeModal() {
+    const modal = document.getElementById('modalPartnerSubscribe');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+async function handlePartnerSubscribeSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmitSubscribe');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i>Menyimpan...';
+    }
+
+    const partnerId = document.getElementById('subPartnerId')?.value;
+    const name = document.getElementById('subSubscriberName')?.value?.trim();
+    const email = document.getElementById('subSubscriberEmail')?.value?.trim();
+    const whatsapp = document.getElementById('subSubscriberWa')?.value?.trim();
+
+    try {
+        await Api.subscribePartner(partnerId, { name, email, whatsapp });
+        
+        // Optimistic update followers count locally
+        const target = partners.find(p => String(p.id) === String(partnerId));
+        if (target) {
+            target.followersCount = Number(target.followersCount || 0) + 1;
+        }
+
+        renderPartnersView();
+        renderAdminPartners();
+        closePartnerSubscribeModal();
+        e.target.reset();
+
+        showToast('Berhasil Berlangganan', `Anda kini mengikuti ${target ? target.name : 'Partner'}. Notifikasi turnamen akan dikirim ke email Anda.`, 'success');
+    } catch (err) {
+        showToast('Gagal Berlangganan', err.message || 'Terjadi kesalahan sistem.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Aktifkan Notifikasi';
+        }
+    }
+}
+
+// Admin Panel: Render Partner List & Verifications
+async function renderAdminPartners() {
+    const container = document.getElementById('adminPartnerListContainer');
+    if (!container) return;
+
+    if (!partners || !partners.length) {
+        try { partners = await Api.getPartners(); } catch (e) { partners = []; }
+    }
+
+    // Update Badges & Stats
+    const total = partners.length;
+    const verified = partners.filter(p => p.status === 'verified').length;
+    const pending = partners.filter(p => p.status === 'pending').length;
+    const followers = partners.reduce((sum, p) => sum + Number(p.followersCount || 0), 0);
+
+    const countEl = document.getElementById('adminPartnerCount');
+    if (countEl) countEl.textContent = total;
+    const statTot = document.getElementById('adminPartnerStatTotal');
+    if (statTot) statTot.textContent = total;
+    const statVer = document.getElementById('adminPartnerStatVerified');
+    if (statVer) statVer.textContent = verified;
+    const statPen = document.getElementById('adminPartnerStatPending');
+    if (statPen) statPen.textContent = pending;
+    const statFol = document.getElementById('adminPartnerStatFollowers');
+    if (statFol) statFol.textContent = followers;
+
+    const navBadge = document.getElementById('adminPendingPartnerBadge');
+    if (navBadge) {
+        if (pending > 0) {
+            navBadge.textContent = pending;
+            navBadge.classList.remove('hidden');
+        } else {
+            navBadge.classList.add('hidden');
+        }
+    }
+
+    // Filter status & search
+    const statusFilter = document.getElementById('adminPartnerFilterStatus')?.value || 'all';
+    const searchQuery = (document.getElementById('adminPartnerSearch')?.value || '').trim().toLowerCase();
+
+    let filtered = [...partners];
+    if (statusFilter !== 'all') {
+        filtered = filtered.filter(p => p.status === statusFilter);
+    }
+    if (searchQuery) {
+        filtered = filtered.filter(p => {
+            const h = [p.name, p.picName, p.phone, p.email, p.kecamatan].filter(Boolean).join(' ').toLowerCase();
+            return h.includes(searchQuery);
+        });
+    }
+
+    if (!filtered.length) {
+        container.innerHTML = `<div class="text-center py-10 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <i class="fa-solid fa-handshake-slash text-2xl mb-1 block"></i>
+            Tidak ada partner yang sesuai filter.
+        </div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(p => {
+        const isVerified = p.status === 'verified';
+        const isPending = p.status === 'pending';
+
+        const statusBadge = isVerified
+            ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-circle-check text-emerald-600"></i> Terverifikasi</span>'
+            : (isPending
+                ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800"><i class="fa-solid fa-clock text-amber-600"></i> Perlu Review</span>'
+                : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800"><i class="fa-solid fa-ban text-red-600"></i> Ditolak</span>');
+
+        const monogram = (p.name || 'PT').substring(0, 2).toUpperCase();
+
+        return `
+        <div class="bg-white border border-[#E2E8F0] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-300 transition">
+            <div class="flex items-start gap-3 min-w-0">
+                <div class="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-slate-700 text-sm shrink-0">
+                    ${monogram}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span class="font-extrabold text-sm text-[#0F172A] truncate">${p.name}</span>
+                        ${statusBadge}
+                        <span class="text-[10px] px-2 py-0.2 rounded bg-slate-100 text-slate-500 font-bold">${p.type || 'Komunitas'}</span>
+                    </div>
+                    <div class="text-xs text-slate-500 flex flex-wrap items-center gap-2.5 mt-1">
+                        <span><i class="fa-solid fa-user-tie mr-1 text-slate-400"></i>${p.picName || 'PIC'}</span>
+                        <span><i class="fa-brands fa-whatsapp mr-1 text-emerald-600"></i>${p.phone || '-'}</span>
+                        <span><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>${p.kecamatan || 'Trenggalek'}</span>
+                        <span><i class="fa-solid fa-users mr-1 text-blue-500"></i>${p.followersCount || 0} Pengikut</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                ${isPending ? `
+                    <button onclick="verifyPartnerAdmin('${p.id}', 'verified')" title="Setujui & Berikan Lencana Terverifikasi"
+                        class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-xs">
+                        <i class="fa-solid fa-check"></i> Setujui
+                    </button>
+                    <button onclick="verifyPartnerAdmin('${p.id}', 'rejected')" title="Tolak Pengajuan"
+                        class="px-2.5 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition">
+                        Tolak
+                    </button>
+                ` : (isVerified ? `
+                    <button onclick="verifyPartnerAdmin('${p.id}', 'pending')" title="Cabut Status Verifikasi"
+                        class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold transition flex items-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i> Cabut
+                    </button>
+                ` : `
+                    <button onclick="verifyPartnerAdmin('${p.id}', 'verified')" title="Pulihkan Verifikasi"
+                        class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition">
+                        Verifikasi
+                    </button>
+                `)}
+                <button onclick="openPartnerDetailModal('${p.id}')" title="Lihat Profil Lengkap"
+                    class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+                <button onclick="deletePartnerAdmin('${p.id}')" title="Hapus Partner"
+                    class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-red-50 hover:text-red-600 text-slate-400 flex items-center justify-center transition">
+                    <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function verifyPartnerAdmin(partnerId, newStatus) {
+    const adminUser = Api.getCurrentAdminUser() || { name: 'Admin ESI Trenggalek' };
+    const p = partners.find(item => String(item.id) === String(partnerId));
+    if (!p) return;
+
+    // Optimistic UI
+    p.status = newStatus;
+    p.verifiedAt = newStatus === 'verified' ? new Date().toISOString() : null;
+    p.verifiedBy = newStatus === 'verified' ? adminUser.name : null;
+
+    renderAdminPartners();
+    renderPartnersView();
+
+    try {
+        await Api.verifyPartner(partnerId, newStatus, adminUser.name);
+        const msg = newStatus === 'verified' 
+            ? `${p.name} kini resmi berstatus Terverifikasi ESI Trenggalek.`
+            : `Status kemitraan ${p.name} telah diperbarui menjadi ${newStatus}.`;
+        showToast('Status Partner Diperbarui', msg, 'success');
+    } catch (e) {
+        showToast('Gagal Memperbarui', e.message || 'Terjadi kesalahan sistem.', 'error');
+        partners = await Api.getPartners();
+        renderAdminPartners();
+        renderPartnersView();
+    }
+}
+
+async function deletePartnerAdmin(partnerId) {
+    if (!confirm('Hapus partner ini dari direktori resmi? Data yang dihapus tidak dapat dipulihkan.')) return;
+    
+    partners = partners.filter(p => String(p.id) !== String(partnerId));
+    renderAdminPartners();
+    renderPartnersView();
+
+    try {
+        await Api.deletePartner(partnerId);
+        showToast('Partner Dihapus', 'Data partner berhasil dihapus dari sistem.', 'success');
+    } catch (e) {
+        showToast('Gagal Menghapus', e.message || 'Terjadi kesalahan sistem.', 'error');
+        partners = await Api.getPartners();
+        renderAdminPartners();
+        renderPartnersView();
+    }
+}
+
 
 // Controller Fitur Super Admin: Kelola Kata Sandi Pengurus
 async function renderAdminAkunPanel() {

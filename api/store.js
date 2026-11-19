@@ -17,7 +17,7 @@ const { put } = require('@vercel/blob');
 const TOKEN = process.env.BLOB_READ_WRITE_TOKEN || "vercel_blob_rw_LPwrIMxJmWXm9ltj_vCdKTxYyVZ7Dv2niukddQ1bF0v4J1s";
 const BASE_URL = "https://lpwrimxjmwxm9ltj.private.blob.vercel-storage.com";
 
-const VALID_COLLECTIONS = ['athletes', 'events', 'news', 'registrations', 'admins', 'documents'];
+const VALID_COLLECTIONS = ['athletes', 'events', 'news', 'registrations', 'admins', 'documents', 'partners', 'subscriptions'];
 
 // ---- Helpers ----
 

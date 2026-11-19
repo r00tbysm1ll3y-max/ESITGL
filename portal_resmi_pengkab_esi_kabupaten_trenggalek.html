@@ -150,6 +150,8 @@
                         class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Cek Data</button>
                     <button onclick="navigateTo('event')" data-nav="event"
                         class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Jadwal Event</button>
+                    <button onclick="navigateTo('partner')" data-nav="partner"
+                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Partner EO</button>
                     <button onclick="navigateTo('klasemen')" data-nav="klasemen"
                         class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Klasemen</button>
                     <button onclick="navigateTo('berita')" data-nav="berita"
@@ -206,6 +208,11 @@
             <button onclick="navigateTo('event'); toggleMobileDrawer();"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
                 <span><i class="fa-solid fa-trophy w-6 text-slate-300"></i> Jadwal Event</span>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+            </button>
+            <button onclick="navigateTo('partner'); toggleMobileDrawer();"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
+                <span><i class="fa-solid fa-handshake-angle w-6 text-emerald-400"></i> Partner Komunitas &amp; EO</span>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
             </button>
             <button onclick="navigateTo('klasemen'); toggleMobileDrawer();"
@@ -2219,7 +2226,140 @@
             </div>
         </section>
 
-<!-- ==================== VIEW 7: PROFIL & KONTAK ==================== -->
+<!-- ==================== VIEW: COMMUNITY & EVENT ORGANIZER PARTNER ==================== -->
+        <section id="view-partner" class="spa-view hidden">
+            <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-8 md:py-12">
+                <!-- Hero Header -->
+                <div class="relative bg-gradient-to-br from-[#0F172A] via-slate-900 to-[#1E293B] rounded-3xl p-6 sm:p-10 border border-slate-800 text-white mb-8 overflow-hidden shadow-xl">
+                    <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute top-0 right-0 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                    
+                    <div class="relative z-10 max-w-3xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-4">
+                            <i class="fa-solid fa-handshake-angle"></i> Ekosistem Resmi ESI Trenggalek
+                        </div>
+                        <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-white mb-3">
+                            Community <span class="text-[#DC2626]">&amp;</span> EO Partner System
+                        </h1>
+                        <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
+                            Wadah resmi bagi komunitas esports dan Event Organizer (EO) se-Kabupaten Trenggalek. Dapatkan verifikasi resmi PB ESI, publikasikan turnamen terpercaya, dan bangun basis peserta loyal Anda.
+                        </p>
+                        
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button onclick="openRegisterPartnerModal()"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-bold transition shadow-lg shadow-red-600/30">
+                                <i class="fa-solid fa-plus-circle"></i>
+                                <span>Daftarkan Komunitas / EO</span>
+                            </button>
+                            <a href="#partnerTrustInfo" onclick="document.getElementById('partnerTrustInfo')?.scrollIntoView({behavior:'smooth'})"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition">
+                                <i class="fa-solid fa-shield-halved text-amber-400"></i>
+                                <span>Standar Verifikasi</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3 Pilar Trust & Benefit Sistem Partner -->
+                <div id="partnerTrustInfo" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-xs flex items-start gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 text-lg">
+                            <i class="fa-solid fa-certificate"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-[#0F172A] mb-1">Verifikasi Resmi ESI</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Peserta dapat membedakan turnamen resmi dan penyelenggara tersertifikasi, bebas penipuan atau turnamen bodong.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-xs flex items-start gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 text-lg">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-[#0F172A] mb-1">Follow &amp; Notifikasi Email</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Peserta turnamen dapat mengikuti (Follow) EO favorit dan menerima email pemberitahuan setiap ada turnamen baru.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-xs flex items-start gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100 text-lg">
+                            <i class="fa-solid fa-ranking-star"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-[#0F172A] mb-1">Poin Klasemen Atlet</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed">Pemenang turnamen yang diadakan oleh Partner Resmi berhak mendapatkan sinkronisasi poin ke Klasemen Atlet ESI Trenggalek.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter & Search Bar -->
+                <div class="bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 mb-8 shadow-xs space-y-3.5">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" id="partnerSearchInput" oninput="handlePartnerSearch(this.value)"
+                                placeholder="Cari nama komunitas, EO, PIC, atau kecamatan..."
+                                class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-xs sm:text-sm text-[#0F172A] bg-slate-50/60 focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <select id="partnerTypeFilter" onchange="setPartnerTypeFilter(this.value)"
+                                class="px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-xs sm:text-sm font-bold text-[#0F172A] bg-slate-50/60 focus:outline-none">
+                                <option value="all">Semua Kategori</option>
+                                <option value="Komunitas">Komunitas Esports</option>
+                                <option value="Event Organizer">Event Organizer (EO)</option>
+                            </select>
+                            <select id="partnerGameFilter" onchange="setPartnerGameFilter(this.value)"
+                                class="px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-xs sm:text-sm font-bold text-[#0F172A] bg-slate-50/60 focus:outline-none">
+                                <option value="all">Semua Game</option>
+                                <option value="MLBB">Mobile Legends</option>
+                                <option value="Free Fire">Free Fire</option>
+                                <option value="eFootball">eFootball</option>
+                                <option value="PUBG Mobile">PUBG Mobile</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Filter Status Pills -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 text-xs">
+                        <span class="text-slate-400 font-semibold shrink-0 mr-1">Status:</span>
+                        <button onclick="setPartnerStatusFilter('all')" id="pFilterBtn_all"
+                            class="partner-status-btn px-3 py-1 rounded-full text-xs font-bold bg-[#0F172A] text-white transition whitespace-nowrap">Semua Partner</button>
+                        <button onclick="setPartnerStatusFilter('verified')" id="pFilterBtn_verified"
+                            class="partner-status-btn px-3 py-1 rounded-full text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition whitespace-nowrap">
+                            <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Terverifikasi ESI
+                        </button>
+                        <button onclick="setPartnerStatusFilter('pending')" id="pFilterBtn_pending"
+                            class="partner-status-btn px-3 py-1 rounded-full text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition whitespace-nowrap">
+                            <i class="fa-solid fa-clock text-amber-500 mr-1"></i> Proses Verifikasi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid Daftar Partner -->
+                <div id="partnerListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Diisi otomatis oleh JavaScript -->
+                </div>
+
+                <!-- Loading State -->
+                <div id="partnerLoading" class="hidden py-16 flex flex-col items-center justify-center gap-3 text-slate-400">
+                    <i class="fa-solid fa-spinner animate-spin text-3xl text-[#DC2626]"></i>
+                    <p class="text-sm font-medium">Memuat data partner &amp; komunitas...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="partnerEmptyState" class="hidden py-16 text-center bg-white rounded-3xl border border-[#E2E8F0] p-8">
+                    <div class="w-16 h-16 mx-auto mb-3 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-300 text-2xl">
+                        <i class="fa-solid fa-handshake-slash"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-700 text-base mb-1">Tidak Ada Partner Ditemukan</h3>
+                    <p class="text-xs text-slate-400 max-w-sm mx-auto mb-4">Coba sesuaikan kata kunci pencarian atau filter kategori Anda.</p>
+                    <button onclick="resetPartnerFilters()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition">
+                        Reset Filter
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 7: PROFIL & KONTAK ==================== -->
         <section id="view-profil" class="spa-view hidden">
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
                 <!-- Profil Organisasi Card -->
@@ -2418,6 +2558,11 @@
                                 <button onclick="switchAdminTab('berita')" data-admintab="berita"
                                     class="admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                                     <i class="fa-solid fa-newspaper w-4 sm:w-5"></i> <span class="hidden sm:inline">Kelola </span>Berita
+                                </button>
+                                <button id="adminTabBtnPartner" onclick="switchAdminTab('partner')" data-admintab="partner"
+                                    class="admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center justify-between gap-1.5 sm:gap-2 whitespace-nowrap">
+                                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-handshake-angle w-4 sm:w-5 text-emerald-500"></i> <span class="hidden sm:inline">Kelola </span>Partner</span>
+                                    <span id="adminPendingPartnerBadge" class="hidden px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500 text-white">0</span>
                                 </button>
                                 <button id="adminTabBtnDokumen" onclick="switchAdminTab('dokumen')" data-admintab="dokumen"
                                     class="admin-tab-btn flex-1 lg:flex-none text-left px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-700 hover:bg-[#F4F6F9] flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
@@ -3153,6 +3298,72 @@
                                         <i class="fa-solid fa-list text-slate-400"></i> Daftar Dokumen Terupload
                                     </h3>
                                     <div id="adminDocumentList" class="space-y-2"></div>
+                                </div>
+                            </div>
+
+                            <!-- TAB: KELOLA PARTNER & EVENT ORGANIZER -->
+                            <div id="admin-panel-partner"
+                                class="admin-panel hidden bg-white border border-[#E2E8F0] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm">
+                                <!-- Header -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-5 border-b border-[#E2E8F0]">
+                                    <div>
+                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider mb-1">
+                                            <i class="fa-solid fa-shield-halved"></i> Verifikasi Kemitraan
+                                        </div>
+                                        <h2 class="font-extrabold text-base sm:text-lg text-[#0F172A]">Kelola Partner Komunitas &amp; EO</h2>
+                                        <p class="text-xs text-slate-500 mt-0.5">Tinjau pendaftaran baru, kelola status verifikasi resmi, dan pantau pengikut partner.</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
+                                            <i class="fa-solid fa-handshake-angle text-emerald-600"></i>
+                                            <span id="adminPartnerCount">0</span> Partner
+                                        </span>
+                                        <button onclick="openRegisterPartnerModal()"
+                                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs">
+                                            <i class="fa-solid fa-plus text-xs"></i> Tambah Partner
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Filter & Stats Bar -->
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                                    <div class="bg-slate-50 border border-[#E2E8F0] rounded-xl p-3 text-center">
+                                        <div class="text-[10px] font-bold uppercase text-slate-400">Total Terdaftar</div>
+                                        <div class="text-lg font-black text-[#0F172A]" id="adminPartnerStatTotal">0</div>
+                                    </div>
+                                    <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-3 text-center">
+                                        <div class="text-[10px] font-bold uppercase text-emerald-600">Terverifikasi</div>
+                                        <div class="text-lg font-black text-emerald-700" id="adminPartnerStatVerified">0</div>
+                                    </div>
+                                    <div class="bg-amber-50/60 border border-amber-100 rounded-xl p-3 text-center">
+                                        <div class="text-[10px] font-bold uppercase text-amber-600">Perlu Review</div>
+                                        <div class="text-lg font-black text-amber-700" id="adminPartnerStatPending">0</div>
+                                    </div>
+                                    <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-3 text-center">
+                                        <div class="text-[10px] font-bold uppercase text-blue-600">Total Pengikut</div>
+                                        <div class="text-lg font-black text-blue-700" id="adminPartnerStatFollowers">0</div>
+                                    </div>
+                                </div>
+
+                                <!-- Search & Filter Controls -->
+                                <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                                    <div class="relative flex-1">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                                        <input type="text" id="adminPartnerSearch" oninput="renderAdminPartners()" placeholder="Cari partner, PIC, telepon, kota..."
+                                            class="w-full pl-8 pr-3 py-2 rounded-xl bg-[#F4F6F9] border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-slate-400">
+                                    </div>
+                                    <select id="adminPartnerFilterStatus" onchange="renderAdminPartners()"
+                                        class="px-3 py-2 rounded-xl bg-[#F4F6F9] border border-[#E2E8F0] text-xs font-bold text-[#0F172A] focus:outline-none">
+                                        <option value="all">Semua Status</option>
+                                        <option value="pending">Perlu Review (Pending)</option>
+                                        <option value="verified">Sudah Terverifikasi</option>
+                                        <option value="rejected">Ditolak</option>
+                                    </select>
+                                </div>
+
+                                <!-- Partner Admin List Container -->
+                                <div id="adminPartnerListContainer" class="space-y-3">
+                                    <!-- Diisi via JS -->
                                 </div>
                             </div>
                         </div>
@@ -3987,6 +4198,250 @@
         </div>
     </div>
 
+    
+    <!-- ==================== MODAL 1: DAFTAR PARTNER KOMUNITAS / EO ==================== -->
+    <div id="modalPartnerRegister" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-900/80 backdrop-blur-xs overflow-y-auto">
+        <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-xl my-8 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <!-- Modal Header -->
+            <div class="bg-[#0F172A] text-white px-5 py-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-sm">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm sm:text-base">Daftar Partner Komunitas &amp; EO</h3>
+                        <p class="text-[11px] text-slate-400">Pengajuan kemitraan resmi ESI Kabupaten Trenggalek</p>
+                    </div>
+                </div>
+                <button onclick="closeRegisterPartnerModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="formPartnerRegister" onsubmit="handlePartnerRegistrationSubmit(event)" class="overflow-y-auto p-5 sm:p-6 space-y-4 flex-1">
+                <div class="bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-3.5 text-xs text-emerald-900 leading-relaxed flex items-start gap-2.5">
+                    <i class="fa-solid fa-shield-halved text-emerald-600 mt-0.5 text-sm shrink-0"></i>
+                    <span>Setelah diajukan, tim pengurus ESI Trenggalek akan memvalidasi data dan menghubungi PIC untuk pemberian <strong>Lencana Terverifikasi Resmi</strong>.</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Organisasi / Komunitas / EO <span class="text-red-500">*</span></label>
+                        <input type="text" id="regPartnerName" required placeholder="Contoh: Trenggalek Gamers Syndicate"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tipe Entitas <span class="text-red-500">*</span></label>
+                        <select id="regPartnerType" required
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                            <option value="Event Organizer">Event Organizer (EO)</option>
+                            <option value="Komunitas">Komunitas Esports</option>
+                            <option value="Akademi / Klub">Akademi / Tim Amatir</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Berdiri</label>
+                        <input type="number" id="regPartnerYear" placeholder="Contoh: 2023" min="2015" max="2030"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Ketua / PIC <span class="text-red-500">*</span></label>
+                        <input type="text" id="regPartnerPic" required placeholder="Nama lengkap penanggung jawab"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">WhatsApp PIC <span class="text-red-500">*</span></label>
+                        <input type="tel" id="regPartnerPhone" required placeholder="Contoh: 087712345678"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Email Resmi</label>
+                        <input type="email" id="regPartnerEmail" placeholder="organisasi@gmail.com"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Instagram / Medsos</label>
+                        <input type="text" id="regPartnerIg" placeholder="@nama_akun"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Domisili Kecamatan di Trenggalek</label>
+                        <input type="text" id="regPartnerKecamatan" placeholder="Contoh: Trenggalek Kota, Karangan, Watulimo"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Fokus Divisi Game</label>
+                        <input type="text" id="regPartnerGames" placeholder="Contoh: MLBB, Free Fire, eFootball"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Profil &amp; Deskripsi Singkat <span class="text-red-500">*</span></label>
+                        <textarea id="regPartnerDesc" rows="3" required placeholder="Ceritakan latar belakang organisasi, visi, dan aktivitas rutin..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626] resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- Footer Submit -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeRegisterPartnerModal()"
+                        class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="btnSubmitPartnerReg"
+                        class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-bold transition shadow-sm">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>Kirim Pendaftaran</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 2: DETAIL PROFIL PARTNER ==================== -->
+    <div id="modalPartnerDetail" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-900/80 backdrop-blur-xs overflow-y-auto">
+        <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-2xl my-8 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <!-- Header Cover Banner -->
+            <div class="relative bg-gradient-to-r from-[#0F172A] to-slate-800 text-white p-6 sm:p-7 shrink-0">
+                <button onclick="closePartnerDetailModal()" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+                
+                <div class="flex items-start gap-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white p-1.5 shadow-md shrink-0 flex items-center justify-center overflow-hidden border border-slate-200">
+                        <img id="detailPartnerLogo" src="assets/images/logo-esi.png" alt="Logo Partner" class="w-full h-full object-contain">
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                            <span id="detailPartnerTypeBadge" class="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-slate-700 text-slate-200"></span>
+                            <span id="detailPartnerVerifyBadge" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"></span>
+                        </div>
+                        <h2 id="detailPartnerName" class="text-lg sm:text-2xl font-black text-white leading-tight"></h2>
+                        <p id="detailPartnerLoc" class="text-xs text-slate-300 mt-1 flex items-center gap-1.5"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body Details -->
+            <div class="overflow-y-auto p-5 sm:p-6 space-y-5 flex-1">
+                <!-- Stats Row -->
+                <div class="grid grid-cols-3 gap-3 bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 text-center">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase text-slate-400">Pengikut</div>
+                        <div id="detailPartnerFollowers" class="text-base sm:text-lg font-black text-[#0F172A]">0</div>
+                    </div>
+                    <div class="border-x border-slate-200">
+                        <div class="text-[10px] font-bold uppercase text-slate-400">Event Diadakan</div>
+                        <div id="detailPartnerEventsCount" class="text-base sm:text-lg font-black text-[#0F172A]">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold uppercase text-slate-400">Tahun Berdiri</div>
+                        <div id="detailPartnerYear" class="text-base sm:text-lg font-black text-[#0F172A]">-</div>
+                    </div>
+                </div>
+
+                <!-- Bio -->
+                <div>
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-align-left text-[#DC2626]"></i> Tentang Organisasi
+                    </h4>
+                    <p id="detailPartnerBio" class="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line"></p>
+                </div>
+
+                <!-- Divisi Games -->
+                <div>
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-gamepad text-[#D97706]"></i> Divisi Game Utama
+                    </h4>
+                    <div id="detailPartnerGamesList" class="flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <!-- PIC & Kontak Langsung -->
+                <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2.5">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-address-card text-blue-600"></i> Kontak Resmi &amp; Penanggung Jawab
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div class="text-slate-600">PIC: <span id="detailPartnerPic" class="font-bold text-[#0F172A]"></span></div>
+                        <div class="text-slate-600">Medsos: <span id="detailPartnerIg" class="font-bold text-purple-600"></span></div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                        <a id="detailPartnerWaLink" href="#" target="_blank" rel="noopener"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs">
+                            <i class="fa-brands fa-whatsapp text-sm"></i> Hubungi WhatsApp
+                        </a>
+                        <button id="detailPartnerSubscribeBtn" onclick="openSubscribeModalFromDetail()"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold transition shadow-xs">
+                            <i class="fa-solid fa-bell text-xs"></i> Follow &amp; Notifikasi Turnamen
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Daftar Event Terkait -->
+                <div>
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-700 mb-2.5 flex items-center gap-1.5">
+                        <i class="fa-solid fa-trophy text-[#DC2626]"></i> Agenda &amp; Turnamen dari Partner Ini
+                    </h4>
+                    <div id="detailPartnerEventsList" class="space-y-2.5"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL 3: SUBSCRIBE / FOLLOW NOTIFIKASI ==================== -->
+    <div id="modalPartnerSubscribe" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-900/80 backdrop-blur-xs">
+        <div class="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div class="bg-[#0F172A] text-white px-5 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-red-600/20 text-[#DC2626] border border-red-600/30 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm sm:text-base">Follow &amp; Notifikasi Turnamen</h3>
+                        <p class="text-[11px] text-slate-400">Dapatkan update turnamen baru langsung</p>
+                    </div>
+                </div>
+                <button onclick="closePartnerSubscribeModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handlePartnerSubscribeSubmit(event)" class="p-5 sm:p-6 space-y-3.5">
+                <input type="hidden" id="subPartnerId">
+                <div class="text-xs text-slate-600 leading-relaxed">
+                    Anda akan menerima pemberitahuan via email atau WhatsApp setiap kali <strong id="subPartnerName" class="text-[#0F172A]"></strong> membuka pendaftaran turnamen baru di website ESI Trenggalek.
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap / Nickname <span class="text-red-500">*</span></label>
+                    <input type="text" id="subSubscriberName" required placeholder="Nama Anda"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Email <span class="text-red-500">*</span></label>
+                    <input type="email" id="subSubscriberEmail" required placeholder="email.anda@gmail.com"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp (Opsional)</label>
+                    <input type="tel" id="subSubscriberWa" placeholder="081234567890"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#DC2626]/20 focus:border-[#DC2626]">
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button" onclick="closePartnerSubscribeModal()"
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="btnSubmitSubscribe"
+                        class="px-5 py-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold transition shadow-xs">
+                        <i class="fa-solid fa-check mr-1"></i> Aktifkan Notifikasi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ==================== 7. TOAST NOTIFICATION (PENGGANTI ALERT) ==================== -->
     <div id="toastNotification"
         class="fixed top-20 right-4 z-50 hidden max-w-xs sm:max-w-sm bg-[#0F172A] text-white border-l-4 border-emerald-500 px-4 py-3 rounded-lg">
@@ -4525,11 +4980,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261118ar" defer></script>
-    <script src="js/config.js?v=20261118ar" defer></script>
-    <script src="js/supabaseClient.js?v=20261118ar" defer></script>
-    <script src="js/api.js?v=20261118ar" defer></script>
-    <script src="js/app.js?v=20261118ar" defer></script>
+    <script src="js/seedData.js?v=20261119ab" defer></script>
+    <script src="js/config.js?v=20261119ab" defer></script>
+    <script src="js/supabaseClient.js?v=20261119ab" defer></script>
+    <script src="js/api.js?v=20261119ab" defer></script>
+    <script src="js/app.js?v=20261119ab" defer></script>
 </body>
 
 </html>
