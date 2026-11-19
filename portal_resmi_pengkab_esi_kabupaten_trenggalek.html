@@ -150,8 +150,6 @@
                         class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Cek Data</button>
                     <button onclick="navigateTo('event')" data-nav="event"
                         class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Jadwal Event</button>
-                    <button onclick="navigateTo('partner')" data-nav="partner"
-                        class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Partner EO</button>
                     <button onclick="navigateTo('klasemen')" data-nav="klasemen"
                         class="nav-link px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold whitespace-nowrap transition">Klasemen</button>
                     <button onclick="navigateTo('berita')" data-nav="berita"
@@ -208,11 +206,6 @@
             <button onclick="navigateTo('event'); toggleMobileDrawer();"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
                 <span><i class="fa-solid fa-trophy w-6 text-slate-300"></i> Jadwal Event</span>
-                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
-            </button>
-            <button onclick="navigateTo('partner'); toggleMobileDrawer();"
-                class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-slate-700 flex items-center justify-between">
-                <span><i class="fa-solid fa-handshake-angle w-6 text-emerald-400"></i> Partner Komunitas &amp; EO</span>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
             </button>
             <button onclick="navigateTo('klasemen'); toggleMobileDrawer();"
@@ -1208,9 +1201,44 @@
                 <!-- Summary Stats Bar -->
                 <div id="eventSummaryBar" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7"></div>
 
+                <!-- Filter Bar Penyelenggara -->
+                <div class="flex flex-wrap items-center gap-2 mb-5">
+                    <span class="text-[11px] font-black uppercase tracking-wider text-slate-500">Penyelenggara:</span>
+                    <button onclick="setEventOrganizerFilter('all')" id="evOrgFilter-all"
+                        class="ev-org-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0F172A] text-white transition">Semua</button>
+                    <button onclick="setEventOrganizerFilter('official')" id="evOrgFilter-official"
+                        class="ev-org-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-shield-halved text-[#DC2626] mr-1"></i>ESI Official
+                    </button>
+                    <button onclick="setEventOrganizerFilter('partner')" id="evOrgFilter-partner"
+                        class="ev-org-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>Mitra Terverifikasi
+                    </button>
+                    <!-- Link ke direktori partner (tersembunyi tapi tetap accessible) -->
+                    <button onclick="navigateTo('partner')" class="ml-auto text-[11px] text-slate-400 hover:text-emerald-600 font-bold flex items-center gap-1 transition">
+                        <i class="fa-solid fa-handshake-angle"></i> Direktori Mitra
+                    </button>
+                </div>
+
                 <!-- Event Grid -->
                 <div id="eventGridContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                     <!-- Diisi otomatis via JS -->
+                </div>
+
+                <!-- CTA Banner Daftarkan EO -->
+                <div class="mt-8 rounded-2xl bg-gradient-to-r from-[#0F172A] via-slate-800 to-[#0F172A] border border-slate-700 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-handshake-angle text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-wider text-emerald-400 mb-0.5">Punya Komunitas atau EO?</p>
+                            <p class="text-sm text-slate-300 font-semibold">Daftarkan ke ESI Trenggalek &mdash; dapatkan badge resmi &amp; publikasikan turnamen Anda.</p>
+                        </div>
+                    </div>
+                    <button onclick="navigateTo('partner')" class="shrink-0 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider transition shadow-sm shadow-emerald-900/40 whitespace-nowrap">
+                        <i class="fa-solid fa-plus mr-1.5"></i>Daftarkan Sekarang
+                    </button>
                 </div>
             </div>
         </section>
@@ -4980,11 +5008,11 @@
     <!-- Hidden Avatar File Input -->
     <input type="file" id="athleteAvatarFileInput" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <script src="js/seedData.js?v=20261119ab" defer></script>
-    <script src="js/config.js?v=20261119ab" defer></script>
-    <script src="js/supabaseClient.js?v=20261119ab" defer></script>
-    <script src="js/api.js?v=20261119ab" defer></script>
-    <script src="js/app.js?v=20261119ab" defer></script>
+    <script src="js/seedData.js?v=20261119ac" defer></script>
+    <script src="js/config.js?v=20261119ac" defer></script>
+    <script src="js/supabaseClient.js?v=20261119ac" defer></script>
+    <script src="js/api.js?v=20261119ac" defer></script>
+    <script src="js/app.js?v=20261119ac" defer></script>
 </body>
 
 </html>

@@ -8,6 +8,7 @@ let athletes = [];
 let events = [];
 let news = [];
 let documents = [];
+let eventOrganizerFilter = 'all';
 let isAdminLoggedIn = false;
 let loggedMember = null;
 
@@ -1398,6 +1399,20 @@ function renderPublicAthletes() {
 }
 
 // ==================== 4. JADWAL EVENT ====================
+function setEventOrganizerFilter(type) {
+    eventOrganizerFilter = type;
+    ['all','official','partner'].forEach(function(t) {
+        var btn = document.getElementById('evOrgFilter-' + t);
+        if (!btn) return;
+        if (t === type) {
+            btn.className = 'ev-org-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0F172A] text-white transition';
+        } else {
+            btn.className = 'ev-org-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition';
+        }
+    });
+    renderEventsView();
+}
+
 function setEventStatusFilter(status) {
     eventStatusFilter = status;
     document.querySelectorAll('.ev-status-tab').forEach(btn => {
@@ -1412,7 +1427,20 @@ function setEventStatusFilter(status) {
 }
 
 function renderEventsView() {
-    const filtered = events.filter(ev => eventStatusFilter === 'Semua' ? true : ev.status === eventStatusFilter);
+    var verifiedPartnerNames = new Set((Array.isArray(partners) ? partners : []).filter(function(p) { return p.status === 'verified'; }).map(function(p) { return (p.name || '').toLowerCase(); }));
+    var filtered = events.filter(function(ev) { return eventStatusFilter === 'Semua' ? true : ev.status === eventStatusFilter; });
+    if (eventOrganizerFilter === 'official') {
+        filtered = filtered.filter(function(ev) {
+            var org = (ev.organizer || 'ESI Trenggalek').toLowerCase();
+            return org.includes('esi') || org.includes('pengkab');
+        });
+    } else if (eventOrganizerFilter === 'partner') {
+        filtered = filtered.filter(function(ev) {
+            if (ev.partnerId) return true;
+            var org = (ev.organizer || '').toLowerCase();
+            return verifiedPartnerNames.has(org);
+        });
+    }
     const container = document.getElementById('eventGridContainer');
     if (!container) return;
 
