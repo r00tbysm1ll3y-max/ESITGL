@@ -9637,19 +9637,37 @@ let activeEOTab = 'create-event';
 function getMemberPartner(member) {
     if (!member || !member.id) return null;
     const mId = String(member.id);
-    return (Array.isArray(partners) ? partners : []).find(p => {
+    const myPartners = (Array.isArray(partners) ? partners : []).filter(p => {
         const isOwner = (p.ownerMemberId && String(p.ownerMemberId) === mId) || (p.memberId && String(p.memberId) === mId);
         const isManager = Array.isArray(p.managerIds) && p.managerIds.map(String).includes(mId);
         return isOwner || isManager;
-    }) || null;
+    });
+
+    if (!myPartners.length) return null;
+
+    // Prioritaskan SELALU yang berstatus 'verified' agar hak akses EO tidak pernah hilang!
+    const verified = myPartners.find(p => p.status === 'verified');
+    if (verified) return verified;
+
+    // Jika belum ada yang verified, cari yang pending
+    const pending = myPartners.find(p => p.status === 'pending');
+    if (pending) return pending;
+
+    return myPartners[0];
 }
 
 /**
  * Mencari partner/EO terverifikasi (status === 'verified') yang dapat diakses oleh member
  */
 function getMemberVerifiedPartner(member) {
-    const p = getMemberPartner(member);
-    return (p && p.status === 'verified') ? p : null;
+    if (!member || !member.id) return null;
+    const mId = String(member.id);
+    return (Array.isArray(partners) ? partners : []).find(p => {
+        if (p.status !== 'verified') return false;
+        const isOwner = (p.ownerMemberId && String(p.ownerMemberId) === mId) || (p.memberId && String(p.memberId) === mId);
+        const isManager = Array.isArray(p.managerIds) && p.managerIds.map(String).includes(mId);
+        return isOwner || isManager;
+    }) || null;
 }
 
 /**
@@ -9991,15 +10009,19 @@ async function handleEOPublishTournamentSubmit(e) {
             // Perbarui state lokal
             events = await Api.getEvents();
             
-            // Tambahkan counter eventsCount di partner
+            // Tambahkan counter eventsCount di partner, pastikan status tetap 'verified'
             const updatedCount = (Number(partner.eventsCount) || 0) + 1;
             partner.eventsCount = updatedCount;
-            await Api.updatePartner(partner.id, { eventsCount: updatedCount });
+            await Api.updatePartner(partner.id, { eventsCount: updatedCount, status: 'verified' });
             partners = await Api.getPartners();
 
-            showToast('Turnamen Berhasil Dipublikasikan!', `"${title}" telah resmi terbit dan dapat dilihat di halaman Jadwal Event.`, 'success');
+            // Sync badge dan banner agar hak EO tetap aktif selamanya tanpa perlu persetujuan ulang
+            if (typeof updateHeaderEOBadge === 'function') updateHeaderEOBadge();
+            if (typeof renderMemberEOStatusBanner === 'function') renderMemberEOStatusBanner();
+
+            showToast('Turnamen Berhasil Dipublikasikan!', `"${title}" telah resmi terbit dan dapat dilihat langsung di Jadwal Event.`, 'success');
             
-            // Reset form dan pindah ke tab daftar event
+            // Reset form dan langsung arahkan ke tab Turnamen Saya
             e.target.reset();
             renderEventsView();
             renderEOPageBanner(partner);
@@ -10102,13 +10124,12 @@ function renderEOMyEventsList(partner) {
  */
 function renderEOTeamList(partner) {
     const listContainer = document.getElementById('eoPageTeamListContainer');
-    const selectEl = document.getElementById('eoInviteMemberSelect');
     if (!listContainer) return;
 
     const ownerId = partner.ownerMemberId || partner.memberId;
     const managerIds = Array.isArray(partner.managerIds) ? partner.managerIds.map(String) : [];
     
-    // Pastikan ownerId masuk ke managerIds
+    // Pastikan ownerId selalu di posisi pertama
     if (ownerId && !managerIds.includes(String(ownerId))) {
         managerIds.unshift(String(ownerId));
     }
@@ -10116,45 +10137,31 @@ function renderEOTeamList(partner) {
     const countTeamEl = document.getElementById('eoTeamCountBadge');
     if (countTeamEl) countTeamEl.textContent = managerIds.length;
 
-    // 1. Populate Dropdown Atlet Terdaftar untuk Diundang (kecuali yang sudah masuk tim)
-    if (selectEl) {
-        const availableAthletes = (Array.isArray(athletes) ? athletes : [])
-            .filter(a => !managerIds.includes(String(a.id)))
-            .sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
-
-        selectEl.innerHTML = `
-            <option value="">-- Pilih Atlet / Member Terdaftar (${availableAthletes.length} Atlet Tersedia) --</option>
-            ${availableAthletes.map(a => {
-                const regNo = getAthleteRegNo(a);
-                return `<option value="${a.id}">${escapeHtml(a.fullName)} (${escapeHtml(a.nickname)}) - No. Reg: ${regNo} - Divisi: ${escapeHtml(a.division)}</option>`;
-            }).join('')}
-        `;
-    }
-
-    // 2. Render Daftar Pengurus yang Aktif
-    const isCurrentUserOwner = ownerId && String(ownerId) === String(loggedMember.id);
+    // Render Daftar Pengurus yang Aktif
+    const isCurrentUserOwner = ownerId && loggedMember && String(ownerId) === String(loggedMember.id);
 
     listContainer.innerHTML = managerIds.map(mId => {
         const athlete = (Array.isArray(athletes) ? athletes : []).find(a => String(a.id) === String(mId));
         const isOwner = ownerId && String(ownerId) === String(mId);
         const name = athlete ? (athlete.fullName || athlete.nickname) : (isOwner ? (partner.picName || 'Ketua EO') : `Member #${mId}`);
+        const username = athlete ? (athlete.username ? '@' + athlete.username : '@' + athlete.nickname) : '-';
         const nickname = athlete ? athlete.nickname : '-';
         const division = athlete ? athlete.division : (partner.gameFocus ? partner.gameFocus[0] : 'Esports');
         const regNo = athlete ? getAthleteRegNo(athlete) : 'ESI-TRG';
 
         const roleBadge = isOwner
-            ? `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30"><i class="fa-solid fa-crown mr-1"></i>Pemilik / Ketua EO</span>`
-            : `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/30"><i class="fa-solid fa-user-shield mr-1"></i>Tim Panitia / Co-Organizer</span>`;
+            ? `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30"><i class="fa-solid fa-crown mr-1 text-amber-400"></i>Pemilik Utama EO</span>`
+            : `<span class="px-2.5 py-1 rounded-full text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/30"><i class="fa-solid fa-user-shield mr-1 text-blue-400"></i>Panitia / Pengurus</span>`;
 
-        // Tombol hapus akses (hanya bisa dilakukan oleh Owner terhadap panitia lain)
+        // Tombol keluarkan anggota: HANYA Pemilik yang bisa mengeluarkan panitia lain
         let deleteBtn = '';
         if (isCurrentUserOwner && !isOwner) {
             deleteBtn = `
                 <button onclick="removeEOManager('${partner.id}', '${mId}')"
-                    class="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 text-xs font-bold transition flex items-center gap-1.5"
-                    title="Cabut akses pengurus dari member ini">
-                    <i class="fa-solid fa-user-minus"></i>
-                    <span>Cabut Akses</span>
+                    class="px-3.5 py-2 rounded-xl bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 active:scale-95 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                    title="Keluarkan member ini dari kepengurusan EO">
+                    <i class="fa-solid fa-user-xmark"></i>
+                    <span>Keluarkan</span>
                 </button>
             `;
         }
@@ -10168,6 +10175,7 @@ function renderEOTeamList(partner) {
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
                             <h5 class="text-sm font-extrabold text-white truncate">${escapeHtml(name)}</h5>
+                            <span class="text-xs text-emerald-400 font-mono font-semibold">${escapeHtml(username)}</span>
                             ${roleBadge}
                         </div>
                         <p class="text-xs text-slate-400 mt-0.5">
@@ -10184,25 +10192,51 @@ function renderEOTeamList(partner) {
 }
 
 /**
- * Handler Invite Member Menjadi Pengurus EO
+ * Handler Invite Member Menjadi Pengurus EO (Berdasarkan Username)
  */
 async function handleEOInviteMemberSubmit(e) {
     e.preventDefault();
     if (!loggedMember) return;
 
     const partner = getMemberVerifiedPartner(loggedMember);
-    if (!partner) return;
-
-    const selectEl = document.getElementById('eoInviteMemberSelect');
-    const memberIdToInvite = selectEl ? selectEl.value : null;
-
-    if (!memberIdToInvite) {
-        showToast('Pilih Member', 'Silakan pilih atlet/member yang ingin diundang.', 'warning');
+    if (!partner) {
+        showToast('Akses Ditolak', 'Hanya pengurus terverifikasi yang dapat mengundang anggota.', 'error');
         return;
     }
 
-    const invitedAthlete = (Array.isArray(athletes) ? athletes : []).find(a => String(a.id) === String(memberIdToInvite));
-    const athleteName = invitedAthlete ? (invitedAthlete.fullName || invitedAthlete.nickname) : `Member #${memberIdToInvite}`;
+    const inputEl = document.getElementById('eoInviteUsernameInput');
+    const query = inputEl ? inputEl.value.trim().toLowerCase().replace(/^@/, '') : '';
+
+    if (!query) {
+        showToast('Username Kosong', 'Silakan masukkan username atau nickname rekan member yang ingin diundang.', 'warning');
+        return;
+    }
+
+    // Cari member di data athletes berdasarkan username, nickname, atau id
+    const targetMember = (Array.isArray(athletes) ? athletes : []).find(a => {
+        const u = (a.username || '').toLowerCase();
+        const n = (a.nickname || '').toLowerCase();
+        const f = (a.fullName || '').toLowerCase();
+        const id = String(a.id);
+        return u === query || n === query || id === query || f === query;
+    });
+
+    if (!targetMember) {
+        showToast('Member Tidak Ditemukan', `Tidak ditemukan member dengan username/nickname "@${query}". Pastikan rekan Anda sudah mendaftar di portal ESI Trenggalek.`, 'error');
+        return;
+    }
+
+    const ownerId = partner.ownerMemberId || partner.memberId;
+    if (ownerId && String(ownerId) === String(targetMember.id)) {
+        showToast('Sudah Pemilik', `${targetMember.fullName || targetMember.nickname} adalah Pemilik Utama EO ini.`, 'info');
+        return;
+    }
+
+    const currentManagers = Array.isArray(partner.managerIds) ? partner.managerIds.map(String) : [];
+    if (currentManagers.includes(String(targetMember.id))) {
+        showToast('Sudah Menjadi Panitia', `${targetMember.fullName || targetMember.nickname} (@${targetMember.username || targetMember.nickname}) sudah terdaftar dalam kepengurusan EO Anda.`, 'info');
+        return;
+    }
 
     const submitBtn = document.getElementById('btnSubmitEOInvite');
     if (submitBtn) {
@@ -10211,16 +10245,15 @@ async function handleEOInviteMemberSubmit(e) {
     }
 
     try {
-        const currentManagers = Array.isArray(partner.managerIds) ? partner.managerIds.map(String) : [];
-        if (!currentManagers.includes(String(memberIdToInvite))) {
-            currentManagers.push(String(memberIdToInvite));
-        }
-
+        currentManagers.push(String(targetMember.id));
         partner.managerIds = currentManagers;
+        
         await Api.updatePartner(partner.id, { managerIds: currentManagers });
         partners = await Api.getPartners();
 
-        showToast('Akses Berhasil Diberikan!', `${athleteName} kini resmi menjadi tim panitia/pengurus ${partner.name}.`, 'success');
+        showToast('Berhasil Ditambahkan!', `@${targetMember.username || targetMember.nickname} (${targetMember.fullName || targetMember.nickname}) kini resmi menjadi Panitia EO ${partner.name}.`, 'success');
+        
+        if (inputEl) inputEl.value = '';
         renderEOTeamList(partner);
         renderEOPageBanner(partner);
     } catch (err) {
@@ -10229,30 +10262,50 @@ async function handleEOInviteMemberSubmit(e) {
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fa-solid fa-user-check"></i><span>Beri Akses Pengurus EO</span>';
+            submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i><span>Undang Rekan Sebagai Panitia</span>';
         }
     }
 }
 
 /**
- * Handler Cabut Akses Pengurus EO (Khusus Owner)
+ * Handler Cabut Akses / Keluarkan Pengurus EO (Hanya Pemilik yang Berhak)
  */
 async function removeEOManager(partnerId, memberId) {
-    if (!confirm('Cabut akses pengurus EO dari member ini? Member tersebut tidak akan dapat lagi mengelola turnamen organisasi Anda.')) return;
-
+    if (!loggedMember) return;
     const partner = (Array.isArray(partners) ? partners : []).find(p => String(p.id) === String(partnerId));
     if (!partner) return;
+
+    const ownerId = partner.ownerMemberId || partner.memberId;
+    const isCurrentUserOwner = ownerId && String(ownerId) === String(loggedMember.id);
+
+    if (!isCurrentUserOwner) {
+        showToast('Akses Ditolak', 'Hanya Pemilik Utama EO yang berhak mengeluarkan rekan panitia.', 'error');
+        return;
+    }
+
+    if (ownerId && String(ownerId) === String(memberId)) {
+        showToast('Tidak Dapat Dikeluarkan', 'Pemilik Utama EO tidak dapat dikeluarkan dari organisasinya sendiri.', 'warning');
+        return;
+    }
+
+    const athlete = (Array.isArray(athletes) ? athletes : []).find(a => String(a.id) === String(memberId));
+    const memberName = athlete ? (athlete.fullName || athlete.nickname) : `Member #${memberId}`;
+    const memberUser = athlete && athlete.username ? `(@${athlete.username})` : '';
+
+    if (!confirm(`Keluarkan ${memberName} ${memberUser} dari kepengurusan EO ${partner.name}?\n\nMember ini tidak akan dapat lagi mengakses Dasbor EO atau mengelola turnamen.`)) {
+        return;
+    }
 
     try {
         partner.managerIds = (Array.isArray(partner.managerIds) ? partner.managerIds : []).filter(id => String(id) !== String(memberId));
         await Api.updatePartner(partner.id, { managerIds: partner.managerIds });
         partners = await Api.getPartners();
 
-        showToast('Akses Dicabut', 'Akses pengurus berhasil dinonaktifkan.', 'success');
+        showToast('Akses Dikeluarkan', `${memberName} telah dikeluarkan dari tim kepengurusan EO.`, 'success');
         renderEOTeamList(partner);
         renderEOPageBanner(partner);
     } catch (err) {
         console.error('Remove manager error:', err);
-        showToast('Error', 'Gagal mencabut akses pengurus.', 'error');
+        showToast('Error', 'Gagal mengeluarkan pengurus.', 'error');
     }
 }
