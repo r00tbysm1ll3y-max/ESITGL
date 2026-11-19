@@ -3,72 +3,142 @@
 //  FILE UPLOAD PREVIEW & HANDLERS FOR PARTNER/EO REGISTRATION
 // =========================================================================
 
-let partnerRegLogoFile = null;
-let partnerRegKtpFile = null;
-let partnerRegPhotoFile = null;
+let partnerRegLogoData = null; // Menyimpan data gambar logo terkompresi
+let partnerRegKtpData = null;  // Menyimpan data gambar KTP terkompresi
+let partnerRegPhotoData = null;// Menyimpan data pas foto terkompresi
 
-function handlePartnerLogoFileSelect(input) {
+async function handlePartnerLogoFileSelect(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
-    partnerRegLogoFile = file;
 
     const label = document.getElementById('labelPartnerLogoName');
-    if (label) label.textContent = file.name;
+    if (label) label.textContent = 'Mengompresi logo...';
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    try {
+        // Kompresi cerdas ke WebP (Resolusi max 800px, target <= 200KB)
+        const res = await compressImageToWebP(file, {
+            maxDimension: 800,
+            targetMaxBytes: 200 * 1024,
+            initialQuality: 0.85
+        });
+        partnerRegLogoData = res.dataUrl;
+
         const img = document.getElementById('previewPartnerLogoImg');
-        if (img) img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+        if (img) img.src = res.dataUrl;
+
+        const sizeKb = Math.round(res.compressedSize / 1024);
+        if (label) label.textContent = `Logo Terkompresi: ${sizeKb} KB (Hemat ${res.savingsPercent}%)`;
+    } catch (err) {
+        console.warn('Compress logo fallback to raw:', err);
+        partnerRegLogoData = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.getElementById('previewPartnerLogoImg');
+            if (img) img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        if (label) label.textContent = file.name;
+    }
 }
 
-function handlePartnerKtpFileSelect(input) {
+async function handlePartnerKtpFileSelect(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
-    partnerRegKtpFile = file;
 
     const badge = document.getElementById('badgeKtpStatus');
     if (badge) {
-        badge.textContent = file.name;
-        badge.className = 'text-[10px] text-emerald-600 font-bold truncate max-w-[120px]';
+        badge.textContent = 'Mengompresi...';
+        badge.className = 'text-[10px] text-amber-500 font-bold';
     }
 
-    const btn = document.getElementById('labelKtpBtn');
-    if (btn) btn.textContent = 'Ganti Foto KTP';
+    try {
+        // Kompresi KTP: max 1400px agar tulisan/NIK tetap 100% jernih dan terbaca jelas, target <= 350KB
+        const res = await compressImageToWebP(file, {
+            maxDimension: 1400,
+            targetMaxBytes: 350 * 1024,
+            initialQuality: 0.88
+        });
+        partnerRegKtpData = res.dataUrl;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
         const container = document.getElementById('previewKtpContainer');
         const img = document.getElementById('previewKtpImg');
-        if (img) img.src = e.target.result;
+        if (img) img.src = res.dataUrl;
         if (container) container.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
+
+        const btn = document.getElementById('labelKtpBtn');
+        if (btn) btn.textContent = 'Ganti Foto KTP';
+
+        const sizeKb = Math.round(res.compressedSize / 1024);
+        if (badge) {
+            badge.textContent = `Terkompresi ${sizeKb} KB (- ${res.savingsPercent}%)`;
+            badge.className = 'text-[10px] text-emerald-600 font-bold';
+        }
+    } catch (err) {
+        console.warn('Compress KTP fallback to raw:', err);
+        partnerRegKtpData = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const container = document.getElementById('previewKtpContainer');
+            const img = document.getElementById('previewKtpImg');
+            if (img) img.src = e.target.result;
+            if (container) container.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        if (badge) {
+            badge.textContent = file.name;
+            badge.className = 'text-[10px] text-emerald-600 font-bold truncate max-w-[120px]';
+        }
+    }
 }
 
-function handlePartnerPhotoFileSelect(input) {
+async function handlePartnerPhotoFileSelect(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
-    partnerRegPhotoFile = file;
 
     const badge = document.getElementById('badgePhotoStatus');
     if (badge) {
-        badge.textContent = file.name;
-        badge.className = 'text-[10px] text-blue-600 font-bold truncate max-w-[120px]';
+        badge.textContent = 'Mengompresi...';
+        badge.className = 'text-[10px] text-amber-500 font-bold';
     }
 
-    const btn = document.getElementById('labelPhotoBtn');
-    if (btn) btn.textContent = 'Ganti Pas Foto';
+    try {
+        // Kompresi Pas Foto Diri: max 900px, target <= 220KB
+        const res = await compressImageToWebP(file, {
+            maxDimension: 900,
+            targetMaxBytes: 220 * 1024,
+            initialQuality: 0.85
+        });
+        partnerRegPhotoData = res.dataUrl;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
         const container = document.getElementById('previewPhotoContainer');
         const img = document.getElementById('previewPhotoImg');
-        if (img) img.src = e.target.result;
+        if (img) img.src = res.dataUrl;
         if (container) container.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
+
+        const btn = document.getElementById('labelPhotoBtn');
+        if (btn) btn.textContent = 'Ganti Pas Foto';
+
+        const sizeKb = Math.round(res.compressedSize / 1024);
+        if (badge) {
+            badge.textContent = `Terkompresi ${sizeKb} KB (- ${res.savingsPercent}%)`;
+            badge.className = 'text-[10px] text-blue-600 font-bold';
+        }
+    } catch (err) {
+        console.warn('Compress foto diri fallback to raw:', err);
+        partnerRegPhotoData = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const container = document.getElementById('previewPhotoContainer');
+            const img = document.getElementById('previewPhotoImg');
+            if (img) img.src = e.target.result;
+            if (container) container.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        if (badge) {
+            badge.textContent = file.name;
+            badge.className = 'text-[10px] text-blue-600 font-bold truncate max-w-[120px]';
+        }
+    }
 }
 
 /**
@@ -3901,9 +3971,9 @@ function openRegisterPartnerModal() {
     const noticeEl = document.getElementById('regPartnerMemberNotice');
     
     // Reset temporary files
-    partnerRegLogoFile = null;
-    partnerRegKtpFile = null;
-    partnerRegPhotoFile = null;
+    partnerRegLogoData = null;
+    partnerRegKtpData = null;
+    partnerRegPhotoData = null;
 
     // Auto-fill jika member sedang login
     if (typeof loggedMember !== 'undefined' && loggedMember) {
@@ -4018,26 +4088,26 @@ async function handlePartnerRegistrationSubmit(e) {
     let personalPhotoUrl = (typeof loggedMember !== 'undefined' && loggedMember) ? (loggedMember.avatarUrl || null) : null;
 
     try {
-        // Upload Logo Komunitas jika dipilih
-        if (partnerRegLogoFile) {
+        // Upload Logo Komunitas jika dipilih (gunakan hasil kompresi otomatis WebP)
+        if (partnerRegLogoData) {
             try {
-                const uploadedLogo = await Api.uploadStorageImage(partnerRegLogoFile, 'partners');
+                const uploadedLogo = await Api.uploadStorageImage(partnerRegLogoData, 'partners');
                 if (uploadedLogo) logoUrl = uploadedLogo;
             } catch (err) { console.warn('Upload logo failed, fallback to default:', err); }
         }
 
-        // Upload KTP jika dipilih
-        if (partnerRegKtpFile) {
+        // Upload Foto KTP jika dipilih (gunakan hasil kompresi otomatis WebP tajam)
+        if (partnerRegKtpData) {
             try {
-                const uploadedKtp = await Api.uploadStorageImage(partnerRegKtpFile, 'partner-docs');
+                const uploadedKtp = await Api.uploadStorageImage(partnerRegKtpData, 'partner-docs');
                 if (uploadedKtp) ktpUrl = uploadedKtp;
             } catch (err) { console.warn('Upload KTP failed:', err); }
         }
 
-        // Upload Pas Foto jika dipilih
-        if (partnerRegPhotoFile) {
+        // Upload Pas Foto PIC jika dipilih (gunakan hasil kompresi otomatis WebP)
+        if (partnerRegPhotoData) {
             try {
-                const uploadedPhoto = await Api.uploadStorageImage(partnerRegPhotoFile, 'partner-docs');
+                const uploadedPhoto = await Api.uploadStorageImage(partnerRegPhotoData, 'partner-docs');
                 if (uploadedPhoto) personalPhotoUrl = uploadedPhoto;
             } catch (err) { console.warn('Upload foto diri failed:', err); }
         }
@@ -4081,9 +4151,9 @@ async function handlePartnerRegistrationSubmit(e) {
         e.target.reset();
 
         // Reset temporary file inputs
-        partnerRegLogoFile = null;
-        partnerRegKtpFile = null;
-        partnerRegPhotoFile = null;
+        partnerRegLogoData = null;
+        partnerRegKtpData = null;
+        partnerRegPhotoData = null;
 
         showToast('Pendaftaran Berhasil Dikirim', 'Pengajuan kemitraan EO Anda lengkap dengan dokumen verifikasi telah tercatat dan sedang dalam peninjauan oleh Pengurus ESI Trenggalek.', 'success');
     } catch (err) {
