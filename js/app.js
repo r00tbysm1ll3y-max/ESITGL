@@ -9725,28 +9725,30 @@ function renderMemberEOStatusBanner() {
         const roleLabel = isOwner ? 'Ketua / Pemilik EO' : 'Tim Pengurus / Panitia';
 
         bannerEl.innerHTML = `
-            <div class="rounded-2xl bg-gradient-to-r from-emerald-950 via-[#0F172A] to-slate-900 border border-emerald-500/40 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl shadow-emerald-950/20">
-                <div class="flex items-center gap-3.5 w-full sm:w-auto">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xl shrink-0">
-                        <i class="fa-solid fa-handshake-angle"></i>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs font-black uppercase tracking-wider text-emerald-400">Penyelenggara Resmi ESI</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                <i class="fa-solid fa-circle-check"></i> Terverifikasi
-                            </span>
-                            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold">${roleLabel}</span>
+            <div class="rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border border-emerald-500/30 p-3.5 sm:p-5 shadow-lg shadow-emerald-950/20">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-base sm:text-lg shrink-0">
+                            <i class="fa-solid fa-handshake-angle"></i>
                         </div>
-                        <h3 class="text-base sm:text-lg font-black text-white leading-tight mt-0.5 truncate">${escapeHtml(partner.name)}</h3>
-                        <p class="text-xs text-slate-300 mt-0.5">Kelola turnamen, buat event resmi, dan undang rekan panitia.</p>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-emerald-400">Penyelenggara Resmi ESI</span>
+                                <span class="px-2 py-0.2 rounded-full text-[9px] sm:text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-check text-[9px]"></i> Terverifikasi
+                                </span>
+                                <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-bold">${roleLabel}</span>
+                            </div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-white leading-tight mt-0.5 truncate">${escapeHtml(partner.name)}</h3>
+                            <p class="text-[11px] text-slate-400 truncate mt-0.5">Kelola turnamen, terima/tolak pendaftar, dan undang rekan panitia.</p>
+                        </div>
                     </div>
+                    <button onclick="navigateTo('eo')"
+                        class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xs transition flex items-center justify-center gap-2 shrink-0 shadow-sm shadow-emerald-950/40">
+                        <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+                        <span>Buka Dasbor EO &rarr;</span>
+                    </button>
                 </div>
-                <button onclick="navigateTo('eo')"
-                    class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-emerald-900/40 transition flex items-center justify-center gap-2 whitespace-nowrap shrink-0">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                    <span>Buka Dasbor EO &rarr;</span>
-                </button>
             </div>
         `;
         return;
@@ -10101,17 +10103,42 @@ function renderEOMyEventsList(partner) {
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-700">
-                    <button onclick="openEventDetail('${ev.id}')"
-                        class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                        <span>Lihat Publik</span>
+                <div class="flex flex-wrap items-center gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-700/80">
+                    <!-- Tombol Kelola Pendaftar Mandiri (Terima / Tolak / Roster / WA) -->
+                    <button onclick="openEOTournamentRegsModal('${ev.id}')"
+                        class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-emerald-950/40"
+                        title="Kelola & Verifikasi Tim Pendaftar Turnamen Ini">
+                        <i class="fa-solid fa-users-gear text-xs"></i>
+                        <span>Kelola Pendaftar (${regCount})</span>
                     </button>
+
+                    <!-- Tombol Edit Turnamen -->
+                    <button onclick="openEOEditEventModal('${ev.id}')"
+                        class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5"
+                        title="Edit Informasi Turnamen (Jadwal, Slot, Status, dll)">
+                        <i class="fa-solid fa-pen-to-square text-xs text-amber-400"></i>
+                        <span>Edit</span>
+                    </button>
+
+                    <!-- Tombol Lihat Halaman Publik -->
+                    <button onclick="openEventDetail('${ev.id}')"
+                        class="px-2.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-slate-300 border border-slate-700 text-xs font-bold transition flex items-center gap-1"
+                        title="Pratinjau Halaman Detail Turnamen Publik">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </button>
+
+                    <!-- Tombol Ekspor Excel -->
                     <button onclick="exportTournamentTeamsExcel('${ev.id}')"
-                        class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold uppercase tracking-wider transition flex items-center gap-1.5 shadow-sm shadow-emerald-950/40"
-                        title="Unduh data tim pendaftar turnamen ke file Excel">
-                        <i class="fa-solid fa-file-excel"></i>
-                        <span>Ekspor Excel (${regCount})</span>
+                        class="px-2.5 py-2 rounded-xl bg-slate-800/80 hover:bg-emerald-900/60 active:scale-95 text-emerald-400 border border-slate-700 text-xs font-bold transition flex items-center gap-1"
+                        title="Unduh Data Pendaftar Excel">
+                        <i class="fa-solid fa-file-excel text-xs"></i>
+                    </button>
+
+                    <!-- Tombol Hapus Turnamen -->
+                    <button onclick="deleteEOTournament('${ev.id}')"
+                        class="px-2.5 py-2 rounded-xl bg-red-600/15 hover:bg-red-600 active:scale-95 text-red-400 hover:text-white border border-red-500/30 text-xs font-bold transition flex items-center gap-1"
+                        title="Hapus Turnamen Ini">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
                     </button>
                 </div>
             </div>
@@ -10307,5 +10334,147 @@ async function removeEOManager(partnerId, memberId) {
     } catch (err) {
         console.error('Remove manager error:', err);
         showToast('Error', 'Gagal mengeluarkan pengurus.', 'error');
+    }
+}
+
+
+/**
+ * =========================================================================
+ *  MANAJEMEN MANDIRI TURNAMEN & PENDAFTAR OLEH EO (MIRIP ADMIN DASHBOARD)
+ * =========================================================================
+ */
+
+function openEOTournamentRegsModal(eventId) {
+    if (typeof openAdminTournamentRegsModal === 'function') {
+        openAdminTournamentRegsModal(eventId);
+    }
+}
+
+function openEOEditEventModal(eventId) {
+    const ev = (Array.isArray(events) ? events : []).find(e => String(e.id) === String(eventId));
+    if (!ev) {
+        showToast('Turnamen Tidak Ditemukan', 'Data turnamen tidak ditemukan.', 'error');
+        return;
+    }
+
+    const modal = document.getElementById('modalEOEditEvent');
+    if (!modal) return;
+
+    document.getElementById('eoEditEventId').value = ev.id;
+    document.getElementById('eoEditEventTitle').value = ev.title || '';
+    document.getElementById('eoEditEventDivision').value = ev.division || 'Mobile Legends (MLBB)';
+    document.getElementById('eoEditEventStatus').value = ev.status || 'Upcoming';
+    document.getElementById('eoEditEventDate').value = ev.date || '';
+    document.getElementById('eoEditEventLocation').value = ev.location || '';
+    document.getElementById('eoEditEventSlots').value = ev.slots || 32;
+    document.getElementById('eoEditEventFee').value = ev.fee || '';
+    document.getElementById('eoEditEventPrize').value = ev.prizePool || '';
+    document.getElementById('eoEditEventContact').value = ev.contact || '';
+    document.getElementById('eoEditEventImage').value = ev.imageUrl || '';
+    document.getElementById('eoEditEventDesc').value = ev.description || '';
+
+    const sub = document.getElementById('eoEditEventSubtitle');
+    if (sub) sub.textContent = `Mengedit turnamen "${ev.title}"`;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEOEditEventModal() {
+    const modal = document.getElementById('modalEOEditEvent');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    document.body.style.overflow = '';
+}
+
+async function handleEOEditEventSubmit(e) {
+    e.preventDefault();
+    const eventId = document.getElementById('eoEditEventId').value;
+    if (!eventId) return;
+
+    const title = document.getElementById('eoEditEventTitle').value.trim();
+    const division = document.getElementById('eoEditEventDivision').value;
+    const status = document.getElementById('eoEditEventStatus').value;
+    const date = document.getElementById('eoEditEventDate').value.trim();
+    const location = document.getElementById('eoEditEventLocation').value.trim();
+    const slots = parseInt(document.getElementById('eoEditEventSlots').value, 10) || 32;
+    const fee = document.getElementById('eoEditEventFee').value.trim();
+    const prizePool = document.getElementById('eoEditEventPrize').value.trim();
+    const contact = document.getElementById('eoEditEventContact').value.trim();
+    const imageUrl = document.getElementById('eoEditEventImage').value.trim();
+    const description = document.getElementById('eoEditEventDesc').value.trim();
+
+    const submitBtn = document.getElementById('btnSubmitEOEditEvent');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i>Menyimpan...';
+    }
+
+    try {
+        const updatePayload = {
+            title,
+            division,
+            status,
+            date,
+            location,
+            slots,
+            fee,
+            prizePool,
+            contact,
+            imageUrl,
+            description,
+            updatedAt: new Date().toISOString()
+        };
+
+        await Api.updateEvent(eventId, updatePayload);
+        events = await Api.getEvents();
+
+        showToast('Turnamen Berhasil Diperbarui', `Perubahan pada "${title}" telah tersimpan.`, 'success');
+        closeEOEditEventModal();
+
+        // Refresh UI
+        if (typeof renderEventsView === 'function') renderEventsView();
+        const partner = getMemberVerifiedPartner(loggedMember);
+        if (partner && typeof renderEOMyEventsList === 'function') {
+            renderEOMyEventsList(partner);
+        }
+    } catch (err) {
+        console.error('Error updating EO event:', err);
+        showToast('Gagal Memperbarui', 'Terjadi kesalahan sistem saat menyimpan perubahan.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1.5"></i><span>Simpan Perubahan</span>';
+        }
+    }
+}
+
+async function deleteEOTournament(eventId) {
+    const ev = (Array.isArray(events) ? events : []).find(e => String(e.id) === String(eventId));
+    const title = ev ? ev.title : 'turnamen ini';
+
+    if (!confirm(`Hapus turnamen "${title}"?\n\nTindakan ini akan menghapus turnamen dari kalender Jadwal Event publik secara permanen.`)) {
+        return;
+    }
+
+    try {
+        await Api.deleteEvent(eventId);
+        events = await Api.getEvents();
+
+        showToast('Turnamen Dihapus', `Turnamen "${title}" berhasil dihapus.`, 'success');
+
+        // Refresh UI
+        if (typeof renderEventsView === 'function') renderEventsView();
+        const partner = getMemberVerifiedPartner(loggedMember);
+        if (partner && typeof renderEOMyEventsList === 'function') {
+            renderEOMyEventsList(partner);
+            renderEOPageBanner(partner);
+        }
+    } catch (err) {
+        console.error('Error deleting EO event:', err);
+        showToast('Gagal Menghapus', 'Terjadi kesalahan sistem saat menghapus turnamen.', 'error');
     }
 }
